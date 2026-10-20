@@ -8,6 +8,7 @@ mod oscar;
 mod other;
 mod sensitivity;
 mod shooting;
+mod wheel4d;
 
 use crate::{
     skin,
@@ -162,6 +163,7 @@ pub struct App {
     /// Desktop settings as read and as edited.
     host: Option<bloody_a90::host::Settings>,
     host_draft: Option<bloody_a90::host::Settings>,
+    wheel4d: wheel4d::Editor,
     host_buttons: host_buttons::Editor,
     associations: Rules,
     associations_draft: Rules,
@@ -347,6 +349,7 @@ impl App {
             held: Vec::new(),
             host: None,
             host_draft: None,
+            wheel4d: wheel4d::Editor::default(),
             host_buttons: host_buttons::Editor::default(),
             associations: Rules::default(),
             associations_draft: Rules::default(),
@@ -798,7 +801,15 @@ impl App {
                         self.report(Err(error));
                     }
                 }
-                Reply::GestureStatus(status) => self.gesture_status(Ok(status), false),
+                Reply::GestureStatus(mut status, gestures_enabled, wheel_enabled) => {
+                    self.wheel_runtime_status(&status, wheel_enabled);
+                    if !gestures_enabled && status.running {
+                        status.running = false;
+                        status.message = "全局手势未启用".into();
+                    }
+                    self.gesture_status(Ok(status), false);
+                }
+                Reply::Wheel(result) => self.wheel_reply(result),
                 Reply::HostButtons(result) => self.host_button_status(result),
                 Reply::HostButtonsEnabled(result) => match result {
                     Ok((settings, bytes, status)) => {
@@ -947,6 +958,12 @@ impl eframe::App for App {
         }
         // Give a due foreground poll priority over the faster button query.
         if self.gestures.running
+            || self.wheel4d.running
+            || (self.wheel4d.loaded
+                && self
+                    .device
+                    .as_ref()
+                    .is_some_and(|d| self.wheel4d.applied.enabled_for(d.identity.core)))
             || (self.host_buttons.running
                 && self
                     .host_buttons
@@ -1166,6 +1183,7 @@ mod tests {
             .unwrap()
             .with_mode(0);
         settings.profiles[0][3] = Some(action.clone());
+        settings.profiles[0][4] = Some(bloody_a90::gestures::Action::new(24, 0, 0, "全部最小化"));
         settings.profiles[0][8] = Some(bloody_a90::gestures::Action::new(2, 0, 0, "16 合一手势"));
         settings.profiles[0][9] = Some(bloody_a90::gestures::Action::new(2, 1, 0, "鼠标手势"));
         let mut documents = [
@@ -1193,7 +1211,7 @@ mod tests {
         assert_eq!(app.host_buttons.action().unwrap(), action);
         let mut output = context.run_ui(Default::default(), |ui| app.keys_page(ui));
         output.textures_delta.clear();
-        for slot in [8, 9] {
+        for slot in [4, 8, 9] {
             app.record = slot;
             app.host_key_selected();
             assert!(app.choice == keys::Choice::Host);

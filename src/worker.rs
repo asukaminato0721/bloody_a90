@@ -60,6 +60,8 @@ pub enum Job {
     Library(PathBuf, Box<bloody_a90::library::Command>),
     Gestures(Option<Box<bloody_a90::gesture_runtime::Settings>>),
     GestureStatus,
+    WheelRead,
+    WheelWrite(bloody_a90::wheel4d::Settings, Option<Vec<u8>>),
 }
 
 pub enum Reply {
@@ -77,7 +79,8 @@ pub enum Reply {
     Foreground(Result<Foreground, String>),
     Library(Result<Box<bloody_a90::library::Update>, String>),
     Gestures(Result<GestureUpdate, String>),
-    GestureStatus(bloody_a90::gesture_runtime::Status),
+    GestureStatus(bloody_a90::gesture_runtime::Status, bool, bool),
+    Wheel(Result<WheelUpdate, String>),
     HostButtons(Result<bloody_a90::gesture_runtime::Status, String>),
     HostButtonsEnabled(
         Result<
@@ -100,6 +103,13 @@ pub struct GestureUpdate {
     pub requested: bool,
     pub status: bloody_a90::gesture_runtime::Status,
     pub host: Option<(bloody_a90::host_buttons::Settings, Option<Vec<u8>>)>,
+}
+
+pub struct WheelUpdate {
+    pub settings: bloody_a90::wheel4d::Settings,
+    pub bytes: Option<Vec<u8>>,
+    pub status: bloody_a90::gesture_runtime::Status,
+    pub runtime_enabled: bool,
 }
 
 pub struct Snapshot {
@@ -161,6 +171,9 @@ struct Worker {
     gesture_settings: Option<bloody_a90::gesture_runtime::Settings>,
     gesture_status: bloody_a90::gesture_runtime::Status,
     capture_suppressed: bool,
+    wheel: bloody_a90::wheel4d::Settings,
+    core: Option<u8>,
+    native_gestures: bool,
     host_buttons: Option<bloody_a90::host_button_runtime::Handle>,
     host_button_status: bloody_a90::gesture_runtime::Status,
 }
@@ -187,6 +200,12 @@ impl Worker {
                 message: "全局手势未启用".into(),
             },
             capture_suppressed: false,
+            wheel: bloody_a90::wheel4d::path()
+                .and_then(|p| bloody_a90::wheel4d::load(&p).ok())
+                .map(|(settings, _)| settings)
+                .unwrap_or_default(),
+            native_gestures: false,
+            core: None,
             host_buttons: None,
             host_button_status: bloody_a90::gesture_runtime::Status {
                 running: false,
@@ -248,7 +267,11 @@ impl Worker {
     fn stop_host_buttons(&mut self) -> Result<(), String> {
         if let Some(mut handle) = self.host_buttons.take() {
             handle.poll();
-            handle.stop()?;
+            let stopped = handle.stop();
+            if let Some(settings) = handle.wheel_settings() {
+                self.wheel = settings;
+            }
+            stopped?;
         }
         self.host_button_status = bloody_a90::gesture_runtime::Status {
             running: false,
@@ -258,6 +281,14 @@ impl Worker {
     }
 
     fn poll_gestures(&mut self) -> bloody_a90::gesture_runtime::Status {
+        if let Some(settings) = self
+            .host_buttons
+            .as_ref()
+            .and_then(|h| h.wheel_settings())
+            .or_else(|| self.gestures.as_ref().and_then(|h| h.wheel_settings()))
+        {
+            self.wheel = settings;
+        }
         if let Some(host) = &self.host_buttons
             && host.owns_gestures()
         {
@@ -275,12 +306,17 @@ impl Worker {
     }
 
     fn stop_input_runtimes(&mut self) -> Result<(), String> {
+        self.native_gestures = false;
         // Attempt both stops even if the native notification service failed.
         // A separate legacy capture must never retain its physical input grab.
         let host = self.stop_host_buttons();
         let capture = self.gestures.take().map_or(Ok(()), |mut handle| {
             handle.poll();
-            handle.stop()
+            let stopped = handle.stop();
+            if let Some(settings) = handle.wheel_settings() {
+                self.wheel = settings;
+            }
+            stopped
         });
         self.gesture_status = bloody_a90::gesture_runtime::Status {
             running: false,
@@ -300,6 +336,8 @@ impl Worker {
         }
         let result = (|| {
             self.stop_input_runtimes()?;
+            self.core = None;
+            self.core = Some(Device::open()?.identity()?.core);
             let (_, mut settings, _) = host_button_settings()?;
             if self.capture_suppressed
                 && let Some(gestures) = &mut settings.gestures
@@ -307,17 +345,19 @@ impl Worker {
                 gestures.enabled = false;
             }
             if settings.enabled && !settings.is_empty() {
+                let native_gestures = settings.gesture_kinds().into_iter().any(|kind| kind);
                 if settings.gesture_kinds().into_iter().any(|kind| kind)
                     && let Some(global) = &mut self.gesture_settings
                 {
                     global.documents = settings.gestures.as_ref().unwrap().documents.clone();
                 }
                 let global = (!self.capture_suppressed)
-                    .then(|| self.gesture_settings.clone())
+                    .then(|| self.capture_settings())
                     .flatten();
                 let mut handle =
                     bloody_a90::host_button_runtime::Handle::start_merged(settings, global)?;
                 self.host_button_status = handle.poll();
+                self.native_gestures = native_gestures;
                 self.host_buttons = Some(handle);
             }
             Ok::<_, String>(())
@@ -333,7 +373,7 @@ impl Worker {
                 .host_buttons
                 .as_ref()
                 .is_some_and(|host| host.owns_gestures())
-            && let Some(settings) = self.gesture_settings.clone()
+            && let Some(settings) = self.capture_settings()
         {
             match bloody_a90::gesture_runtime::Handle::start(settings) {
                 Ok(mut handle) => {
@@ -348,6 +388,30 @@ impl Worker {
                 }
             }
         }
+    }
+
+    fn capture_settings(&self) -> Option<bloody_a90::gesture_runtime::Settings> {
+        let mut settings = self.gesture_settings.clone();
+        if let Some(settings) = &mut settings {
+            settings.wheel = None;
+        }
+        if let Some(wheel) = self.core.and_then(|core| self.wheel.active_for(core)) {
+            settings
+                .get_or_insert_with(|| bloody_a90::gesture_runtime::Settings {
+                    documents: [
+                        bloody_a90::gestures::Document::new(bloody_a90::gestures::Kind::Sixteen),
+                        bloody_a90::gestures::Document::new(bloody_a90::gestures::Kind::Mouse),
+                    ],
+                    triggers: [None; 2],
+                    wheel: None,
+                })
+                .wheel = Some(wheel);
+        }
+        settings
+    }
+
+    fn wheel_enabled(&self) -> bool {
+        self.core.is_some_and(|core| self.wheel.enabled_for(core))
     }
 
     fn save_buttons(
@@ -589,16 +653,61 @@ impl Worker {
                 self.gesture_settings = settings
                     .map(|s| *s)
                     .filter(|settings| settings.triggers.iter().any(Option::is_some));
-                self.capture_suppressed = !apply;
-                self.restart_host_buttons(apply);
-                let status = self.poll_gestures();
+                self.capture_suppressed = !apply && !self.wheel_enabled();
+                self.restart_host_buttons(apply || self.wheel_enabled());
+                let mut status = self.poll_gestures();
+                if !apply && status.running {
+                    status.running = false;
+                    status.message = "全局手势已停止，区域滚动继续运行".into();
+                }
                 Ok(GestureUpdate {
                     requested: apply,
                     status,
                     host: updated,
                 })
             })()),
-            Job::GestureStatus => Reply::GestureStatus(self.poll_gestures()),
+            Job::GestureStatus => {
+                let status = self.poll_gestures();
+                Reply::GestureStatus(
+                    status,
+                    self.native_gestures || self.gesture_settings.is_some(),
+                    self.wheel_enabled(),
+                )
+            }
+            Job::WheelRead => Reply::Wheel((|| {
+                let path = bloody_a90::wheel4d::path().ok_or("无法确定滚轮设置文件路径")?;
+                let (settings, bytes) = bloody_a90::wheel4d::load(&path)?;
+                Ok(WheelUpdate {
+                    settings,
+                    bytes,
+                    status: self.poll_gestures(),
+                    runtime_enabled: self.wheel_enabled(),
+                })
+            })()),
+            Job::WheelWrite(settings, expected) => Reply::Wheel((|| {
+                settings.validate()?;
+                let path = bloody_a90::wheel4d::path().ok_or("无法确定滚轮设置文件路径")?;
+                if settings.cores.into_iter().any(|enabled| enabled) {
+                    self.core = Some(Device::open()?.identity()?.core);
+                }
+                if self.core.is_some_and(|core| settings.enabled_for(core)) {
+                    let previous = std::mem::replace(&mut self.wheel, settings.clone());
+                    let capture = self.capture_settings().unwrap();
+                    self.wheel = previous;
+                    let (_, native, _) = host_button_settings()?;
+                    bloody_a90::host_button_runtime::preflight_merged(&native, Some(&capture))?;
+                }
+                bloody_a90::wheel4d::save(&path, &settings, expected.as_deref())?;
+                self.wheel = settings.clone();
+                // An explicit apply can resume capture after the emergency chord.
+                self.restart_host_buttons(self.wheel_enabled());
+                Ok(WheelUpdate {
+                    bytes: Some(settings.to_bytes()),
+                    settings,
+                    status: self.poll_gestures(),
+                    runtime_enabled: self.wheel_enabled(),
+                })
+            })()),
         }
     }
 }
@@ -625,6 +734,34 @@ pub fn spawn(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn wheel_capture_settings_keep_gesture_documents_and_allow_wheel_only() {
+        let mut worker = Worker::new();
+        worker.wheel = bloody_a90::wheel4d::Settings::default();
+        worker.core = Some(2);
+        assert!(worker.capture_settings().is_none());
+        worker.wheel.cores[1] = true;
+        let wheel_only = worker.capture_settings().unwrap();
+        assert_eq!(wheel_only.triggers, [None; 2]);
+        assert_eq!(wheel_only.wheel.as_ref().unwrap().settings(), &worker.wheel);
+        let mut combined = wheel_only;
+        combined.triggers[1] = Some(bloody_a90::linux_input::BUTTONS[4]);
+        combined.documents[1].actions[0] = bloody_a90::gestures::Action::keyboard(27, 1, "剪切");
+        worker.gesture_settings = Some(combined.clone());
+        let capture = worker.capture_settings().unwrap();
+        assert_eq!(capture.triggers, combined.triggers);
+        assert_eq!(capture.documents, combined.documents);
+        worker.wheel.cores[1] = false;
+        assert!(worker.capture_settings().unwrap().wheel.is_none());
+        worker.gesture_settings = None;
+        worker.wheel.cores[2] = true;
+        assert!(worker.capture_settings().is_none());
+        worker.core = Some(3);
+        assert_eq!(worker.capture_settings().unwrap().wheel.unwrap().core(), 3);
+        worker.core = None;
+        assert!(worker.capture_settings().is_none());
+    }
 
     #[test]
     #[ignore = "requires A90_TEST_ASSOCIATIONS=1, a mouse, and a stable foreground window"]

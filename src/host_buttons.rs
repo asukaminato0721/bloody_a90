@@ -163,9 +163,11 @@ impl Settings {
         for slots in &self.profiles {
             for (slot, action) in slots.iter().enumerate() {
                 if let Some(action) = action {
-                    if !matches!(action.number("Simulator")?, 2 | 20..=22 | 24)
-                        || action.number("Action")? > 3
-                    {
+                    let simulator = action.number("Simulator")?;
+                    let mode = action.number("Action")?;
+                    let scroll =
+                        simulator == 9 && action.number("Object")? == 9 && matches!(mode, 5 | 6);
+                    if !scroll && (!matches!(simulator, 2 | 20..=22 | 24) || mode > 3) {
                         return Err("主机动作类型或执行阶段无效".into());
                     }
                     if action.number("Simulator")? == 2
@@ -491,6 +493,7 @@ mod tests {
         );
         settings.profiles[1][10] = Some(Action::input_text("中😀\n<&").unwrap().with_mode(0));
         settings.profiles[1][24] = Some(Action::new(22, 0, 0, "放大"));
+        settings.profiles[1][25] = Some(Action::new(9, 9, 5, "滚轮向左"));
         settings.bind(&config).unwrap();
         let bytes = settings.to_bytes();
         assert_eq!(Settings::parse(&bytes).unwrap(), settings);

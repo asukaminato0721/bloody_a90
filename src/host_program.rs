@@ -190,8 +190,20 @@ fn validate(words: &[u16]) -> Result<(), String> {
 /// EXE 0045cd4c, cases 20/21/22/24: mode 0/1 runs on press; mode 3 runs on
 /// either phase. Mode 2 does not run these desktop actions.
 pub fn prepare_button(action: &Action, pressed: bool) -> Result<Prepared, String> {
+    if action.number("Simulator")? == 9
+        && action.number("Object")? == 9
+        && matches!(action.number("Action")?, 5 | 6)
+    {
+        // Horizontal wheel actions encode direction in Action. A native
+        // physical press or wheel notch produces one scroll step.
+        return if pressed {
+            prepare(action)
+        } else {
+            prepare(&Action::default())
+        };
+    }
     if !matches!(action.number("Simulator")?, 20..=22 | 24) {
-        return Err("按键主机动作只支持打开目标、文字、缩放和窗口动作".into());
+        return Err("按键主机动作只支持打开目标、文字、缩放、窗口动作和左右滚轮".into());
     }
     let mode = action.number("Action")?;
     if mode > 3 {
@@ -313,12 +325,18 @@ pub fn prepare(action: &Action) -> Result<Prepared, String> {
         if mode > 3 {
             return Err("窗口动作需要 Action=0 至 3".into());
         }
-        if mode != 3 || object == 0 {
+        if mode != 3 {
             return Ok(once(vec![storage::END]));
         }
+        // Object 0 is compiled to Win+M by 0062f6c8 on Windows. Linux uses
+        // a desktop operation. The native host dispatcher handles only 1/2.
         // 004602df posts SC_MINIMIZE; 00460273 posts SC_MAXIMIZE.
         let mut prepared = once(vec![
-            if object == 1 { 0xff31 } else { 0xff32 },
+            match object {
+                0 => 0xff33,
+                1 => 0xff31,
+                _ => 0xff32,
+            },
             storage::END,
         ]);
         prepared.window = true;
@@ -607,6 +625,7 @@ impl Vm {
                 )),
                 0xff31 => output.push(Output::Window(crate::host_window::Operation::Minimize)),
                 0xff32 => output.push(Output::Window(crate::host_window::Operation::Maximize)),
+                0xff33 => output.push(Output::Window(crate::host_window::Operation::MinimizeAll)),
                 _ => return Err(format!("主机宏指令未实现：{word:04x}")),
             }
         }
@@ -616,6 +635,28 @@ impl Vm {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn native_horizontal_wheels_scroll_once_on_press_and_skip_release() {
+        use super::*;
+        for (mode, horizontal) in [(5, -1), (6, 1)] {
+            for pressed in [false, true] {
+                let now = Instant::now();
+                let action = Action::new(9, 9, mode, "左右滚轮");
+                let mut vm = Vm::new(prepare_button(&action, pressed).unwrap(), now, false);
+                assert_eq!(
+                    vm.tick(now, [0; 3]).unwrap(),
+                    if pressed {
+                        vec![Output::Wheel(horizontal, 0)]
+                    } else {
+                        Vec::new()
+                    }
+                );
+                assert!(vm.finished());
+            }
+        }
+        assert!(prepare_button(&Action::new(9, 1, 5, "错误对象"), true).is_err());
+        assert!(prepare_button(&Action::new(9, 9, 7, "错误方向"), true).is_err());
+    }
     #[test]
     fn player_and_file_manager_consumer_keys_keep_linux_press_and_release_codes() {
         use super::*;
@@ -683,17 +724,19 @@ mod tests {
         assert!(prepare(&Action::new(22, 0, 4, "错误阶段")).is_err());
     }
     #[test]
-    fn window_objects_and_release_phase_match_dispatcher() {
+    fn window_objects_keep_pointer_actions_and_translate_all_minimize_for_linux() {
         use crate::host_window::Operation;
         let now = Instant::now();
         for object in [0, 1, 2, 9, u32::MAX] {
             for mode in 0..=3 {
                 let prepared = prepare(&Action::new(24, object, mode, "窗口动作")).unwrap();
-                let executes = mode == 3 && object != 0;
+                let executes = mode == 3;
                 assert_eq!(prepared.needs_window(), executes);
                 let mut vm = Vm::new(prepared, now, false);
                 let expected = if executes {
-                    vec![Output::Window(if object == 1 {
+                    vec![Output::Window(if object == 0 {
+                        Operation::MinimizeAll
+                    } else if object == 1 {
                         Operation::Minimize
                     } else {
                         Operation::Maximize

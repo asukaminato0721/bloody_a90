@@ -26,3 +26,4 @@ pub mod sensitivity;
 pub mod shooting;
 pub mod storage;
 pub mod vendor_input;
+pub mod wheel4d;

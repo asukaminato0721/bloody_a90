@@ -168,6 +168,8 @@ impl App {
 
     pub(super) fn wheel(&mut self, ui: &mut egui::Ui) {
         self.host_page(ui, Field::Lines);
+        ui.add_space(14.0);
+        self.evolutionary_wheel(ui);
     }
 
     pub(super) fn pointer(&mut self, ui: &mut egui::Ui) {

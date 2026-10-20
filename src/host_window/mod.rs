@@ -1,5 +1,7 @@
-//! Simulator 24: minimize or maximize the window under the pointer.
+//! Simulator 24: minimize/maximize the pointer window or minimize all windows.
 mod kwin;
+#[cfg(test)]
+mod pointer_test;
 mod x11;
 
 use std::{
@@ -16,6 +18,7 @@ use std::{
 pub enum Operation {
     Minimize,
     Maximize,
+    MinimizeAll,
 }
 
 trait Backend {

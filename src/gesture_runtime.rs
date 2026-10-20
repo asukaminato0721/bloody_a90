@@ -17,6 +17,7 @@ use std::{
 pub struct Settings {
     pub documents: [Document; 2],
     pub triggers: [Option<u16>; 2],
+    pub wheel: Option<crate::wheel4d::Active>,
 }
 
 #[cfg(test)]
@@ -81,6 +82,7 @@ pub(crate) struct Remote {
     sender: SyncSender<Native>,
     allowed: [bool; 2],
     control: mpsc::Sender<Control>,
+    wheel: Option<crate::wheel4d::Observer>,
 }
 
 #[derive(Clone, Copy)]
@@ -97,6 +99,9 @@ fn check_native_emergency(state: crate::vendor_input::State) -> Result<(), Strin
 }
 
 impl Remote {
+    pub(crate) fn wheel_settings(&self) -> Option<crate::wheel4d::Settings> {
+        self.wheel.as_ref()?.settings()
+    }
     pub(crate) fn interrupt(&self) {
         let _ = self.control.send(Control::Interrupt);
     }
@@ -136,6 +141,7 @@ struct Engine {
     native_previous: Option<crate::vendor_input::State>,
     native_triggers: [Option<usize>; 24],
     native_blocked: [u8; 3],
+    overlay_button: bool,
 }
 
 impl Engine {
@@ -148,6 +154,7 @@ impl Engine {
             native_previous: None,
             native_triggers: [None; 24],
             native_blocked: [0; 3],
+            overlay_button: false,
         }
     }
 
@@ -279,6 +286,7 @@ impl Engine {
             (input::KEY, code) => {
                 self.motion(&mut output);
                 if event.value == 1
+                    && !(code == input::BUTTONS[0] && self.overlay_button)
                     && self.stroke.is_none()
                     && self.held.is_empty()
                     && let Some(kind) = self
@@ -597,6 +605,9 @@ impl Handle {
             Devices::for_host_actions(&prepared.into_iter().flatten().collect::<Vec<_>>())?;
         let info = input::find()?;
         let _source = Source::open(&info.path)?;
+        if let Some(wheel) = &settings.wheel {
+            let _wheel = crate::wheel4d::Monitor::start_with_direction(&wheel.settings)?;
+        }
         Ok(())
     }
 
@@ -611,8 +622,12 @@ impl Handle {
         }
         if settings.triggers.iter().all(Option::is_none)
             && !external.into_iter().any(|enabled| enabled)
+            && settings.wheel.is_none()
         {
             return Err("请至少启用一套手势".into());
+        }
+        if let Some(wheel) = &settings.wheel {
+            wheel.settings.validate()?;
         }
         for code in settings.triggers.iter().flatten() {
             if !input::BUTTONS.contains(code) {
@@ -628,6 +643,11 @@ impl Handle {
     pub(crate) fn start_external(settings: Settings, external: [bool; 2]) -> Result<Self, String> {
         Self::validate(&settings, external)?;
         let prepared = prepare_external_actions(&settings, external)?;
+        let wheel = if let Some(wheel) = &settings.wheel {
+            Some(crate::wheel4d::Monitor::start_runtime(&wheel.settings)?)
+        } else {
+            None
+        };
         let physical = if prepared.iter().flatten().any(Prepared::needs_buttons) {
             Some(physical_buttons::Reader::start()?)
         } else {
@@ -646,6 +666,9 @@ impl Handle {
         let info = input::find()?;
         let mut source = Source::open(&info.path)?;
         let mut axes = source.capabilities(input::REL, 15)?;
+        if axes.contains(&11) && !axes.contains(&12) {
+            axes.push(12);
+        }
         for axis in [input::HWHEEL, input::WHEEL] {
             if !axes.contains(&axis) {
                 axes.push(axis);
@@ -685,16 +708,23 @@ impl Handle {
         let (stop, stopping) = mpsc::channel();
         let (updates, status) = mpsc::sync_channel(32);
         let (native_sender, native_receiver) = mpsc::sync_channel(64);
-        let remote = external
-            .into_iter()
-            .any(|enabled| enabled)
-            .then_some(Remote {
-                sender: native_sender,
-                allowed: external,
-                control: stop.clone(),
-            });
+        let remote = Some(Remote {
+            sender: native_sender,
+            allowed: external,
+            control: stop.clone(),
+            wheel: wheel.as_ref().map(|m| m.observer()),
+        });
         let native = remote.as_ref().map(|_| native_receiver);
-        let message = format!("全局手势已启用：{}", info.path.display());
+        let features = if settings.wheel.is_some() {
+            if settings.triggers.iter().any(Option::is_some) || external.into_iter().any(|s| s) {
+                "全局手势和区域滚动"
+            } else {
+                "区域滚动"
+            }
+        } else {
+            "全局手势"
+        };
+        let message = format!("{features}已启用：{}", info.path.display());
         let thread = thread::spawn(move || {
             run(
                 source,
@@ -715,6 +745,7 @@ impl Handle {
                     status: updates,
                     tip,
                     native,
+                    wheel,
                 },
             )
         });
@@ -755,6 +786,10 @@ impl Handle {
         self.last.clone()
     }
 
+    pub fn wheel_settings(&self) -> Option<crate::wheel4d::Settings> {
+        self.remote.as_ref()?.wheel_settings()
+    }
+
     pub fn stop(&mut self) -> Result<(), String> {
         let _ = self.stop.send(Control::Stop);
         let result = if let Some(thread) = self.thread.take() {
@@ -791,6 +826,7 @@ struct Extra {
     status: SyncSender<Status>,
     tip: Option<crate::gesture_tip::Handle>,
     native: Option<Receiver<Native>>,
+    wheel: Option<crate::wheel4d::Monitor>,
 }
 
 fn run(
@@ -805,6 +841,7 @@ fn run(
         status,
         tip,
         native,
+        wheel,
     } = extra;
     let result = (|| {
         let mut engine = Engine::new(settings);
@@ -813,6 +850,7 @@ fn run(
         let mut physical = [0; 3];
         let mut tip_visible = false;
         let mut last_tip = Instant::now() - Duration::from_secs(1);
+        let mut wheel_route = crate::wheel4d::Route::default();
         loop {
             match stop.try_recv() {
                 Ok(Control::Stop) | Err(mpsc::TryRecvError::Disconnected) => break,
@@ -889,7 +927,28 @@ fn run(
                 let events = source.read()?;
                 let finished = events.is_empty() || released.is_none();
                 for event in events {
+                    if event.kind == input::KEY
+                        && event.code == input::BUTTONS[0]
+                        && event.value == 1
+                        && engine.stroke.is_none()
+                        && engine.held.is_empty()
+                    {
+                        engine.overlay_button = wheel.as_ref().is_some_and(|m| m.divider_hit());
+                    }
+                    let event =
+                        if let (Some(monitor), Some(settings)) = (&wheel, &engine.settings.wheel) {
+                            let horizontal = monitor.horizontal(&settings.settings)?;
+                            wheel_route.event(event, horizontal)
+                        } else {
+                            event
+                        };
                     decisions.extend(engine.event(event)?);
+                    if event.kind == input::KEY
+                        && event.code == input::BUTTONS[0]
+                        && event.value == 0
+                    {
+                        engine.overlay_button = false;
+                    }
                 }
                 if finished {
                     break;
@@ -1064,11 +1123,12 @@ fn run(
     drop(source);
     drop(devices);
     drop(tip);
+    drop(wheel);
     result
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     fn settings(kind: usize) -> Settings {
         let mut triggers = [None; 2];
@@ -1076,6 +1136,193 @@ mod tests {
         Settings {
             documents: [Document::new(Kind::Sixteen), Document::new(Kind::Mouse)],
             triggers,
+            wheel: None,
+        }
+    }
+
+    /// The private KWin test supplies a real monitor over a right-hand region.
+    /// All generated input is grabbed by the test and cannot reach the desktop.
+    pub(crate) fn exercise_wheel_and_gesture_capture(wheel: crate::wheel4d::Monitor) {
+        let identity = input::Identity {
+            bus: 6,
+            vendor: 0x1d6b,
+            product: 0xa092,
+            version: 1,
+        };
+        let mut injected = Virtual::new(
+            "A90 isolated wheel source",
+            identity,
+            &input::BUTTONS,
+            &[input::X, input::Y, input::WHEEL, 11],
+        )
+        .unwrap();
+        let mut source = input::isolated_reader(&injected).unwrap();
+        source.grab().unwrap();
+        let axes = [input::X, input::Y, input::WHEEL, input::HWHEEL, 11, 12];
+        let pointer = Virtual::new(
+            "A90 isolated wheel output",
+            identity,
+            &input::BUTTONS,
+            &axes,
+        )
+        .unwrap();
+        let keyboard =
+            Virtual::new("A90 isolated wheel keyboard", identity, &[29, 45], &[]).unwrap();
+        let mut pointer_reader = input::isolated_reader(&pointer).unwrap();
+        let mut keyboard_reader = input::isolated_reader(&keyboard).unwrap();
+        pointer_reader.grab().unwrap();
+        keyboard_reader.grab().unwrap();
+        let pointer_sys = pointer.sys_name().unwrap();
+        let keyboard_sys = keyboard.sys_name().unwrap();
+        let mut config = settings(0);
+        config.wheel = crate::wheel4d::Settings {
+            cores: [true; 4],
+            ..Default::default()
+        }
+        .active_for(2);
+        config.documents[0].actions[0] = crate::gestures::Action::keyboard(27, 1, "剪切");
+        let prepared = prepare_actions(&config).unwrap();
+        let (stop, stopping) = mpsc::channel();
+        let (status, _updates) = mpsc::sync_channel(32);
+        let runtime = thread::spawn(move || {
+            run(
+                source,
+                Devices {
+                    pointer,
+                    keyboard,
+                    buttons: Buttons::default(),
+                    axes: axes.into_iter().collect(),
+                    opener: crate::host_open::Queue::default(),
+                    text: None,
+                    window: None,
+                    physical: None,
+                },
+                config,
+                prepared,
+                stopping,
+                Extra {
+                    status,
+                    tip: None,
+                    native: None,
+                    wheel: Some(wheel),
+                },
+            )
+        });
+        struct Cleanup {
+            stop: mpsc::Sender<Control>,
+            thread: Option<JoinHandle<Result<(), String>>>,
+        }
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = self.stop.send(Control::Stop);
+                if let Some(thread) = self.thread.take() {
+                    let _ = thread.join();
+                }
+            }
+        }
+        let mut cleanup = Cleanup {
+            stop,
+            thread: Some(runtime),
+        };
+        let collect = |reader: &mut Source, kind, code, value| {
+            let deadline = Instant::now() + Duration::from_secs(2);
+            let mut events = Vec::new();
+            loop {
+                reader.wait(10).unwrap();
+                events.extend(reader.read().unwrap());
+                if events
+                    .iter()
+                    .any(|e| e.kind == kind && e.code == code && e.value == value)
+                {
+                    return events;
+                }
+                assert!(Instant::now() < deadline, "input timeout: {events:?}");
+            }
+        };
+        injected.event(input::REL, input::X, 7).unwrap();
+        injected.event(input::REL, input::WHEEL, 1).unwrap();
+        injected.event(input::REL, 11, 120).unwrap();
+        injected.sync().unwrap();
+        let events = collect(&mut pointer_reader, input::REL, 12, -120);
+        assert_eq!(
+            events
+                .iter()
+                .filter(|e| e.kind == input::REL)
+                .map(|e| (e.code, e.value))
+                .collect::<Vec<_>>(),
+            [(input::X, 7), (input::HWHEEL, -1), (12, -120)]
+        );
+        injected.event(input::REL, 11, -120).unwrap();
+        injected.event(input::REL, input::WHEEL, -1).unwrap();
+        injected.sync().unwrap();
+        let events = collect(&mut pointer_reader, input::REL, input::HWHEEL, 1);
+        assert_eq!(
+            events
+                .iter()
+                .filter(|e| e.kind == input::REL)
+                .map(|e| (e.code, e.value))
+                .collect::<Vec<_>>(),
+            [(12, 120), (input::HWHEEL, 1)]
+        );
+        injected.event(input::KEY, input::BUTTONS[3], 1).unwrap();
+        injected.sync().unwrap();
+        for _ in 0..5 {
+            injected.event(input::REL, input::Y, -21).unwrap();
+            injected.sync().unwrap();
+        }
+        injected.event(input::KEY, input::BUTTONS[3], 0).unwrap();
+        injected.sync().unwrap();
+        let events = collect(&mut keyboard_reader, input::KEY, 29, 0);
+        assert_eq!(
+            events
+                .iter()
+                .filter(|e| e.kind == input::KEY)
+                .map(|e| (e.code, e.value))
+                .collect::<Vec<_>>(),
+            [(29, 1), (45, 1), (45, 0), (29, 0)]
+        );
+        assert!(keyboard_reader.held().unwrap().is_empty());
+        assert!(
+            !pointer_reader
+                .read()
+                .unwrap()
+                .iter()
+                .any(|e| e.kind == input::REL && e.code == input::Y)
+        );
+        // The shared emergency chord must release the physical source and
+        // remove the mirrors even while the KWin monitor is still active.
+        injected.event(input::KEY, input::BUTTONS[1], 1).unwrap();
+        injected.event(input::KEY, input::BUTTONS[2], 1).unwrap();
+        injected.sync().unwrap();
+        let deadline = Instant::now() + Duration::from_secs(2);
+        while !cleanup.thread.as_ref().unwrap().is_finished() {
+            assert!(
+                Instant::now() < deadline,
+                "emergency chord did not stop capture"
+            );
+            thread::sleep(Duration::from_millis(5));
+        }
+        assert!(
+            cleanup
+                .thread
+                .take()
+                .unwrap()
+                .join()
+                .unwrap()
+                .unwrap_err()
+                .contains("右键和中键")
+        );
+        injected.event(input::KEY, input::BUTTONS[1], 0).unwrap();
+        injected.event(input::KEY, input::BUTTONS[2], 0).unwrap();
+        injected.sync().unwrap();
+        let mut reclaimed = input::isolated_reader(&injected).unwrap();
+        reclaimed.grab().unwrap();
+        for name in [pointer_sys, keyboard_sys] {
+            assert!(
+                !std::path::Path::new("/sys/devices/virtual/input")
+                    .join(name)
+                    .exists()
+            );
         }
     }
 
@@ -1190,6 +1437,7 @@ mod tests {
                     status,
                     tip: None,
                     native: Some(received),
+                    wheel: None,
                 },
             )
         });
@@ -1604,6 +1852,7 @@ mod tests {
                     status,
                     tip: None,
                     native: None,
+                    wheel: None,
                 },
             )
         });
@@ -1859,6 +2108,43 @@ mod tests {
                 .join(keyboard_sys)
                 .exists()
         );
+    }
+
+    #[test]
+    #[ignore = "requires A90_TEST_WHEEL_CAPTURE=1, A90 and KDE Wayland; forwards physical input briefly without flash writes"]
+    fn physical_wheel_only_start_stop_keeps_device_settings() {
+        use crate::device::{BUTTONS, Device};
+        assert_eq!(std::env::var("A90_TEST_WHEEL_CAPTURE").as_deref(), Ok("1"));
+        let device = Device::open().unwrap();
+        let original_table = device.read_flash(BUTTONS, 16, |_, _| {}).unwrap();
+        let original_profile = device.runtime_profile().unwrap();
+        let original_mode = device.ram(0x4b).unwrap();
+        let core = device.identity().unwrap().core;
+        drop(device);
+        let info = input::find().unwrap();
+        let mut config = settings(0);
+        config.triggers = [None; 2];
+        config.wheel = crate::wheel4d::Settings {
+            cores: [true; 4],
+            ..Default::default()
+        }
+        .active_for(core);
+        let mut handle = Handle::start(config).unwrap();
+        assert!(handle.poll().running);
+        thread::sleep(Duration::from_millis(400));
+        assert!(handle.poll().running);
+        handle.stop().unwrap();
+        assert!(!handle.poll().running);
+        let mut reclaimed = Source::open(&info.path).unwrap();
+        reclaimed.grab().unwrap();
+        drop(reclaimed);
+        let device = Device::open().unwrap();
+        assert_eq!(
+            device.read_flash(BUTTONS, 16, |_, _| {}).unwrap(),
+            original_table
+        );
+        assert_eq!(device.runtime_profile().unwrap(), original_profile);
+        assert_eq!(device.ram(0x4b).unwrap(), original_mode);
     }
 
     #[test]

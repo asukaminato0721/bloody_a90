@@ -35,6 +35,14 @@ impl Default for Editor {
 
 impl Editor {
     pub fn select(&mut self, action: &Action) {
+        if action.number("Simulator") == Ok(9) && action.number("Object") == Ok(9) {
+            self.kind = if action.number("Action") == Ok(5) {
+                9
+            } else {
+                10
+            };
+            return;
+        }
         self.kind = match (
             action.number("Simulator").unwrap_or(0),
             action.number("Object").unwrap_or(0),
@@ -51,6 +59,7 @@ impl Editor {
             (22, 0) => 2,
             (22, _) => 3,
             (24, 1) => 4,
+            (24, 0) => 8,
             (2, 0) => 6,
             (2, _) => 7,
             _ => 5,
@@ -82,17 +91,25 @@ impl Editor {
             4 => Action::new(24, 1, 0, "最小化指针下的窗口"),
             5 => Action::new(24, 2, 0, "最大化指针下的窗口"),
             6 => Action::new(2, 0, 0, "16 合一手势"),
-            _ => Action::new(2, 1, 0, "鼠标手势"),
-        }
-        .with_mode(0);
-        if self.kind < 6 {
+            7 => Action::new(2, 1, 0, "鼠标手势"),
+            8 => Action::new(24, 0, 0, "全部最小化"),
+            9 => Action::new(9, 9, 5, "滚轮向左"),
+            10 => Action::new(9, 9, 6, "滚轮向右"),
+            _ => return Err("无效的主机动作".into()),
+        };
+        let action = if matches!(self.kind, 9 | 10) {
+            action
+        } else {
+            action.with_mode(0)
+        };
+        if !matches!(self.kind, 6 | 7) {
             bloody_a90::host_program::prepare_button(&action, true)?;
         }
         Ok(action)
     }
 
     pub fn edit(&mut self, ui: &mut egui::Ui, allow_gestures: bool) {
-        if !allow_gestures && self.kind >= 6 {
+        if !allow_gestures && matches!(self.kind, 6 | 7) {
             self.kind = 0;
         }
         let names = [
@@ -104,14 +121,17 @@ impl Editor {
             "最大化指针下的窗口",
             "16 合一手势",
             "鼠标手势",
+            "全部最小化",
+            "滚轮向左",
+            "滚轮向右",
         ];
         egui::ComboBox::from_id_salt("host-button-kind")
             .selected_text(names[self.kind])
             .show_ui(ui, |ui| {
                 for (index, name) in names
                     .into_iter()
-                    .take(if allow_gestures { 8 } else { 6 })
                     .enumerate()
+                    .filter(|(index, _)| allow_gestures || !matches!(index, 6 | 7))
                 {
                     ui.selectable_value(&mut self.kind, index, name);
                 }
@@ -140,6 +160,12 @@ impl Editor {
             }
             6 | 7 => {
                 ui.label("按住此键移动鼠标。设定此按键时，载入手势页的当前动作。修改方向后，在手势页重新应用。");
+            }
+            8 => {
+                ui.label("最小化当前桌面和活动中的所有可最小化窗口。需要 KDE Wayland。");
+            }
+            9 | 10 => {
+                ui.label("每次按下或每格滚动执行一格水平滚动。");
             }
             _ => {}
         }
@@ -190,5 +216,41 @@ impl App {
                 ));
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn all_minimize_remains_available_for_wheel_actions_without_gesture_choices() {
+        let context = egui::Context::default();
+        let mut editor = Editor::default();
+        let action = Action::new(24, 0, 0, "全部最小化");
+        editor.select(&action);
+        let mut output = context.run_ui(Default::default(), |ui| editor.edit(ui, false));
+        output.textures_delta.clear();
+        assert_eq!(editor.action().unwrap(), action);
+        for mode in [5, 6] {
+            let action = Action::new(
+                9,
+                9,
+                mode,
+                if mode == 5 {
+                    "滚轮向左"
+                } else {
+                    "滚轮向右"
+                },
+            );
+            editor.select(&action);
+            let mut output = context.run_ui(Default::default(), |ui| editor.edit(ui, false));
+            output.textures_delta.clear();
+            assert_eq!(editor.action().unwrap(), action);
+        }
+        editor.select(&Action::new(2, 0, 0, "手势"));
+        let mut output = context.run_ui(Default::default(), |ui| editor.edit(ui, false));
+        output.textures_delta.clear();
+        assert_ne!(editor.kind, 6);
     }
 }

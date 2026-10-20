@@ -124,13 +124,14 @@ fn capture_settings(
 ) -> Option<(crate::gesture_runtime::Settings, [bool; 2])> {
     let kinds = settings.gesture_kinds();
     if !kinds.into_iter().any(|kind| kind) {
-        return None;
+        return global.map(|settings| (settings, kinds));
     }
     let documents = settings.gestures.as_ref()?.documents.clone();
     Some((
         crate::gesture_runtime::Settings {
             documents,
-            triggers: global.map_or([None; 2], |g| g.triggers),
+            triggers: global.as_ref().map_or([None; 2], |g| g.triggers),
+            wheel: global.and_then(|g| g.wheel),
         },
         kinds,
     ))
@@ -143,6 +144,10 @@ impl Handle {
 
     pub fn owns_gestures(&self) -> bool {
         self.capture_remote.is_some()
+    }
+
+    pub fn wheel_settings(&self) -> Option<crate::wheel4d::Settings> {
+        self.capture_remote.as_ref()?.wheel_settings()
     }
 
     pub fn gesture_status(&self) -> Status {
@@ -463,6 +468,37 @@ fn run(
 mod tests {
     use super::*;
 
+    #[test]
+    fn shared_capture_keeps_wheel_with_and_without_native_gestures() {
+        let mut settings = Settings::default();
+        settings.resize(1);
+        let global = crate::gesture_runtime::Settings {
+            documents: [
+                crate::gestures::Document::new(crate::gestures::Kind::Sixteen),
+                crate::gestures::Document::new(crate::gestures::Kind::Mouse),
+            ],
+            triggers: [Some(crate::linux_input::BUTTONS[3]), None],
+            wheel: crate::wheel4d::Settings {
+                cores: [true; 4],
+                ..Default::default()
+            }
+            .active_for(2),
+        };
+        let (capture, kinds) = capture_settings(&settings, Some(global.clone())).unwrap();
+        assert_eq!(kinds, [false; 2]);
+        assert_eq!(capture.wheel, global.wheel);
+        assert_eq!(capture.triggers, global.triggers);
+        settings.gestures = Some(Box::new(crate::host_buttons::Gestures {
+            enabled: true,
+            documents: global.documents.clone(),
+        }));
+        settings.profiles[0][8] = Some(crate::gestures::Action::new(2, 0, 0, "手势"));
+        let (capture, kinds) = capture_settings(&settings, Some(global.clone())).unwrap();
+        assert_eq!(kinds, [true, false]);
+        assert_eq!(capture.wheel, global.wheel);
+        assert_eq!(capture.triggers, global.triggers);
+    }
+
     fn state(profile: u8, buttons: [u8; 3]) -> State {
         State {
             profile,
@@ -624,6 +660,8 @@ mod tests {
             .with_mode(0),
         );
         settings.profiles[1][3] = settings.profiles[0][10].clone();
+        settings.profiles[0][24] = Some(crate::gestures::Action::new(9, 9, 5, "滚轮向左"));
+        settings.profiles[1][25] = Some(crate::gestures::Action::new(9, 9, 6, "滚轮向右"));
         let mut prepared = prepare(&settings).unwrap();
         // Keep Ctrl held long enough to check interruption deterministically.
         let mut delayed = prepared[10][0].clone().unwrap();
@@ -653,6 +691,11 @@ mod tests {
             let mut report = [0; crate::device::REPORT];
             report[0] = 7;
             report[1] = 1;
+            report[2] = match state.wheel {
+                -1 => 0xf0,
+                1 => 0x10,
+                _ => 0,
+            };
             report[3..6].copy_from_slice(&state.buttons);
             report[7] = state.profile;
             sender.write_all(&report).unwrap();
@@ -725,6 +768,18 @@ mod tests {
         collect(&mut pointer, input::REL, input::WHEEL, 1);
         assert!(keyboard.held().unwrap().is_empty());
         assert!(!marker.exists());
+        let mut horizontal = state(0, [0; 3]);
+        horizontal.wheel = -1;
+        send(&mut sender, horizontal);
+        let events = collect(&mut pointer, input::REL, 12, -120);
+        assert_eq!(
+            events
+                .iter()
+                .filter(|event| event.kind == input::REL && event.code == input::HWHEEL)
+                .map(|event| event.value)
+                .collect::<Vec<_>>(),
+            [-1]
+        );
         send(&mut sender, state(0, [8, 0, 0]));
         collect(&mut keyboard, input::KEY, 29, 1);
         assert!(keyboard.held().unwrap().contains(&29));
@@ -745,6 +800,18 @@ mod tests {
         }
         // A prepared target can disappear. Its error must reach the UI while
         // later button actions continue to execute.
+        let mut horizontal = state(1, [0; 3]);
+        horizontal.wheel = 1;
+        send(&mut sender, horizontal);
+        let events = collect(&mut pointer, input::REL, 12, 120);
+        assert_eq!(
+            events
+                .iter()
+                .filter(|event| event.kind == input::REL && event.code == input::HWHEEL)
+                .map(|event| event.value)
+                .collect::<Vec<_>>(),
+            [1]
+        );
         fs::remove_file(&executable).unwrap();
         send(&mut sender, state(1, [0, 4, 0]));
         send(&mut sender, state(1, [0; 3]));

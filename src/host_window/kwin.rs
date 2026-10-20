@@ -103,7 +103,7 @@ impl KWin {
             serial: 0,
         };
         // Check the actual JS API and callback path before grabbing input.
-        result.run_body("if (typeof workspace.windowAt !== 'function' || !workspace.cursorPos) { throw new Error('KWin windowAt unavailable'); } workspace.windowAt(workspace.cursorPos, 0);")?;
+        result.run_body("if (typeof workspace.windowAt !== 'function' || !workspace.cursorPos || typeof workspace.windowList !== 'function' || !workspace.currentDesktop || typeof workspace.currentActivity !== 'string') { throw new Error('KWin window API unavailable'); } workspace.windowAt(workspace.cursorPos, 0);")?;
         Ok(result)
     }
 
@@ -195,6 +195,9 @@ impl Backend for KWin {
             Operation::Maximize => {
                 "const windows = workspace.windowAt(workspace.cursorPos, 1); if (windows.length && windows[0].maximizable) { windows[0].setMaximize(true, true); }"
             }
+            Operation::MinimizeAll => {
+                "const desktop = workspace.currentDesktop; const activity = workspace.currentActivity; for (const window of workspace.windowList()) { const onDesktop = window.desktops.length === 0 || window.desktops.indexOf(desktop) !== -1; const onActivity = window.activities.length === 0 || window.activities.indexOf(activity) !== -1; if (window.minimizable && onDesktop && onActivity) { window.minimized = true; } }"
+            }
         };
         self.run_body(body)
     }
@@ -237,6 +240,51 @@ mod tests {
             "{select} if (workspace.windowAt(workspace.cursorPos,1)[0] !== target) {{ throw new Error('pointer is not over target'); }}"
         );
         wait_for(backend, &under_pointer);
+        // The wheel monitor must use the pointer window even when another
+        // window has focus. Exercise native Wayland and Xwayland alike.
+        let wheel =
+            crate::wheel4d::Monitor::start_with_direction(&crate::wheel4d::Settings::default())
+                .unwrap();
+        let mut wheel_settings = crate::wheel4d::Settings::default();
+        assert!(!wheel.horizontal(&wheel_settings).unwrap());
+        let app = wheel.application();
+        assert!(
+            !app.is_empty(),
+            "pointer window has no application identifier"
+        );
+        // At one third of the window width, a 20% rule must select horizontal
+        // scrolling. Unmatched identifiers keep the 90% default divider.
+        wheel_settings
+            .applications
+            .push(crate::wheel4d::Application {
+                app: app.clone(),
+                divider: 200,
+            });
+        assert!(wheel.horizontal(&wheel_settings).unwrap());
+        wheel_settings.applications[0].app = format!("{app}.unmatched");
+        assert!(!wheel.horizontal(&wheel_settings).unwrap());
+        wheel_settings.applications.clear();
+        backend.run_body(&format!("{select} const p = workspace.cursorPos; target.frameGeometry = {{x:p.x-230,y:p.y-60,width:240,height:180}};")).unwrap();
+        let deadline = Instant::now() + Duration::from_secs(2);
+        while !wheel.horizontal(&wheel_settings).unwrap() {
+            assert!(
+                Instant::now() < deadline,
+                "right wheel region was not observed"
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let icon_visible = "const tip = workspace.stackingOrder.find(w => w.caption === 'Bloody A90 horizontal wheel' && !w.deleted); if (!tip || tip.active) { throw new Error('wheel direction icon unavailable or focused'); } const r = tip.frameGeometry; if (r.width !== 28 || r.height !== 24 || workspace.windowAt({x:r.x+14,y:r.y+12},0).indexOf(tip) !== -1) { throw new Error('wheel icon geometry or input passthrough differs'); }";
+        let icon_hidden = "if (workspace.stackingOrder.some(w => w.caption === 'Bloody A90 horizontal wheel' && !w.deleted)) { throw new Error('wheel icon remained visible'); }";
+        wait_for(backend, icon_visible);
+        backend.run_body(&format!("{select} const p = workspace.cursorPos; target.frameGeometry = {{x:p.x-80,y:p.y-60,width:240,height:180}};")).unwrap();
+        wait_for(backend, icon_hidden);
+        backend.run_body(&format!("{select} const p = workspace.cursorPos; target.frameGeometry = {{x:p.x-230,y:p.y-60,width:240,height:180}};")).unwrap();
+        wait_for(backend, icon_visible);
+        crate::gesture_runtime::tests::exercise_wheel_and_gesture_capture(wheel);
+        wait_for(
+            backend,
+            "if (workspace.stackingOrder.some(w => w.caption === 'Bloody A90 horizontal wheel' && !w.deleted)) { throw new Error('wheel icon remained after capture stopped'); }",
+        );
         submit(1);
         wait_for(
             backend,
@@ -259,6 +307,35 @@ mod tests {
         );
         backend.execute(Operation::Maximize).unwrap();
         backend.run_body(&format!("{select} if (target.maximizeMode !== 3) {{ throw new Error('maximize must not toggle restore'); }}")).unwrap();
+        submit(0);
+        wait_for(
+            backend,
+            &format!(
+                "{select} if (!target.minimized || !active.minimized) {{ throw new Error('all minimize did not minimize both windows'); }}"
+            ),
+        );
+        backend.run_body(&format!("{select} const here = workspace.currentDesktop; if (workspace.desktops.length < 2) {{ workspace.createDesktop(1, 'A90 isolated second desktop'); }} const other = workspace.desktops.find(desktop => desktop !== here); if (!other) {{ throw new Error('second desktop unavailable'); }} target.desktops = [here]; active.desktops = [other]; target.minimized = false; active.minimized = false; workspace.currentDesktop = here;")).unwrap();
+        submit(0);
+        wait_for(
+            backend,
+            &format!(
+                "{select} if (!target.minimized || active.minimized) {{ throw new Error('all minimize affected another desktop'); }}"
+            ),
+        );
+        // Sticky windows are visible on the current desktop and must be included.
+        backend
+            .run_body(&format!(
+                "{select} target.desktops = []; target.minimized = false;"
+            ))
+            .unwrap();
+        submit(0);
+        wait_for(
+            backend,
+            &format!(
+                "{select} if (!target.minimized || active.minimized) {{ throw new Error('all minimize ignored a sticky window'); }}"
+            ),
+        );
+        backend.run_body(&format!("{select} target.desktops = [workspace.currentDesktop]; active.desktops = [workspace.currentDesktop]; target.minimized = false; active.minimized = false;")).unwrap();
         assert!(actions.poll().is_empty());
     }
 
@@ -283,6 +360,77 @@ mod tests {
         assert_eq!(fs::read_dir(&path).unwrap().count(), 0);
         drop(backend);
         assert!(!path.exists());
+    }
+
+    #[test]
+    #[ignore = "requires A90_TEST_KWIN_ISOLATED=1 and private KWin; creates only an internal test overlay"]
+    fn isolated_kwin_internal_overlay_position_focus_and_cleanup() {
+        assert_eq!(std::env::var("A90_TEST_KWIN_ISOLATED").as_deref(), Ok("1"));
+        let mut backend = KWin::connect().unwrap();
+        let file = backend.directory.0.join("overlay.qml");
+        fs::write(&file, r##"
+import QtQuick
+import QtQuick.Window as QuickWindow
+import org.kde.kwin
+import org.kde.plasma.workspace.dbus 1.0 as DBus
+QuickWindow.Window {
+        title: "A90 isolated wheel overlay"
+        x: 100
+        y: 120
+        width: 24
+        height: 24
+        color: "transparent"
+        flags: Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowDoesNotAcceptFocus | Qt.WindowTransparentForInput
+        visible: true
+        Component.onCompleted: DBus.SessionBus.asyncCall({service: "A90_TEST_BUS", path: "/org/bloody/A90/WindowAction", iface: "org.bloody.A90.WindowAction", member: "Completed", arguments: ["overlay-probe", ""]}, function(reply) {}, function(reply) { console.warn("A90 overlay callback failed", reply.error.message); })
+        Rectangle { anchors.fill: parent; color: "#d22c35"; radius: 4 }
+}
+"##.replace("A90_TEST_BUS", backend.bus.unique_name().unwrap().as_str())).unwrap();
+        let overlay = Script {
+            bus: backend.bus.clone(),
+            plugin: format!("a90-overlay-probe-{}", std::process::id()),
+            file,
+        };
+        let scripting = Proxy::new(
+            &backend.bus,
+            "org.kde.KWin",
+            "/Scripting",
+            "org.kde.kwin.Scripting",
+        )
+        .unwrap();
+        let id: i32 = scripting
+            .call(
+                "loadDeclarativeScript",
+                &(overlay.file.to_str().unwrap(), &overlay.plugin),
+            )
+            .unwrap();
+        assert!(id >= 0);
+        let path = format!("/Scripting/Script{id}");
+        let script = Proxy::new(
+            &backend.bus,
+            "org.kde.KWin",
+            path.as_str(),
+            "org.kde.kwin.Script",
+        )
+        .unwrap();
+        let _: () = script.call("run", &()).unwrap();
+        drop(script);
+        drop(scripting);
+        let (token, error) = backend
+            .results
+            .recv_timeout(Duration::from_secs(3))
+            .expect("QML overlay did not complete construction");
+        assert_eq!(token, "overlay-probe");
+        assert!(error.is_empty());
+        wait_for(
+            &mut backend,
+            "const tip = workspace.stackingOrder.find(w => w.caption === 'A90 isolated wheel overlay'); if (!tip) { throw new Error('internal overlay not mapped: ' + JSON.stringify(workspace.stackingOrder.map(w => ({caption:w.caption, normal:w.normalWindow, geometry:w.frameGeometry})))); } const r = tip.frameGeometry; if (r.x !== 100 || r.y !== 120 || r.width !== 24 || r.height !== 24 || tip.active) { throw new Error('internal overlay geometry or focus differs'); } if (workspace.windowAt({x:112,y:132},0).indexOf(tip) !== -1) { throw new Error('transparent overlay intercepts pointer input'); }",
+        );
+        drop(overlay);
+        wait_for(
+            &mut backend,
+            "if (workspace.stackingOrder.some(w => w.caption === 'A90 isolated wheel overlay')) { throw new Error('internal overlay remained after script unload'); }",
+        );
     }
 
     #[test]
@@ -312,6 +460,18 @@ mod tests {
             .reply()
             .unwrap()
             .atom;
+        let wm_class = client
+            .intern_atom(false, b"WM_CLASS")
+            .unwrap()
+            .reply()
+            .unwrap()
+            .atom;
+        let string = client
+            .intern_atom(false, b"STRING")
+            .unwrap()
+            .reply()
+            .unwrap()
+            .atom;
         let mut windows = Vec::new();
         for title in ["A90 isolated target", "A90 isolated active"] {
             let window = client.generate_id().unwrap();
@@ -334,6 +494,15 @@ mod tests {
                 .unwrap();
             client
                 .change_property8(PropMode::REPLACE, window, name, utf8, title.as_bytes())
+                .unwrap();
+            client
+                .change_property8(
+                    PropMode::REPLACE,
+                    window,
+                    wm_class,
+                    string,
+                    b"a90-isolated-window\0A90IsolatedWindow\0",
+                )
                 .unwrap();
             client.map_window(window).unwrap();
             windows.push(window);

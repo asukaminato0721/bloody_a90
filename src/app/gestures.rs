@@ -164,7 +164,7 @@ impl App {
                 }
                 ui.horizontal(|ui| {
                     if skin::button(ui, "应用全局设置", 160.0, editor.triggers.iter().any(Option::is_some) || self.host_buttons.applied.assigned_gesture_kinds().into_iter().any(|kind| kind)).clicked() {
-                        job = Some(Job::Gestures(Some(Box::new(Settings { documents: editor.documents.clone(), triggers: editor.triggers }))));
+                        job = Some(Job::Gestures(Some(Box::new(Settings { documents: editor.documents.clone(), triggers: editor.triggers, wheel: None }))));
                     }
                     if skin::button(ui, "停止全局手势", 160.0, editor.running).clicked() { job = Some(Job::Gestures(None)); }
                     if skin::button(ui, "中断宏", 100.0, editor.running).clicked() { job = Some(Job::Interrupt); }
@@ -278,6 +278,7 @@ impl App {
                                     "最大化指针下的窗口",
                                     "应用放大（Ctrl+滚轮）",
                                     "应用缩小（Ctrl+滚轮）",
+                                    "全部最小化（KDE Wayland）",
                                 ][editor.choice],
                             )
                             .show_ui(ui, |ui| {
@@ -297,6 +298,7 @@ impl App {
                                     "最大化指针下的窗口",
                                     "应用放大（Ctrl+滚轮）",
                                     "应用缩小（Ctrl+滚轮）",
+                                    "全部最小化（KDE Wayland）",
                                 ]
                                 .iter()
                                 .enumerate()
@@ -402,6 +404,7 @@ impl App {
                                 12 => Ok(Action::new(24, 2, 3, "最大化指针下的窗口")),
                                 13 => Ok(Action::new(22, 0, 3, "放大")),
                                 14 => Ok(Action::new(22, 1, 3, "缩小")),
+                                15 => Ok(Action::new(24, 0, 3, "全部最小化")),
                                 _ => Action::macro_file(&editor.macro_path),
                             };
                             match action {

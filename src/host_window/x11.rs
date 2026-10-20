@@ -131,6 +131,9 @@ impl X11 {
 
 impl Backend for X11 {
     fn execute(&mut self, operation: Operation) -> Result<(), String> {
+        if operation == Operation::MinimizeAll {
+            return Err("全部最小化目前需要 KDE Wayland 桌面".into());
+        }
         let Some(window) = self.under_pointer()? else {
             return Ok(());
         };
