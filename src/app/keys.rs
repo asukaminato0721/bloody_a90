@@ -142,6 +142,32 @@ fn record_name(index: usize) -> String {
 /// Records with a physical button on the A90.
 const PHYSICAL: [usize; 8] = [0, 1, 2, 3, 4, 8, 9, 10];
 
+/// Rows of the KeySet sheet. The left button is reached from the diagram.
+const ROWS: [(&str, usize); 9] = [
+    ("R", 1),
+    ("M", 2),
+    ("UP", 25),
+    ("DN", 24),
+    ("→", 4),
+    ("←", 3),
+    ("1", 8),
+    ("N", 9),
+    ("3", 10),
+];
+
+/// Diagram captions: record, caption box and leader dot, relative to the
+/// mouse drawing.
+const DIAGRAM: [(&str, usize, (f32, f32), (f32, f32)); 8] = [
+    ("L", 0, (38.0, 103.0), (214.0, 118.0)),
+    ("→", 4, (38.0, 179.0), (153.0, 193.0)),
+    ("←", 3, (38.0, 247.0), (153.0, 261.0)),
+    ("R", 1, (486.0, 79.0), (347.0, 94.0)),
+    ("M", 2, (486.0, 120.0), (285.0, 134.0)),
+    ("1", 8, (486.0, 183.0), (274.0, 198.0)),
+    ("N", 9, (486.0, 219.0), (274.0, 230.0)),
+    ("3", 10, (486.0, 255.0), (274.0, 262.0)),
+];
+
 impl App {
     fn key_functions(&self) -> impl Iterator<Item = &'static (&'static str, u16, u16)> + '_ {
         FUNCTIONS
@@ -308,18 +334,80 @@ impl App {
         button_actions::wheel(self.binding()?, keyboard_delay)
     }
 
-    pub(super) fn keys_page(&mut self, ui: &mut egui::Ui) {
-        let selected = (self.profile, self.record);
-        if self.watching
-            && let Some(button) = self.held.first()
+    /// Caption of a record's combo box: the matching menu entry, as the
+    /// official program shows "鼠标右键" or "CPI+".
+    fn record_caption(&mut self, record: usize) -> String {
+        let Some(config) = &self.keys else {
+            return String::new();
+        };
+        let Some(profile) = config.profiles.get(self.profile).cloned() else {
+            return String::new();
+        };
+        if record < BUTTONS && profile.buttons[record] == Binding::default()
+            || record >= BUTTONS && profile.wheel[record - BUTTONS] == Action::Direct(NO_OPERATION)
         {
-            self.record = (*button as usize - 1).min(BUTTONS - 1);
+            if let Some(action) = self
+                .host_buttons
+                .rules
+                .profiles
+                .get(self.profile)
+                .and_then(|slots| slots[record].as_ref())
+            {
+                return format!("主机：{}", action.label());
+            }
         }
+        let saved = (self.record, self.choice, self.choice_value, self.key_modifiers);
+        self.record = record;
+        self.select_hardware();
+        let caption = match self.choice {
+            Choice::Mouse => format!("鼠标{}", MOUSE[self.choice_value].0),
+            Choice::Keyboard => {
+                let mut parts: Vec<&str> = ["Ctrl", "Shift", "Alt", "Super"]
+                    .into_iter()
+                    .enumerate()
+                    .filter(|(index, _)| self.key_modifiers & (0x11 << index) != 0)
+                    .map(|(_, name)| name)
+                    .collect();
+                let options = self.options();
+                if self.choice_value < highlanguage::keys().count() {
+                    parts.push(options[self.choice_value].as_str());
+                }
+                format!("键盘：{}", parts.join("+"))
+            }
+            Choice::Disabled => "禁用".into(),
+            Choice::Macro => {
+                let action = if record < BUTTONS {
+                    profile.buttons[record].press.clone()
+                } else {
+                    profile.wheel[record - BUTTONS].clone()
+                };
+                match action {
+                    Action::Macro(words) => format!("宏（{} 字）", words.len()),
+                    action => describe(&action),
+                }
+            }
+            choice => {
+                let options = self.options();
+                let name = options.get(self.choice_value).cloned().unwrap_or_default();
+                match choice {
+                    Choice::Function => name
+                        .replace("DPI 增加", "CPI+")
+                        .replace("DPI 减少", "CPI-"),
+                    _ => name,
+                }
+            }
+        };
+        (self.record, self.choice, self.choice_value, self.key_modifiers) = saved;
+        caption
+    }
+
+    /// 模式1…模式N above the KeySet sheet.
+    pub(super) fn profile_strip(&mut self, ui: &mut egui::Ui) {
         let count = self.keys.as_ref().map_or(0, |config| config.profiles.len());
-        ui.label(RichText::new("选择配置 :").font(skin::regular(16.0)));
+        let before = self.profile;
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
-            for index in 0..count.max(5) {
+            for index in 0..count.max(3) {
                 if skin::profile_tab(
                     ui,
                     &format!("模式{}", index + 1),
@@ -332,168 +420,181 @@ impl App {
                 }
             }
         });
-        if selected != (self.profile, self.record) {
+        if before != self.profile {
+            self.key_popup = None;
             self.host_key_selected();
         }
-        let Some(config) = &self.keys else {
-            skin::sheet().show(ui, |ui| {
-                ui.set_width(ui.available_width());
-                ui.label(RichText::new("按键设置").font(skin::bold(17.0)));
-                ui.label(
-                    RichText::new("请连接鼠标，或在 其他设置 → 已有备份 中读取文件。")
-                        .color(skin::GRAY),
+    }
+
+    pub(super) fn keys_page(&mut self, ui: &mut egui::Ui) {
+        let selected = self.record;
+        if self.watching
+            && let Some(button) = self.held.first()
+        {
+            self.record = (*button as usize - 1).min(BUTTONS - 1);
+        }
+        if selected != self.record {
+            self.host_key_selected();
+        }
+        let origin = ui.cursor().min;
+        // KeySet: the 530 × 530 button sheet and the diagram to its right.
+        let sheet = egui::Rect::from_min_size(origin + vec2(33.0, 18.0), vec2(530.0, 530.0));
+        ui.painter().rect_filled(sheet, 0, egui::Color32::from_rgb(27, 28, 30));
+        let header = egui::Rect::from_min_size(sheet.min + vec2(26.0, 20.0), vec2(293.0, 25.0));
+        ui.painter().rect_filled(header, 0, skin::SHEET);
+        ui.painter().text(
+            header.left_center() + vec2(8.0, 0.0),
+            egui::Align2::LEFT_CENTER,
+            "按键设置",
+            skin::regular(16.0),
+            skin::TEXT,
+        );
+        let mut open = None;
+        if self.keys.is_none() {
+            ui.painter().text(
+                header.left_bottom() + vec2(8.0, 24.0),
+                egui::Align2::LEFT_CENTER,
+                "请连接鼠标，或在 其他设置 → 已有备份 中读取文件。",
+                skin::regular(15.0),
+                skin::GRAY,
+            );
+        } else {
+            for (row, (label, record)) in ROWS.iter().enumerate() {
+                let top = header.bottom() + 11.0 + row as f32 * 32.0;
+                let held = self.held.contains(&(*record as u8 + 1));
+                ui.painter().text(
+                    egui::pos2(sheet.left() + 40.0, top + 13.0),
+                    egui::Align2::CENTER_CENTER,
+                    label,
+                    skin::bold(19.0),
+                    if held { skin::CAPTION_RED } else { skin::TEXT },
                 );
-            });
-            return;
-        };
-        let profile = &config.profiles[self.profile.min(count - 1)];
-        let rows: Vec<[String; 2]> = profile
-            .buttons
-            .iter()
-            .enumerate()
-            .map(|(slot, binding)| {
-                if let Some(action) = self
-                    .host_buttons
-                    .rules
-                    .profiles
-                    .get(self.profile)
-                    .and_then(|slots| slots[slot].as_ref())
-                    .filter(|_| *binding == Binding::default())
-                {
-                    [format!("主机：{}", action.label()), "空操作".into()]
-                } else {
-                    [describe(&binding.press), describe(&binding.release)]
-                }
-            })
-            .collect();
-        let wheel: [String; 2] = std::array::from_fn(|index| {
-            self.host_buttons
-                .rules
-                .profiles
-                .get(self.profile)
-                .and_then(|slots| slots[24 + index].as_ref())
-                .filter(|_| profile.wheel[index] == Action::Direct(NO_OPERATION))
-                .map_or_else(
-                    || describe(&profile.wheel[index]),
-                    |action| format!("主机：{}", action.label()),
-                )
-        });
-        let mut select = None;
-        let mut select_wheel = None;
-        skin::sheet().show(ui, |ui| {
-            ui.set_width(ui.available_width());
-            ui.horizontal_top(|ui| {
-                ui.spacing_mut().item_spacing.x = 24.0;
-                ui.vertical(|ui| {
-                    ui.set_width(520.0);
-                    ui.label(RichText::new("按键设置").font(skin::bold(17.0)));
-                    let mut row = |ui: &mut egui::Ui, index: usize| {
-                        let held = self.held.contains(&(index as u8 + 1));
-                        let name = if held {
-                            format!("● {}", record_name(index))
-                        } else {
-                            record_name(index)
-                        };
-                        if ui.selectable_label(self.record == index, name).clicked() {
-                            select = Some(index);
-                        }
-                        ui.label(&rows[index][0]);
-                        ui.label(&rows[index][1]);
-                        ui.end_row();
-                    };
-                    egui::Grid::new("key-records")
-                        .striped(true)
-                        .min_col_width(80.0)
-                        .show(ui, |ui| {
-                            for title in ["按键", "按下", "弹起"] {
-                                ui.label(RichText::new(title).color(skin::GRAY));
-                            }
-                            ui.end_row();
-                            for index in PHYSICAL {
-                                row(ui, index);
-                            }
-                            for (index, label) in wheel.iter().enumerate() {
-                                if ui
-                                    .selectable_label(
-                                        self.record == 24 + index,
-                                        record_name(24 + index),
-                                    )
-                                    .clicked()
-                                {
-                                    select_wheel = Some(24 + index);
-                                }
-                                ui.label(label);
-                                ui.label("—");
-                                ui.end_row();
-                            }
-                        });
-                    ui.collapsing("其他记录（A90 没有对应的物理按键）", |ui| {
-                        egui::Grid::new("other-records")
-                            .striped(true)
-                            .min_col_width(80.0)
-                            .show(ui, |ui| {
-                                for index in (0..BUTTONS).filter(|i| !PHYSICAL.contains(i)) {
-                                    row(ui, index);
-                                }
-                            });
-                    });
-                });
-                ui.vertical(|ui| self.key_editor(ui));
-            });
-        });
-        if let Some(index) = select.or(select_wheel) {
-            self.record = index;
-            self.host_key_selected();
-        }
-        ui.add_space(14.0);
-        let connected = self.connected() && !self.pending;
-        ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 10.0;
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let apply = skin::button(ui, "应用", 140.0, connected && self.keys_dirty)
-                    .on_disabled_hover_text("需要连接鼠标，并先修改按键");
-                if apply.clicked()
-                    && let Some(config) = &self.keys
-                {
-                    self.start(Job::SaveHostButtons(
-                        Box::new(config.clone()),
-                        Box::new(self.host_buttons.rules.clone()),
-                        self.host_buttons.expected_file.clone(),
-                    ));
-                }
-                if skin::button(ui, "取消", 140.0, self.keys_dirty).clicked() {
-                    self.host_buttons.rules = self.host_buttons.applied.clone();
-                    let backup = self
-                        .device
-                        .as_ref()
-                        .map(|device| device.backup.clone())
-                        .or_else(|| self.source.clone());
-                    if let Some(backup) = backup {
-                        self.load_source(backup);
-                    }
-                }
-                let factory = self
-                    .source
-                    .as_ref()
-                    .map(|backup| backup.factory_configuration());
-                if skin::button(ui, "恢复默认", 140.0, factory.is_some())
-                    .on_hover_text("载入出厂按键表，点击“应用”后写入")
+                let caption = self.record_caption(*record);
+                let rect = egui::Rect::from_min_size(
+                    egui::pos2(sheet.left() + 64.0, top),
+                    vec2(255.0, 25.0),
+                );
+                let mut child = ui.new_child(egui::UiBuilder::new().max_rect(rect));
+                if skin::combo(&mut child, &caption, 255.0, self.key_popup == Some(*record))
                     .clicked()
                 {
-                    match factory {
-                        Some(Ok(config)) => {
-                            self.host_buttons.rules = bloody_a90::host_buttons::Settings::default();
-                            self.host_buttons.rules.resize(config.profiles.len());
-                            self.keys = Some(config);
-                            self.keys_dirty = true;
-                        }
-                        Some(Err(error)) => self.report(Err(error)),
-                        None => {}
+                    open = Some((*record, rect));
+                }
+            }
+        }
+        // Button diagram. Clicking a caption selects that button.
+        let diagram = sheet.left_top() + vec2(683.0, 13.0);
+        skin::mouse_top(ui, diagram);
+        let line = egui::Stroke::new(1.0, egui::Color32::from_rgb(130, 130, 134));
+        for (caption, record, at, dot) in DIAGRAM {
+            let rect = egui::Rect::from_min_size(diagram + vec2(at.0, at.1), vec2(38.0, 30.0));
+            let dot = diagram + vec2(dot.0, dot.1);
+            let edge = if at.0 < 100.0 {
+                rect.right_center()
+            } else {
+                rect.left_center()
+            };
+            ui.painter()
+                .line_segment([edge, egui::pos2(dot.x, edge.y)], line);
+            ui.painter().circle_stroke(egui::pos2(dot.x, edge.y), 5.0, line);
+            let lit = self.record == record || self.held.contains(&(record as u8 + 1));
+            if skin::key_box(ui, rect, caption, lit).clicked() && self.keys.is_some() {
+                open = Some((record, egui::Rect::from_min_size(sheet.left_top() + vec2(64.0, 56.0), vec2(255.0, 25.0))));
+            }
+        }
+        ui.allocate_space(vec2(ui.available_width(), 548.0));
+        if let Some((record, rect)) = open {
+            if self.key_popup == Some(record) {
+                self.key_popup = None;
+            } else {
+                self.record = record;
+                self.host_key_selected();
+                self.key_popup = Some(record);
+                self.key_popup_at = rect.left_bottom();
+            }
+        }
+        if let Some(record) = self.key_popup {
+            if record != self.record || ui.input(|input| input.key_pressed(egui::Key::Escape)) {
+                self.key_popup = None;
+            } else {
+                egui::Area::new(ui.scope_id().with("key-popup"))
+                    .order(egui::Order::Foreground)
+                    .fixed_pos(self.key_popup_at)
+                    .show(ui.ctx(), |ui| {
+                        egui::Frame::new()
+                            .fill(egui::Color32::from_rgb(20, 20, 22))
+                            .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgb(200, 200, 200)))
+                            .inner_margin(egui::Margin::same(10))
+                            .show(ui, |ui| {
+                                ui.set_width(460.0);
+                                self.key_editor(ui);
+                            });
+                    });
+            }
+        }
+        ui.collapsing("其他记录（A90 没有对应的物理按键）", |ui| {
+            ui.horizontal_wrapped(|ui| {
+                for index in (0..BUTTONS).filter(|i| !PHYSICAL.contains(i)) {
+                    if ui
+                        .selectable_label(self.record == index, record_name(index))
+                        .clicked()
+                    {
+                        self.record = index;
+                        self.host_key_selected();
+                        self.key_popup = Some(index);
+                        self.key_popup_at = ui.min_rect().left_bottom();
                     }
                 }
             });
         });
         self.host_button_controls(ui);
+        let connected = self.connected() && !self.pending;
+        let factory = self
+            .source
+            .as_ref()
+            .map(|backup| backup.factory_configuration());
+        let clicked = skin::footer(
+            ui,
+            self.footer_area,
+            &[
+                ("恢复默认", factory.is_some()),
+                ("取消", self.keys_dirty),
+                ("应用", connected && self.keys_dirty),
+            ],
+        );
+        if clicked[0] {
+            match factory {
+                Some(Ok(config)) => {
+                    self.host_buttons.rules = bloody_a90::host_buttons::Settings::default();
+                    self.host_buttons.rules.resize(config.profiles.len());
+                    self.keys = Some(config);
+                    self.keys_dirty = true;
+                }
+                Some(Err(error)) => self.report(Err(error)),
+                None => {}
+            }
+        }
+        if clicked[1] {
+            self.host_buttons.rules = self.host_buttons.applied.clone();
+            let backup = self
+                .device
+                .as_ref()
+                .map(|device| device.backup.clone())
+                .or_else(|| self.source.clone());
+            if let Some(backup) = backup {
+                self.load_source(backup);
+            }
+        }
+        if clicked[2]
+            && let Some(config) = &self.keys
+        {
+            self.key_popup = None;
+            self.start(Job::SaveHostButtons(
+                Box::new(config.clone()),
+                Box::new(self.host_buttons.rules.clone()),
+                self.host_buttons.expected_file.clone(),
+            ));
+        }
     }
 
     fn key_editor(&mut self, ui: &mut egui::Ui) {
@@ -643,6 +744,7 @@ impl App {
                             }
                             self.host_buttons.rules.profiles[self.profile][self.record] = host;
                             self.keys_dirty = true;
+                            self.key_popup = None;
                         }
                     }
                     Err(error) => self.report(Err(error)),

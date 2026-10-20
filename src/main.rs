@@ -24,8 +24,8 @@ fn main() -> eframe::Result {
         "Bloody A90",
         eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
-                .with_inner_size([1440.0, 900.0])
-                .with_min_inner_size([1180.0, 720.0]),
+                .with_inner_size([1640.0, 950.0])
+                .with_min_inner_size([1280.0, 760.0]),
             ..Default::default()
         },
         Box::new(move |cc| {

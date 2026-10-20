@@ -20,21 +20,21 @@ use bloody_a90::{
     configuration::Configuration,
     macros::{self, Program, Repeat},
 };
-use eframe::egui::{self, Align2, RichText, vec2};
+use eframe::egui::{self, Align2, RichText, pos2, vec2};
 use std::{
     fs,
     path::PathBuf,
     sync::mpsc::{self, Receiver, Sender},
 };
 
-/// Dashboard main tabs, in the order of rb_MainTab1..6.
+/// Dashboard main tabs, in the order of rb_MainTab1..6. The wired A90 has
+/// no 无线设置 tab.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Main {
     Keys,
     Sensitivity,
     Programming,
     Lighting,
-    Wireless,
     Other,
 }
 
@@ -65,7 +65,7 @@ enum Page {
 // "已有备份" are additions of this tool.
 fn sub_tabs(main: Main) -> &'static [(&'static str, Option<Page>)] {
     match main {
-        Main::Keys | Main::Wireless => &[],
+        Main::Keys => &[],
         Main::Sensitivity => &[
             ("分辨率", Some(Page::Resolution)),
             ("按键响应", Some(Page::Response)),
@@ -81,7 +81,8 @@ fn sub_tabs(main: Main) -> &'static [(&'static str, Option<Page>)] {
             ("奥斯卡II", Some(Page::Oscar)),
             ("奥斯卡III", Some(Page::Library)),
         ],
-        Main::Lighting => &[("灯光亮度", Some(Page::Brightness)), ("灯光控制", None)],
+        // The monochrome A90 shows only 灯光亮度, as in the official program.
+        Main::Lighting => &[("灯光亮度", Some(Page::Brightness))],
         Main::Other => &[
             ("关于软件", Some(Page::About)),
             ("关于硬件", Some(Page::Hardware)),
@@ -132,6 +133,8 @@ pub struct App {
     separate: bool,
     lift_enabled: bool,
     lift_level: u8,
+    /// Report rate chosen on the page but not applied yet.
+    rate_draft: Option<u32>,
     sensitivity_template: Option<Vec<u16>>,
     press: String,
     release: String,
@@ -158,6 +161,9 @@ pub struct App {
     choice: keys::Choice,
     choice_value: usize,
     key_modifiers: u8,
+    /// Record whose KeySet menu is open, and where it opens.
+    key_popup: Option<usize>,
+    key_popup_at: egui::Pos2,
     watching: bool,
     held: Vec<u8>,
     /// Desktop settings as read and as edited.
@@ -177,6 +183,8 @@ pub struct App {
     receiver: Receiver<Reply>,
     worker: Option<std::thread::JoinHandle<()>>,
     smoke_frames: Option<u8>,
+    /// Page background of the current frame; footer buttons anchor to it.
+    footer_area: egui::Rect,
 }
 
 fn load_fonts(ctx: &egui::Context) {
@@ -321,6 +329,7 @@ impl App {
             separate: false,
             lift_enabled: false,
             lift_level: 16,
+            rate_draft: None,
             sensitivity_template: None,
             compiled: macros::compile(&press, "", Repeat::Once),
             shooting: shooting::Editor::default(),
@@ -345,6 +354,8 @@ impl App {
             choice: keys::Choice::Mouse,
             choice_value: 0,
             key_modifiers: 0,
+            key_popup: None,
+            key_popup_at: egui::Pos2::ZERO,
             watching: false,
             held: Vec::new(),
             host: None,
@@ -363,6 +374,7 @@ impl App {
             receiver,
             worker: Some(worker),
             smoke_frames: None,
+            footer_area: egui::Rect::NOTHING,
         }
     }
 
@@ -629,7 +641,7 @@ impl App {
     fn open(&mut self, main: Main) {
         self.main = main;
         self.page = match main {
-            Main::Keys | Main::Wireless => Page::Keys,
+            Main::Keys => Page::Keys,
             _ => sub_tabs(main)
                 .iter()
                 .find_map(|(_, page)| *page)
@@ -642,128 +654,138 @@ impl App {
     }
 
     fn dashboard(&mut self, ui: &mut egui::Ui) {
-        ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
-        let state = match &self.device {
-            Some(device) => format!("已连接 · 固件 {:02x}", device.identity.firmware),
-            None => "未连接".into(),
-        };
-        skin::device(ui, "设备一", "A90", &state);
-        ui.add_space(12.0);
-        for (main, caption, enabled) in [
-            (Main::Keys, "按键", true),
-            (Main::Sensitivity, "灵敏度", true),
-            (Main::Programming, "编程设置", true),
-            (Main::Lighting, "灯光设置", true),
-            // A90 is a wired mouse.
-            (Main::Wireless, "无线设置", false),
-            (Main::Other, "其他设置", true),
+        ui.spacing_mut().item_spacing = vec2(0.0, 1.0);
+        let rect = ui.max_rect();
+        skin::logo(ui, rect);
+        // rb_MainTab1 starts at y 485 of the 950 px form. Smaller windows
+        // keep the tabs below the logo.
+        let top = (rect.height() * 485.0 / 950.0).max(110.0);
+        ui.add_space(top);
+        // A90 is wired, so the official program hides 无线设置.
+        for (main, caption) in [
+            (Main::Keys, "按键"),
+            (Main::Sensitivity, "灵敏度"),
+            (Main::Programming, "编程设置"),
+            (Main::Lighting, "灯光设置"),
+            (Main::Other, "其他设置"),
         ] {
-            if skin::main_tab(ui, caption, self.main == main, enabled).clicked() {
+            if skin::main_tab(ui, caption, self.main == main, true).clicked() {
                 self.open(main);
             }
         }
         // lb_VersionInfo and lb_Version sit at the bottom of the dashboard.
-        let bottom = ui.max_rect().left_bottom();
+        let bottom = rect.left_bottom();
         ui.painter().text(
-            bottom + vec2(14.0, -52.0),
+            bottom + vec2(18.0, -26.0),
             Align2::LEFT_BOTTOM,
-            "版本信息",
-            skin::bold(22.0),
+            "Bloody A90",
+            skin::bold(26.0),
             skin::TEXT,
         );
         ui.painter().text(
-            bottom + vec2(14.0, -24.0),
+            bottom + vec2(20.0, -8.0),
             Align2::LEFT_BOTTOM,
             concat!("v", env!("CARGO_PKG_VERSION")),
-            skin::regular(14.0),
+            skin::regular(13.0),
             skin::GRAY,
         );
     }
 
+    /// The empty title area above the sub tabs holds the device line, the
+    /// status of the last job and the reconnect button.
     fn header(&mut self, ui: &mut egui::Ui) {
-        let rect = ui.max_rect();
-        let painter = ui.painter();
-        painter.rect_filled(
-            egui::Rect::from_min_size(rect.min, vec2(175.0, rect.height())),
-            0,
-            skin::DASHBOARD,
-        );
-        painter.text(
-            rect.left_center() + vec2(88.0, -8.0),
-            Align2::CENTER_CENTER,
-            "BLOODY",
-            skin::bold(30.0),
-            skin::CAPTION_RED,
-        );
-        painter.text(
-            rect.left_center() + vec2(88.0, 22.0),
-            Align2::CENTER_CENTER,
-            "A90 配置工具",
-            skin::regular(13.0),
-            skin::LIGHT_GRAY,
-        );
-        let mut right = rect.right_center() - vec2(24.0, 0.0);
-        let button = egui::Rect::from_min_size(right - vec2(120.0, 18.0), vec2(120.0, 36.0));
+        let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), 87.0), egui::Sense::hover());
+        let button = egui::Rect::from_min_size(rect.right_top() + vec2(-120.0, 24.0), vec2(120.0, 36.0));
         let caption = if self.connected() {
             "重新读取"
         } else {
             "连接鼠标"
         };
-        if ui
-            .put(button, |ui: &mut egui::Ui| {
-                skin::button(ui, caption, 120.0, !self.pending)
-            })
-            .clicked()
-        {
+        let mut child = ui.new_child(egui::UiBuilder::new().max_rect(button));
+        if skin::button(&mut child, caption, 120.0, !self.pending).clicked() {
             self.start(Job::Connect);
         }
-        right.x -= 140.0;
-        let text = match &self.device {
+        let device = match &self.device {
             Some(device) => format!(
-                "{} · 型号 {:04x} · 核心 {}",
-                device.path, device.identity.model, device.identity.core
+                "A90 · 固件 {:02x} · 核心 {} · {}",
+                device.identity.firmware, device.identity.core, device.path
             ),
             None => "未连接鼠标 · 可离线编辑".into(),
         };
+        let right = pos2(button.left() - 16.0, button.center().y);
         ui.painter().text(
-            right,
+            right + vec2(0.0, -10.0),
             Align2::RIGHT_CENTER,
-            text,
+            device,
             skin::regular(14.0),
-            skin::GRAY,
+            skin::LIGHT_GRAY,
         );
+        let color = if self.failed { skin::ERROR } else { skin::GRAY };
+        let status = if self.pending && !self.watching {
+            format!("⏳ {}", self.status)
+        } else {
+            self.status.clone()
+        };
+        let galley = ui.painter().layout(
+            status,
+            skin::regular(13.0),
+            color,
+            (right.x - rect.left()).max(100.0),
+        );
+        let pos = pos2(right.x - galley.size().x, right.y + 2.0);
+        ui.painter().galley(pos, galley, color);
+    }
+
+    fn banner(&self) -> &'static str {
+        match self.main {
+            Main::Keys => {
+                "全键编程模板 : 提供MMORPG等游戏所需的多按键自定义编程功能，若FPS/TPS射击类游戏玩家可选用更专业的左键编程模板进行设置。"
+            }
+            Main::Sensitivity => {
+                "灵敏度设置 : 提供鼠标的分辨率CPI，按键响应，报告率，微精校准LOD，滚轮及指针等灵敏度的功能设置。"
+            }
+            Main::Programming => {
+                "编程设置 : 提供多种编程平台的“组合键”“左键编程”“奥斯卡II”“狙击键”等编程组合设置，并在按键设置中绑定编程按键使用。"
+            }
+            Main::Lighting => {
+                "灯光设置：提供鼠标灯光亮度，灯效控制及RGB编辑等设置。（因产品功能不同，灯光设置会有所差异)"
+            }
+            Main::Other => "其他设置 : 提供鼠标软件与硬件等设备设置。",
+        }
     }
 
     fn sub_strip(&mut self, ui: &mut egui::Ui) {
         let tabs = sub_tabs(self.main);
-        ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
-            if tabs.is_empty() {
-                ui.allocate_space(vec2(1.0, 51.0));
-            }
-            for (caption, page) in tabs {
-                let selected = *page == Some(self.page);
-                if skin::sub_tab(ui, caption, selected, page.is_some())
-                    .on_disabled_hover_text("A90 为单色灯光，不使用 RGB 灯效控制。")
-                    .clicked()
-                    && let Some(page) = page
-                {
-                    self.page = *page;
-                }
-            }
-        });
-        // gl_SeparateLine sits directly below the tabs.
-        ui.add_space(-ui.spacing().item_spacing.y);
-        let (rect, _) =
-            ui.allocate_exact_size(vec2(ui.available_width(), 3.0), egui::Sense::hover());
-        ui.painter().rect_filled(rect, 0, skin::RED);
-        ui.add_space(2.0);
-        ui.label(
-            RichText::new(description(self.page))
-                .font(skin::regular(14.0))
-                .color(skin::LIGHT_GRAY),
+        let (strip, _) = ui.allocate_exact_size(vec2(ui.available_width(), 49.0), egui::Sense::hover());
+        ui.painter().rect_filled(strip, 0, skin::SHEET);
+        let mut tab_ui = ui.new_child(
+            egui::UiBuilder::new()
+                .max_rect(egui::Rect::from_min_size(strip.min + vec2(1.0, 1.0), vec2(strip.width() - 1.0, 48.0)))
+                .layout(egui::Layout::left_to_right(egui::Align::Min)),
         );
-        ui.add_space(14.0);
+        tab_ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+        if self.main == Main::Keys {
+            // The A90 shows the template selector here. Only the
+            // all-buttons template is migrated.
+            skin::template(&mut tab_ui, "全键编程模板")
+                .on_hover_text("左键编程模板请在“编程设置 → 左键编程”中设置。");
+        }
+        for (caption, page) in tabs {
+            let selected = *page == Some(self.page);
+            if skin::sub_tab(&mut tab_ui, caption, selected, page.is_some())
+                .on_disabled_hover_text("A90 为单色灯光，不使用 RGB 灯效控制。")
+                .clicked()
+                && let Some(page) = page
+            {
+                self.page = *page;
+            }
+        }
+        // gl_SeparateLine sits directly below the tabs.
+        let (line, _) = ui.allocate_exact_size(vec2(ui.available_width(), 2.0), egui::Sense::hover());
+        ui.painter().rect_filled(line, 0, skin::RED);
+        let (gap, _) = ui.allocate_exact_size(vec2(ui.available_width(), 4.0), egui::Sense::hover());
+        ui.painter().rect_filled(gap, 0, skin::SHEET);
+        skin::banner(ui, self.banner());
     }
 
     fn receive(&mut self) {
@@ -1030,44 +1052,53 @@ impl eframe::App for App {
             }
             ui.ctx().request_repaint();
         }
-        let plain = egui::Frame::new().fill(skin::BACKGROUND);
-        egui::Panel::top("title")
-            .exact_size(84.0)
-            .show_separator_line(false)
-            .frame(egui::Frame::new().fill(skin::BACKGROUND))
-            .show(ui, |ui| self.header(ui));
-        egui::Panel::bottom("status")
-            .show_separator_line(false)
-            .frame(plain.inner_margin(egui::Margin::symmetric(20, 6)))
-            .show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    ui.add_space(175.0);
-                    if self.pending && !self.watching {
-                        ui.spinner();
-                    }
-                    ui.label(
-                        RichText::new(&self.status)
-                            .font(skin::regular(14.0))
-                            .color(if self.failed { skin::ERROR } else { skin::GRAY }),
-                    );
-                });
-            });
         egui::Panel::left("dashboard")
-            .exact_size(175.0)
+            .exact_size(174.0)
             .resizable(false)
             .show_separator_line(false)
             .frame(egui::Frame::new().fill(skin::DASHBOARD))
             .show(ui, |ui| self.dashboard(ui));
         egui::CentralPanel::default()
-            .frame(plain.inner_margin(egui::Margin {
-                left: 20,
-                right: 20,
-                top: 3,
+            .frame(egui::Frame::new().fill(skin::BACKGROUND).inner_margin(egui::Margin {
+                left: 21,
+                right: 16,
+                top: 0,
                 bottom: 0,
             }))
             .show(ui, |ui| {
+                ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+                self.header(ui);
                 self.sub_strip(ui);
-                egui::ScrollArea::vertical().show(ui, |ui| {
+                if self.page == Page::Keys {
+                    ui.add_space(20.0);
+                    self.profile_strip(ui);
+                } else {
+                    ui.add_space(38.0);
+                }
+                let area = ui.available_rect_before_wrap();
+                ui.painter().rect_filled(area, 0, skin::SHEET);
+                self.footer_area = area;
+                // Pages built from group panels carry the badge on each panel.
+                if !matches!(
+                    self.page,
+                    Page::Response
+                        | Page::Rate
+                        | Page::Lift
+                        | Page::Wheel
+                        | Page::Pointer
+                        | Page::Brightness
+                        | Page::About
+                ) {
+                    skin::info(ui, area.right_top() + vec2(-24.0, 23.0), description(self.page));
+                }
+                let mut page = ui.new_child(
+                    egui::UiBuilder::new()
+                        .max_rect(area.shrink2(vec2(20.0, 0.0)))
+                        .layout(egui::Layout::top_down(egui::Align::Min)),
+                );
+                page.spacing_mut().item_spacing = vec2(10.0, 10.0);
+                egui::ScrollArea::vertical().show(&mut page, |ui| {
+                    ui.add_space(24.0);
                     match self.page {
                         Page::Keys => self.keys_page(ui),
                         Page::Resolution => self.resolution(ui),
@@ -1088,7 +1119,8 @@ impl eframe::App for App {
                         Page::Associations => self.associations_page(ui),
                         Page::Gestures => self.gestures_page(ui),
                     }
-                    ui.add_space(16.0);
+                    // Room for the footer buttons.
+                    ui.add_space(70.0);
                 });
             });
     }

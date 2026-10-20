@@ -145,8 +145,33 @@ impl App {
         });
     }
 
+    /// AboutSoftware: option tiles, then what this tool covers. Tiles for
+    /// vendor services (更新通知, 新品通知, 模式管理, 游戏防打扰) are left
+    /// out; they have no counterpart on Linux.
     pub(super) fn about(&mut self, ui: &mut egui::Ui) {
-        skin::sheet().show(ui, |ui| {
+        ui.add_space(-10.0);
+        ui.horizontal_top(|ui| {
+            ui.spacing_mut().item_spacing.x = 15.0;
+            ui.add_space(-4.0);
+            let width = ((ui.available_width() - 15.0) / 2.0).min(690.0);
+            tile(ui, width, skin::Icon::Startup, "开机自动启动", |ui| {
+                let mut on = autostart_file().is_some_and(|path| path.exists());
+                if skin::toggle(ui, &mut on).changed() {
+                    let result = set_autostart(on);
+                    self.report(result);
+                }
+            });
+            tile(ui, width, skin::Icon::Language, "显示语言", |ui| {
+                egui::ComboBox::from_id_salt("language")
+                    .selected_text("简体中文")
+                    .width(120.0)
+                    .show_ui(ui, |ui| {
+                        let _ = ui.selectable_label(true, "简体中文");
+                    });
+            });
+        });
+        ui.add_space(15.0);
+        skin::sheet().fill(skin::PANEL).show(ui, |ui| {
             ui.set_width(ui.available_width());
             ui.label(RichText::new("Bloody A90 配置工具").font(skin::bold(22.0)));
             ui.label(
@@ -170,4 +195,55 @@ impl App {
             ui.hyperlink_to("egui 文档", "https://docs.rs/egui/0.37.0/egui/");
         });
     }
+}
+
+/// One 690 × 100 option tile of AboutSoftware.
+fn tile(ui: &mut egui::Ui, width: f32, icon: skin::Icon, caption: &str, control: impl FnOnce(&mut egui::Ui)) {
+    egui::Frame::new()
+        .fill(skin::PANEL)
+        .inner_margin(egui::Margin::symmetric(32, 15))
+        .show(ui, |ui| {
+            ui.set_width(width - 64.0);
+            ui.set_height(70.0);
+            ui.horizontal_centered(|ui| {
+                skin::icon(ui, icon);
+                ui.add_space(14.0);
+                ui.label(RichText::new(caption).font(skin::regular(17.0)));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.add_space(10.0);
+                    control(ui);
+                });
+            });
+        });
+}
+
+/// XDG autostart entry that starts this program at login.
+fn autostart_file() -> Option<std::path::PathBuf> {
+    std::env::var_os("XDG_CONFIG_HOME")
+        .map(std::path::PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|home| std::path::PathBuf::from(home).join(".config")))
+        .map(|dir| dir.join("autostart").join("bloody-a90.desktop"))
+}
+
+fn set_autostart(on: bool) -> Result<String, String> {
+    let path = autostart_file().ok_or("找不到配置目录")?;
+    if !on {
+        return match std::fs::remove_file(&path) {
+            Ok(()) => Ok("已关闭开机自动启动".into()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                Ok("已关闭开机自动启动".into())
+            }
+            Err(error) => Err(format!("无法删除 {}：{error}", path.display())),
+        };
+    }
+    let exe = std::env::current_exe().map_err(|error| format!("找不到程序路径：{error}"))?;
+    let text = format!(
+        "[Desktop Entry]\nType=Application\nName=Bloody A90\nExec=\"{}\"\nX-GNOME-Autostart-enabled=true\n",
+        exe.display()
+    );
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir).map_err(|error| format!("无法创建 {}：{error}", dir.display()))?;
+    }
+    std::fs::write(&path, text).map_err(|error| format!("无法写入 {}：{error}", path.display()))?;
+    Ok(format!("已写入 {}", path.display()))
 }
