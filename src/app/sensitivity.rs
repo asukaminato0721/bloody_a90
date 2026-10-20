@@ -157,7 +157,11 @@ impl App {
         let clicked = skin::footer(
             ui,
             self.footer_area,
-            &[("恢复默认", enabled[0]), ("取消", enabled[1]), ("应用", enabled[2])],
+            &[
+                ("恢复默认", enabled[0]),
+                ("取消", enabled[1]),
+                ("应用", enabled[2]),
+            ],
         );
         if clicked[0] {
             self.reset_dpi();
@@ -179,7 +183,11 @@ impl App {
             self.start(Job::SaveSensitivity(words.clone()));
         }
         if let Err(error) = &block {
-            ui.label(RichText::new(error).font(skin::regular(13.0)).color(skin::GRAY));
+            ui.label(
+                RichText::new(error)
+                    .font(skin::regular(13.0))
+                    .color(skin::GRAY),
+            );
         }
         ui.add_space(8.0);
         egui::CollapsingHeader::new("查看编码参数").show(ui, |ui| {
@@ -244,8 +252,12 @@ impl App {
                     if self.separate {
                         ui.add_space(18.0);
                         ui.label(
-                            RichText::new(if axis == 0 { "X轴 设定 :" } else { "Y轴 设定 :" })
-                                .font(skin::regular(16.0)),
+                            RichText::new(if axis == 0 {
+                                "X轴 设定 :"
+                            } else {
+                                "Y轴 设定 :"
+                            })
+                            .font(skin::regular(16.0)),
                         );
                     }
                     if axis == 0 {
@@ -360,7 +372,12 @@ impl App {
                         skin::ticks(
                             ui,
                             width,
-                            &[(0.0, "125"), (1.0 / 3.0, "250"), (2.0 / 3.0, "500"), (1.0, "1000")],
+                            &[
+                                (0.0, "125"),
+                                (1.0 / 3.0, "250"),
+                                (2.0 / 3.0, "500"),
+                                (1.0, "1000"),
+                            ],
                         );
                     });
                 });
@@ -449,14 +466,28 @@ fn sensor(ui: &mut egui::Ui) {
         let x = inner.left() + inner.width() * t;
         let y = inner.top() + inner.height() * t;
         let grid = egui::Stroke::new(1.0, egui::Color32::from_rgb(60, 18, 20));
-        painter.line_segment([egui::pos2(x, inner.top()), egui::pos2(x, inner.bottom())], grid);
-        painter.line_segment([egui::pos2(inner.left(), y), egui::pos2(inner.right(), y)], grid);
+        painter.line_segment(
+            [egui::pos2(x, inner.top()), egui::pos2(x, inner.bottom())],
+            grid,
+        );
+        painter.line_segment(
+            [egui::pos2(inner.left(), y), egui::pos2(inner.right(), y)],
+            grid,
+        );
     }
     let c = rect.center();
     for (radius, alpha) in [(70.0, 30), (52.0, 50), (40.0, 80), (30.0, 140)] {
-        painter.circle_filled(c, radius, egui::Color32::from_rgba_unmultiplied(220, 20, 30, alpha));
+        painter.circle_filled(
+            c,
+            radius,
+            egui::Color32::from_rgba_unmultiplied(220, 20, 30, alpha),
+        );
     }
-    painter.circle_stroke(c, 30.0, egui::Stroke::new(1.5, egui::Color32::from_rgb(240, 60, 70)));
+    painter.circle_stroke(
+        c,
+        30.0,
+        egui::Stroke::new(1.5, egui::Color32::from_rgb(240, 60, 70)),
+    );
     painter.circle_filled(c, 10.0, egui::Color32::from_rgb(235, 20, 30));
 }
 
@@ -484,12 +515,18 @@ fn ladder(ui: &mut egui::Ui, level: &mut u8) {
     for i in 0..16 {
         let y = top + span * i as f32 / 15.0;
         painter.line_segment(
-            [egui::pos2(rect.left() + 14.0, y), egui::pos2(rect.right() - 14.0, y)],
+            [
+                egui::pos2(rect.left() + 14.0, y),
+                egui::pos2(rect.right() - 14.0, y),
+            ],
             egui::Stroke::new(1.5, red),
         );
     }
     let x = rect.center().x;
-    let groove = egui::Rect::from_min_max(egui::pos2(x - 5.0, top - 6.0), egui::pos2(x + 5.0, top + span + 6.0));
+    let groove = egui::Rect::from_min_max(
+        egui::pos2(x - 5.0, top - 6.0),
+        egui::pos2(x + 5.0, top + span + 6.0),
+    );
     painter.rect_filled(groove, 5, egui::Color32::from_rgb(25, 25, 27));
     let y = top + span * f32::from(16 - (*level).clamp(1, 16)) / 15.0;
     let thumb = egui::Rect::from_center_size(egui::pos2(x, y), vec2(9.0, 12.0));
@@ -518,7 +555,10 @@ fn side_view(ui: &mut egui::Ui, level: Option<u8>) {
             }
             _ => line,
         };
-        painter.line_segment([egui::pos2(base.x, y), egui::pos2(rect.right() - 140.0, y)], stroke);
+        painter.line_segment(
+            [egui::pos2(base.x, y), egui::pos2(rect.right() - 140.0, y)],
+            stroke,
+        );
     }
     let outline = egui::Stroke::new(1.5, egui::Color32::from_rgb(190, 190, 192));
     let p = |x: f32, y: f32| rect.left_top() + vec2(x, y);
@@ -530,12 +570,37 @@ fn side_view(ui: &mut egui::Ui, level: Option<u8>) {
             outline,
         ))
     };
-    painter.add(curve([p(80.0, 110.0), p(160.0, 20.0), p(380.0, 10.0), p(490.0, 130.0)]));
-    painter.add(curve([p(490.0, 130.0), p(510.0, 160.0), p(480.0, 185.0), p(420.0, 190.0)]));
+    painter.add(curve([
+        p(80.0, 110.0),
+        p(160.0, 20.0),
+        p(380.0, 10.0),
+        p(490.0, 130.0),
+    ]));
+    painter.add(curve([
+        p(490.0, 130.0),
+        p(510.0, 160.0),
+        p(480.0, 185.0),
+        p(420.0, 190.0),
+    ]));
     painter.line_segment([p(420.0, 190.0), p(150.0, 190.0)], outline);
-    painter.add(curve([p(150.0, 190.0), p(110.0, 185.0), p(70.0, 140.0), p(80.0, 110.0)]));
-    painter.add(curve([p(140.0, 100.0), p(220.0, 70.0), p(300.0, 80.0), p(360.0, 100.0)]));
-    painter.add(curve([p(200.0, 125.0), p(240.0, 110.0), p(300.0, 110.0), p(340.0, 125.0)]));
+    painter.add(curve([
+        p(150.0, 190.0),
+        p(110.0, 185.0),
+        p(70.0, 140.0),
+        p(80.0, 110.0),
+    ]));
+    painter.add(curve([
+        p(140.0, 100.0),
+        p(220.0, 70.0),
+        p(300.0, 80.0),
+        p(360.0, 100.0),
+    ]));
+    painter.add(curve([
+        p(200.0, 125.0),
+        p(240.0, 110.0),
+        p(300.0, 110.0),
+        p(340.0, 125.0),
+    ]));
     painter.line_segment([p(20.0, 152.0), p(80.0, 152.0)], outline);
     painter.line_segment([p(20.0, 160.0), p(78.0, 160.0)], outline);
 }

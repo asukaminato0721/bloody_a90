@@ -161,6 +161,7 @@ pub struct App {
     choice: keys::Choice,
     choice_value: usize,
     key_modifiers: u8,
+    oscar_view: oscar::View,
     /// Record whose KeySet menu is open, and where it opens.
     key_popup: Option<usize>,
     key_popup_at: egui::Pos2,
@@ -355,6 +356,7 @@ impl App {
             choice_value: 0,
             key_modifiers: 0,
             key_popup: None,
+            oscar_view: oscar::View::default(),
             key_popup_at: egui::Pos2::ZERO,
             watching: false,
             held: Vec::new(),
@@ -694,8 +696,10 @@ impl App {
     /// The empty title area above the sub tabs holds the device line, the
     /// status of the last job and the reconnect button.
     fn header(&mut self, ui: &mut egui::Ui) {
-        let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), 87.0), egui::Sense::hover());
-        let button = egui::Rect::from_min_size(rect.right_top() + vec2(-120.0, 24.0), vec2(120.0, 36.0));
+        let (rect, _) =
+            ui.allocate_exact_size(vec2(ui.available_width(), 87.0), egui::Sense::hover());
+        let button =
+            egui::Rect::from_min_size(rect.right_top() + vec2(-120.0, 24.0), vec2(120.0, 36.0));
         let caption = if self.connected() {
             "重新读取"
         } else {
@@ -756,19 +760,51 @@ impl App {
 
     fn sub_strip(&mut self, ui: &mut egui::Ui) {
         let tabs = sub_tabs(self.main);
-        let (strip, _) = ui.allocate_exact_size(vec2(ui.available_width(), 49.0), egui::Sense::hover());
+        let (strip, _) =
+            ui.allocate_exact_size(vec2(ui.available_width(), 49.0), egui::Sense::hover());
         ui.painter().rect_filled(strip, 0, skin::SHEET);
         let mut tab_ui = ui.new_child(
             egui::UiBuilder::new()
-                .max_rect(egui::Rect::from_min_size(strip.min + vec2(1.0, 1.0), vec2(strip.width() - 1.0, 48.0)))
+                .max_rect(egui::Rect::from_min_size(
+                    strip.min + vec2(1.0, 1.0),
+                    vec2(strip.width() - 1.0, 48.0),
+                ))
                 .layout(egui::Layout::left_to_right(egui::Align::Min)),
         );
         tab_ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
         if self.main == Main::Keys {
             // The A90 shows the template selector here. Only the
             // all-buttons template is migrated.
-            skin::template(&mut tab_ui, "全键编程模板")
-                .on_hover_text("左键编程模板请在“编程设置 → 左键编程”中设置。");
+            let response = skin::template(&mut tab_ui, "全键编程模板");
+            let id = response.id.with("menu");
+            if response.clicked() {
+                ui.ctx().data_mut(|data| {
+                    let open = data.get_temp::<bool>(id).unwrap_or(false);
+                    data.insert_temp(id, !open);
+                });
+            }
+            if ui
+                .ctx()
+                .data(|data| data.get_temp::<bool>(id))
+                .unwrap_or(false)
+            {
+                egui::Area::new(id)
+                    .order(egui::Order::Foreground)
+                    .fixed_pos(response.rect.left_bottom())
+                    .show(ui.ctx(), |ui| {
+                        ui.spacing_mut().item_spacing.y = 0.0;
+                        let all = skin::template_item(ui, "全键编程模板", true);
+                        // The A90 programs its left button on the 左键编程 page.
+                        let left = skin::template_item(ui, "左键编程模板", false);
+                        if all.clicked() || left.clicked() {
+                            ui.ctx().data_mut(|data| data.insert_temp(id, false));
+                        }
+                        if left.clicked() {
+                            self.main = Main::Programming;
+                            self.page = Page::Shooting;
+                        }
+                    });
+            }
         }
         for (caption, page) in tabs {
             let selected = *page == Some(self.page);
@@ -781,9 +817,11 @@ impl App {
             }
         }
         // gl_SeparateLine sits directly below the tabs.
-        let (line, _) = ui.allocate_exact_size(vec2(ui.available_width(), 2.0), egui::Sense::hover());
+        let (line, _) =
+            ui.allocate_exact_size(vec2(ui.available_width(), 2.0), egui::Sense::hover());
         ui.painter().rect_filled(line, 0, skin::RED);
-        let (gap, _) = ui.allocate_exact_size(vec2(ui.available_width(), 4.0), egui::Sense::hover());
+        let (gap, _) =
+            ui.allocate_exact_size(vec2(ui.available_width(), 4.0), egui::Sense::hover());
         ui.painter().rect_filled(gap, 0, skin::SHEET);
         skin::banner(ui, self.banner());
     }
@@ -1059,12 +1097,16 @@ impl eframe::App for App {
             .frame(egui::Frame::new().fill(skin::DASHBOARD))
             .show(ui, |ui| self.dashboard(ui));
         egui::CentralPanel::default()
-            .frame(egui::Frame::new().fill(skin::BACKGROUND).inner_margin(egui::Margin {
-                left: 21,
-                right: 16,
-                top: 0,
-                bottom: 0,
-            }))
+            .frame(
+                egui::Frame::new()
+                    .fill(skin::BACKGROUND)
+                    .inner_margin(egui::Margin {
+                        left: 21,
+                        right: 16,
+                        top: 0,
+                        bottom: 0,
+                    }),
+            )
             .show(ui, |ui| {
                 ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
                 self.header(ui);
@@ -1088,8 +1130,15 @@ impl eframe::App for App {
                         | Page::Pointer
                         | Page::Brightness
                         | Page::About
+                        | Page::Hardware
+                        | Page::Shooting
+                        | Page::Sniper
                 ) {
-                    skin::info(ui, area.right_top() + vec2(-24.0, 23.0), description(self.page));
+                    skin::info(
+                        ui,
+                        area.right_top() + vec2(-24.0, 23.0),
+                        description(self.page),
+                    );
                 }
                 let mut page = ui.new_child(
                     egui::UiBuilder::new()

@@ -155,9 +155,11 @@ const ROWS: [(&str, usize); 9] = [
     ("3", 10),
 ];
 
-/// Diagram captions: record, caption box and leader dot, relative to the
-/// mouse drawing.
-const DIAGRAM: [(&str, usize, (f32, f32), (f32, f32)); 8] = [
+/// Caption, record, caption box and leader dot of the diagram.
+type Caption = (&'static str, usize, (f32, f32), (f32, f32));
+
+/// Diagram captions, relative to the mouse drawing.
+const DIAGRAM: [Caption; 8] = [
     ("L", 0, (38.0, 103.0), (214.0, 118.0)),
     ("→", 4, (38.0, 179.0), (153.0, 193.0)),
     ("←", 3, (38.0, 247.0), (153.0, 261.0)),
@@ -343,20 +345,27 @@ impl App {
         let Some(profile) = config.profiles.get(self.profile).cloned() else {
             return String::new();
         };
-        if record < BUTTONS && profile.buttons[record] == Binding::default()
-            || record >= BUTTONS && profile.wheel[record - BUTTONS] == Action::Direct(NO_OPERATION)
-        {
-            if let Some(action) = self
+        let empty = if record < BUTTONS {
+            profile.buttons[record] == Binding::default()
+        } else {
+            profile.wheel[record - BUTTONS] == Action::Direct(NO_OPERATION)
+        };
+        if empty
+            && let Some(action) = self
                 .host_buttons
                 .rules
                 .profiles
                 .get(self.profile)
                 .and_then(|slots| slots[record].as_ref())
-            {
-                return format!("主机：{}", action.label());
-            }
+        {
+            return format!("主机：{}", action.label());
         }
-        let saved = (self.record, self.choice, self.choice_value, self.key_modifiers);
+        let saved = (
+            self.record,
+            self.choice,
+            self.choice_value,
+            self.key_modifiers,
+        );
         self.record = record;
         self.select_hardware();
         let caption = match self.choice {
@@ -390,14 +399,19 @@ impl App {
                 let options = self.options();
                 let name = options.get(self.choice_value).cloned().unwrap_or_default();
                 match choice {
-                    Choice::Function => name
-                        .replace("DPI 增加", "CPI+")
-                        .replace("DPI 减少", "CPI-"),
+                    Choice::Function => {
+                        name.replace("DPI 增加", "CPI+").replace("DPI 减少", "CPI-")
+                    }
                     _ => name,
                 }
             }
         };
-        (self.record, self.choice, self.choice_value, self.key_modifiers) = saved;
+        (
+            self.record,
+            self.choice,
+            self.choice_value,
+            self.key_modifiers,
+        ) = saved;
         caption
     }
 
@@ -439,7 +453,8 @@ impl App {
         let origin = ui.cursor().min;
         // KeySet: the 530 × 530 button sheet and the diagram to its right.
         let sheet = egui::Rect::from_min_size(origin + vec2(33.0, 18.0), vec2(530.0, 530.0));
-        ui.painter().rect_filled(sheet, 0, egui::Color32::from_rgb(27, 28, 30));
+        ui.painter()
+            .rect_filled(sheet, 0, egui::Color32::from_rgb(27, 28, 30));
         let header = egui::Rect::from_min_size(sheet.min + vec2(26.0, 20.0), vec2(293.0, 25.0));
         ui.painter().rect_filled(header, 0, skin::SHEET);
         ui.painter().text(
@@ -496,10 +511,17 @@ impl App {
             };
             ui.painter()
                 .line_segment([edge, egui::pos2(dot.x, edge.y)], line);
-            ui.painter().circle_stroke(egui::pos2(dot.x, edge.y), 5.0, line);
+            ui.painter()
+                .circle_stroke(egui::pos2(dot.x, edge.y), 5.0, line);
             let lit = self.record == record || self.held.contains(&(record as u8 + 1));
             if skin::key_box(ui, rect, caption, lit).clicked() && self.keys.is_some() {
-                open = Some((record, egui::Rect::from_min_size(sheet.left_top() + vec2(64.0, 56.0), vec2(255.0, 25.0))));
+                open = Some((
+                    record,
+                    egui::Rect::from_min_size(
+                        sheet.left_top() + vec2(64.0, 56.0),
+                        vec2(255.0, 25.0),
+                    ),
+                ));
             }
         }
         ui.allocate_space(vec2(ui.available_width(), 548.0));
@@ -523,7 +545,10 @@ impl App {
                     .show(ui.ctx(), |ui| {
                         egui::Frame::new()
                             .fill(egui::Color32::from_rgb(20, 20, 22))
-                            .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgb(200, 200, 200)))
+                            .stroke(egui::Stroke::new(
+                                1.0,
+                                egui::Color32::from_rgb(200, 200, 200),
+                            ))
                             .inner_margin(egui::Margin::same(10))
                             .show(ui, |ui| {
                                 ui.set_width(460.0);

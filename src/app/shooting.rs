@@ -148,15 +148,20 @@ impl App {
             &mut editor.slot
         };
         ui.horizontal(|ui| {
-            ui.label("程序槽位：");
+            ui.spacing_mut().item_spacing.x = 0.0;
             for index in if sniper { 5..=7 } else { 1..=4 } {
-                if skin::tool(ui, &index.to_string(), *slot == index).clicked() {
+                let caption = if sniper {
+                    format!("狙击键{}", index - 4)
+                } else {
+                    format!("程序槽位{index}")
+                };
+                if skin::profile_tab(ui, &caption, *slot == index, true).clicked() {
                     *slot = index;
                 }
             }
         });
         let slot = *slot;
-        ui.label("以下参数是本地草稿。连接鼠标不会覆盖此草稿。");
+        ui.add_space(12.0);
         if let Some(config) = &self.keys {
             ui.collapsing("查看已载入的槽位程序", |ui| {
                 for (caption, action) in [
@@ -181,9 +186,9 @@ impl App {
             });
         }
         let draft = &mut editor.drafts[slot - 1];
-        skin::sheet().show(ui, |ui| {
-            ui.set_width(ui.available_width());
-            ui.label(RichText::new("射击程序").font(skin::bold(17.0)));
+        let help = "射击程序：以下参数是本地草稿，连接鼠标不会覆盖此草稿。\n\
+                    X 向右为正，Y 向下为正，位移使用鼠标计数值。";
+        skin::card(ui, None, "射击程序", help, |ui| {
             ui.horizontal_wrapped(|ui| {
                 for (kind, name) in [
                     (Kind::A, "A 连击"),
@@ -239,7 +244,6 @@ impl App {
                         ui.end_row();
                     }
                 });
-            ui.label("X 向右为正。Y 向下为正。位移使用鼠标计数值。");
             ui.horizontal(|ui| {
                 skin::check(ui, &mut draft.recover, "结束时恢复位移");
                 skin::check(ui, &mut draft.special, "等待左键状态");
@@ -304,8 +308,9 @@ impl App {
             }
         }
         let mut assign = false;
+        ui.add_space(12.0);
         ui.horizontal(|ui| {
-            ui.label("切换按键：");
+            ui.label(RichText::new("切换按键 :").font(skin::regular(16.0)));
             egui::ComboBox::from_id_salt("shooting-trigger")
                 .selected_text(trigger_name(editor.trigger))
                 .show_ui(ui, |ui| {
@@ -343,25 +348,28 @@ impl App {
             configuration::build(&config)?;
             Ok(config)
         });
-        ui.horizontal(|ui| {
-            if skin::button(ui, "载入按键草稿", 160.0, config.is_ok()).clicked()
-                && let Ok(config) = &config
-            {
-                self.keys = Some(config.clone());
-                self.keys_dirty = true;
-            }
-            if skin::button(
-                ui,
-                "应用",
-                140.0,
-                config.is_ok() && self.device.is_some() && !self.pending,
-            )
-            .clicked()
-                && let Ok(config) = &config
-            {
-                self.start(Job::SaveButtons(Box::new(config.clone())));
-            }
-        });
+        let clicked = skin::footer(
+            ui,
+            self.footer_area,
+            &[
+                ("载入按键草稿", config.is_ok()),
+                (
+                    "应用",
+                    config.is_ok() && self.device.is_some() && !self.pending,
+                ),
+            ],
+        );
+        if clicked[0]
+            && let Ok(config) = &config
+        {
+            self.keys = Some(config.clone());
+            self.keys_dirty = true;
+        }
+        if clicked[1]
+            && let Ok(config) = &config
+        {
+            self.start(Job::SaveButtons(Box::new(config.clone())));
+        }
         if let Err(error) = config {
             ui.colored_label(skin::ERROR, error);
         }

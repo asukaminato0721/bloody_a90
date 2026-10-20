@@ -15,7 +15,14 @@ fn profile(ui: &mut egui::Ui, id: impl std::hash::Hash + std::fmt::Debug, value:
 
 impl App {
     pub(super) fn associations_page(&mut self, ui: &mut egui::Ui) {
-        ui.heading("应用程序配置关联");
+        skin::sheet().show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            self.associations_body(ui);
+        });
+    }
+
+    fn associations_body(&mut self, ui: &mut egui::Ui) {
+        ui.label(egui::RichText::new("应用程序配置关联").font(skin::regular(17.0)));
         ui.label("支持 KDE Plasma Wayland 和 X11。使用窗口的应用标识，不使用窗口标题。");
         ui.label("无匹配项时使用默认配置。应用保持不变时，可以用鼠标按键手动切换配置。");
         ui.horizontal(|ui| {

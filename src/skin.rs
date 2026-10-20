@@ -217,7 +217,11 @@ pub fn check(ui: &mut Ui, value: &mut bool, caption: &str) -> Response {
         response.mark_changed();
     }
     let enabled = ui.is_enabled();
-    let light = if enabled { rgb(220, 220, 220) } else { rgb(90, 90, 92) };
+    let light = if enabled {
+        rgb(220, 220, 220)
+    } else {
+        rgb(90, 90, 92)
+    };
     let square = Rect::from_center_size(pos2(rect.left() + 9.0, rect.center().y), vec2(16.0, 16.0));
     let painter = ui.painter();
     painter.rect_filled(square, 0, rgb(30, 31, 34));
@@ -351,10 +355,10 @@ pub fn value(ui: &mut Ui, text: &str, selected: bool, size: [f32; 2]) -> Respons
     response
 }
 
-/// Group frame of a settings sheet.
+/// Group frame of a settings sheet: a group panel on the page background.
 pub fn sheet() -> egui::Frame {
     egui::Frame::new()
-        .fill(SHEET)
+        .fill(PANEL)
         .inner_margin(egui::Margin::same(16))
 }
 
@@ -387,7 +391,11 @@ pub fn template(ui: &mut Ui, caption: &str) -> Response {
     );
     let c = rect.right_center() + vec2(-12.0, 1.0);
     painter.add(egui::Shape::convex_polygon(
-        vec![c + vec2(-7.0, -3.0), c + vec2(7.0, -3.0), c + vec2(0.0, 4.0)],
+        vec![
+            c + vec2(-7.0, -3.0),
+            c + vec2(7.0, -3.0),
+            c + vec2(0.0, 4.0),
+        ],
         rgb(60, 0, 4),
         Stroke::NONE,
     ));
@@ -443,6 +451,7 @@ pub enum Icon {
     Wheel,
     Startup,
     Language,
+    Card,
 }
 
 /// The 70 × 70 icon tile at the top left of a group panel: a dark red glow
@@ -475,7 +484,10 @@ pub fn icon(ui: &mut Ui, icon: Icon) {
         Icon::MouseX | Icon::MouseY => {
             let body = Rect::from_center_size(c, vec2(22.0, 32.0));
             painter.rect_stroke(body, 11, stroke, StrokeKind::Inside);
-            painter.line_segment([body.center_top(), body.center_top() + vec2(0.0, 9.0)], stroke);
+            painter.line_segment(
+                [body.center_top(), body.center_top() + vec2(0.0, 9.0)],
+                stroke,
+            );
             let thin = Stroke::new(2.0, red);
             let chevron = |tip: Pos2, a: egui::Vec2, b: egui::Vec2| {
                 painter.line_segment([tip, tip + a], thin);
@@ -497,7 +509,10 @@ pub fn icon(ui: &mut Ui, icon: Icon) {
                 })
                 .collect();
             painter.add(egui::Shape::line(points, stroke));
-            painter.line_segment([c + vec2(0.0, 8.0), c + vec2(6.0, -10.0)], Stroke::new(3.5, red));
+            painter.line_segment(
+                [c + vec2(0.0, 8.0), c + vec2(6.0, -10.0)],
+                Stroke::new(3.5, red),
+            );
             painter.circle_filled(c + vec2(0.0, 8.0), 3.5, red);
         }
         Icon::DoubleClick => {
@@ -519,8 +534,14 @@ pub fn icon(ui: &mut Ui, icon: Icon) {
         Icon::Rate => {
             painter.circle_stroke(c, 20.0, stroke);
             painter.circle_stroke(c, 9.0, Stroke::new(2.0, red));
-            painter.line_segment([c + vec2(-24.0, 0.0), c + vec2(24.0, 0.0)], Stroke::new(1.5, red));
-            painter.line_segment([c + vec2(0.0, -24.0), c + vec2(0.0, 24.0)], Stroke::new(1.5, red));
+            painter.line_segment(
+                [c + vec2(-24.0, 0.0), c + vec2(24.0, 0.0)],
+                Stroke::new(1.5, red),
+            );
+            painter.line_segment(
+                [c + vec2(0.0, -24.0), c + vec2(0.0, 24.0)],
+                Stroke::new(1.5, red),
+            );
         }
         Icon::Pointer => {
             let tip = c + vec2(-16.0, -16.0);
@@ -529,7 +550,10 @@ pub fn icon(ui: &mut Ui, icon: Icon) {
                 red,
                 Stroke::NONE,
             ));
-            painter.line_segment([tip + vec2(12.0, 12.0), tip + vec2(26.0, 26.0)], Stroke::new(4.0, red));
+            painter.line_segment(
+                [tip + vec2(12.0, 12.0), tip + vec2(26.0, 26.0)],
+                Stroke::new(4.0, red),
+            );
             let ghost = Stroke::new(1.5, rgb(160, 20, 28));
             let tip = tip + vec2(12.0, 6.0);
             painter.line_segment([tip, tip + vec2(22.0, 8.0)], ghost);
@@ -537,7 +561,13 @@ pub fn icon(ui: &mut Ui, icon: Icon) {
         }
         Icon::Light => {
             painter.circle_stroke(c + vec2(0.0, -2.0), 11.0, stroke);
-            painter.text(c + vec2(0.0, -2.0), Align2::CENTER_CENTER, "A", bold(14.0), red);
+            painter.text(
+                c + vec2(0.0, -2.0),
+                Align2::CENTER_CENTER,
+                "A",
+                bold(14.0),
+                red,
+            );
             for i in 0..8 {
                 let angle = std::f32::consts::TAU * i as f32 / 8.0;
                 let d = vec2(angle.cos(), angle.sin());
@@ -545,7 +575,10 @@ pub fn icon(ui: &mut Ui, icon: Icon) {
                     continue;
                 }
                 painter.line_segment(
-                    [c + vec2(0.0, -2.0) + d * 15.0, c + vec2(0.0, -2.0) + d * 21.0],
+                    [
+                        c + vec2(0.0, -2.0) + d * 15.0,
+                        c + vec2(0.0, -2.0) + d * 21.0,
+                    ],
                     Stroke::new(2.0, red),
                 );
             }
@@ -553,12 +586,36 @@ pub fn icon(ui: &mut Ui, icon: Icon) {
             painter.line_segment([c + vec2(-4.0, 18.0), c + vec2(4.0, 18.0)], stroke);
         }
         Icon::Startup => {
-            painter.line_segment([c + vec2(-12.0, 0.0), c + vec2(10.0, 0.0)], Stroke::new(5.0, red));
+            painter.line_segment(
+                [c + vec2(-12.0, 0.0), c + vec2(10.0, 0.0)],
+                Stroke::new(5.0, red),
+            );
             painter.add(egui::Shape::convex_polygon(
-                vec![c + vec2(14.0, 0.0), c + vec2(2.0, -11.0), c + vec2(2.0, 11.0)],
+                vec![
+                    c + vec2(14.0, 0.0),
+                    c + vec2(2.0, -11.0),
+                    c + vec2(2.0, 11.0),
+                ],
                 red,
                 Stroke::NONE,
             ));
+        }
+        Icon::Card => {
+            let card = Rect::from_center_size(c, vec2(40.0, 28.0));
+            painter.rect_filled(card, 3, red);
+            let dark = rgb(70, 14, 18);
+            painter.circle_filled(c + vec2(-10.0, -4.0), 5.0, dark);
+            painter.rect_filled(
+                Rect::from_center_size(c + vec2(-10.0, 7.0), vec2(14.0, 8.0)),
+                3,
+                dark,
+            );
+            for y in [-6.0, 0.0, 6.0] {
+                painter.line_segment(
+                    [c + vec2(3.0, y), c + vec2(15.0, y)],
+                    Stroke::new(2.0, dark),
+                );
+            }
         }
         Icon::Language => {
             let back = Rect::from_min_size(c + vec2(-20.0, -18.0), vec2(24.0, 22.0));
@@ -574,8 +631,14 @@ pub fn icon(ui: &mut Ui, icon: Icon) {
             painter.rect_stroke(body, 8, stroke, StrokeKind::Inside);
             for i in 0..4 {
                 let y = body.top() + 8.0 + i as f32 * 6.0;
-                painter.line_segment([pos2(c.x - 4.0, y), pos2(c.x, y + 3.0)], Stroke::new(1.5, red));
-                painter.line_segment([pos2(c.x + 4.0, y), pos2(c.x, y + 3.0)], Stroke::new(1.5, red));
+                painter.line_segment(
+                    [pos2(c.x - 4.0, y), pos2(c.x, y + 3.0)],
+                    Stroke::new(1.5, red),
+                );
+                painter.line_segment(
+                    [pos2(c.x + 4.0, y), pos2(c.x, y + 3.0)],
+                    Stroke::new(1.5, red),
+                );
             }
         }
     }
@@ -663,7 +726,11 @@ pub fn option(ui: &mut Ui, selected: bool, caption: &str) -> Response {
     let square = Rect::from_center_size(pos2(rect.left() + 6.0, rect.center().y), vec2(12.0, 12.0));
     let painter = ui.painter();
     painter.rect_filled(square, 0, rgb(25, 25, 27));
-    let fill = if selected { rgb(200, 10, 20) } else { rgb(90, 90, 92) };
+    let fill = if selected {
+        rgb(200, 10, 20)
+    } else {
+        rgb(90, 90, 92)
+    };
     painter.rect_filled(square.shrink(1.0), 0, fill);
     painter.text(
         pos2(square.right() + 7.0, rect.center().y),
@@ -683,13 +750,33 @@ pub fn toggle(ui: &mut Ui, on: &mut bool) -> Response {
         response.mark_changed();
     }
     let painter = ui.painter();
-    let off_color = if *on { rgb(80, 80, 82) } else { rgb(160, 160, 162) };
+    let off_color = if *on {
+        rgb(80, 80, 82)
+    } else {
+        rgb(160, 160, 162)
+    };
     let on_color = if *on { CAPTION_RED } else { rgb(80, 80, 82) };
-    painter.text(rect.left_center(), Align2::LEFT_CENTER, "OFF", bold(17.0), off_color);
-    painter.text(rect.right_center(), Align2::RIGHT_CENTER, "ON", bold(17.0), on_color);
+    painter.text(
+        rect.left_center(),
+        Align2::LEFT_CENTER,
+        "OFF",
+        bold(17.0),
+        off_color,
+    );
+    painter.text(
+        rect.right_center(),
+        Align2::RIGHT_CENTER,
+        "ON",
+        bold(17.0),
+        on_color,
+    );
     let groove = Rect::from_center_size(rect.center(), vec2(58.0, 22.0));
     painter.rect_filled(groove, 11, rgb(30, 31, 34));
-    let knob_x = if *on { groove.right() - 21.0 } else { groove.left() + 21.0 };
+    let knob_x = if *on {
+        groove.right() - 21.0
+    } else {
+        groove.left() + 21.0
+    };
     let knob = Rect::from_center_size(pos2(knob_x, groove.center().y), vec2(40.0, 18.0));
     painter.rect_filled(knob, 9, if *on { RED } else { rgb(110, 110, 112) });
     response
@@ -712,7 +799,11 @@ pub fn levels(ui: &mut Ui, current: Option<u8>, width: f32) -> Option<u8> {
     for level in 0..4u8 {
         let x = left + span * f32::from(level) / 3.0;
         let knob = Rect::from_center_size(pos2(x, y), vec2(22.0, 22.0));
-        let response = ui.interact(knob.expand(6.0), ui.scope_id().with(("level", level)), Sense::click());
+        let response = ui.interact(
+            knob.expand(6.0),
+            ui.scope_id().with(("level", level)),
+            Sense::click(),
+        );
         let painter = ui.painter();
         painter.rect_filled(knob, 2, rgb(30, 31, 33));
         let lit = current == Some(level);
@@ -724,7 +815,11 @@ pub fn levels(ui: &mut Ui, current: Option<u8>, width: f32) -> Option<u8> {
         } else {
             rgb(100, 100, 102)
         };
-        painter.rect_filled(Rect::from_center_size(knob.center(), vec2(10.0, 10.0)), 0, fill);
+        painter.rect_filled(
+            Rect::from_center_size(knob.center(), vec2(10.0, 10.0)),
+            0,
+            fill,
+        );
         if response.clicked() && ui.is_enabled() {
             chosen = Some(level);
         }
@@ -746,7 +841,13 @@ pub fn levels(ui: &mut Ui, current: Option<u8>, width: f32) -> Option<u8> {
             painter.line_segment([bulb + d * 12.0, bulb + d * 17.0], stroke);
         }
         if level == 3 {
-            painter.text(bulb, Align2::CENTER_CENTER, "A", regular(10.0), rgb(150, 150, 152));
+            painter.text(
+                bulb,
+                Align2::CENTER_CENTER,
+                "A",
+                regular(10.0),
+                rgb(150, 150, 152),
+            );
         }
     }
     chosen
@@ -763,14 +864,16 @@ pub fn combo(ui: &mut Ui, caption: &str, width: f32, open: bool) -> Response {
         rgb(59, 60, 64)
     };
     painter.rect_filled(rect, 0, fill);
-    let text = painter.layout(
-        caption.to_owned(),
-        regular(15.0),
+    let text = painter.layout(caption.to_owned(), regular(15.0), TEXT, f32::INFINITY);
+    let clip = painter.with_clip_rect(Rect::from_min_max(
+        rect.min,
+        pos2(rect.right() - 26.0, rect.bottom()),
+    ));
+    clip.galley(
+        pos2(rect.left() + 5.0, rect.center().y - text.size().y / 2.0),
+        text,
         TEXT,
-        f32::INFINITY,
     );
-    let clip = painter.with_clip_rect(Rect::from_min_max(rect.min, pos2(rect.right() - 26.0, rect.bottom())));
-    clip.galley(pos2(rect.left() + 5.0, rect.center().y - text.size().y / 2.0), text, TEXT);
     let c = rect.right_center() + vec2(-12.0, 0.0);
     let stroke = Stroke::new(1.2, rgb(200, 200, 202));
     painter.line_segment([c + vec2(-5.0, -2.5), c + vec2(0.0, 2.5)], stroke);
@@ -780,16 +883,31 @@ pub fn combo(ui: &mut Ui, caption: &str, width: f32, open: bool) -> Response {
 
 /// Caption box of the button diagram, 38 × 30. Red when selected.
 pub fn key_box(ui: &mut Ui, rect: Rect, caption: &str, selected: bool) -> Response {
-    let response = ui.interact(rect, ui.scope_id().with(("key-box", caption)), Sense::click());
+    let response = ui.interact(
+        rect,
+        ui.scope_id().with(("key-box", caption)),
+        Sense::click(),
+    );
     let painter = ui.painter();
     let hovered = response.hovered();
     if selected {
         painter.rect_filled(rect, 3, rgb(225, 20, 30));
     } else {
         painter.rect_filled(rect, 3, if hovered { rgb(60, 61, 66) } else { SHEET });
-        painter.rect_stroke(rect, 3, Stroke::new(1.5, rgb(164, 164, 166)), StrokeKind::Inside);
+        painter.rect_stroke(
+            rect,
+            3,
+            Stroke::new(1.5, rgb(164, 164, 166)),
+            StrokeKind::Inside,
+        );
     }
-    painter.text(rect.center(), Align2::CENTER_CENTER, caption, bold(20.0), TEXT);
+    painter.text(
+        rect.center(),
+        Align2::CENTER_CENTER,
+        caption,
+        bold(20.0),
+        TEXT,
+    );
     response
 }
 
@@ -812,10 +930,30 @@ pub fn mouse_top(ui: &Ui, origin: Pos2) {
     // Body, mirrored around x 272.
     let mut body = Vec::new();
     let half = [
-        [p(272.0, 48.0), p(230.0, 50.0), p(190.0, 58.0), p(175.0, 80.0)],
-        [p(175.0, 80.0), p(150.0, 160.0), p(155.0, 200.0), p(140.0, 250.0)],
-        [p(140.0, 250.0), p(115.0, 330.0), p(120.0, 400.0), p(180.0, 450.0)],
-        [p(180.0, 450.0), p(220.0, 480.0), p(250.0, 500.0), p(272.0, 508.0)],
+        [
+            p(272.0, 48.0),
+            p(230.0, 50.0),
+            p(190.0, 58.0),
+            p(175.0, 80.0),
+        ],
+        [
+            p(175.0, 80.0),
+            p(150.0, 160.0),
+            p(155.0, 200.0),
+            p(140.0, 250.0),
+        ],
+        [
+            p(140.0, 250.0),
+            p(115.0, 330.0),
+            p(120.0, 400.0),
+            p(180.0, 450.0),
+        ],
+        [
+            p(180.0, 450.0),
+            p(220.0, 480.0),
+            p(250.0, 500.0),
+            p(272.0, 508.0),
+        ],
     ];
     for segment in half {
         let shape = egui::epaint::CubicBezierShape::from_points_stroke(
@@ -840,17 +978,87 @@ pub fn mouse_top(ui: &Ui, origin: Pos2) {
     ));
     painter.add(egui::Shape::closed_line(outline, line));
     // Cable.
-    painter.line_segment([p(268.0, 14.0), p(268.0, 50.0)], Stroke::new(2.0, rgb(110, 110, 114)));
-    painter.line_segment([p(276.0, 14.0), p(276.0, 50.0)], Stroke::new(2.0, rgb(110, 110, 114)));
+    painter.line_segment(
+        [p(268.0, 14.0), p(268.0, 50.0)],
+        Stroke::new(2.0, rgb(110, 110, 114)),
+    );
+    painter.line_segment(
+        [p(276.0, 14.0), p(276.0, 50.0)],
+        Stroke::new(2.0, rgb(110, 110, 114)),
+    );
     // Button seams and the center ridge.
-    curve([p(255.0, 50.0), p(250.0, 120.0), p(252.0, 200.0), p(250.0, 270.0)], line);
-    curve([p(289.0, 50.0), p(294.0, 120.0), p(292.0, 200.0), p(294.0, 270.0)], line);
-    curve([p(175.0, 80.0), p(190.0, 140.0), p(215.0, 230.0), p(250.0, 270.0)], line);
-    curve([p(369.0, 80.0), p(354.0, 140.0), p(329.0, 230.0), p(294.0, 270.0)], line);
-    curve([p(250.0, 270.0), p(255.0, 310.0), p(265.0, 320.0), p(272.0, 330.0)], line);
-    curve([p(294.0, 270.0), p(289.0, 310.0), p(279.0, 320.0), p(272.0, 330.0)], line);
-    curve([p(160.0, 420.0), p(210.0, 440.0), p(240.0, 455.0), p(272.0, 465.0)], line);
-    curve([p(384.0, 420.0), p(334.0, 440.0), p(304.0, 455.0), p(272.0, 465.0)], line);
+    curve(
+        [
+            p(255.0, 50.0),
+            p(250.0, 120.0),
+            p(252.0, 200.0),
+            p(250.0, 270.0),
+        ],
+        line,
+    );
+    curve(
+        [
+            p(289.0, 50.0),
+            p(294.0, 120.0),
+            p(292.0, 200.0),
+            p(294.0, 270.0),
+        ],
+        line,
+    );
+    curve(
+        [
+            p(175.0, 80.0),
+            p(190.0, 140.0),
+            p(215.0, 230.0),
+            p(250.0, 270.0),
+        ],
+        line,
+    );
+    curve(
+        [
+            p(369.0, 80.0),
+            p(354.0, 140.0),
+            p(329.0, 230.0),
+            p(294.0, 270.0),
+        ],
+        line,
+    );
+    curve(
+        [
+            p(250.0, 270.0),
+            p(255.0, 310.0),
+            p(265.0, 320.0),
+            p(272.0, 330.0),
+        ],
+        line,
+    );
+    curve(
+        [
+            p(294.0, 270.0),
+            p(289.0, 310.0),
+            p(279.0, 320.0),
+            p(272.0, 330.0),
+        ],
+        line,
+    );
+    curve(
+        [
+            p(160.0, 420.0),
+            p(210.0, 440.0),
+            p(240.0, 455.0),
+            p(272.0, 465.0),
+        ],
+        line,
+    );
+    curve(
+        [
+            p(384.0, 420.0),
+            p(334.0, 440.0),
+            p(304.0, 455.0),
+            p(272.0, 465.0),
+        ],
+        line,
+    );
     // Wheel.
     let wheel = Rect::from_min_size(p(258.0, 88.0), vec2(28.0, 74.0));
     painter.rect_filled(wheel, 13, rgb(70, 71, 75));
@@ -862,7 +1070,10 @@ pub fn mouse_top(ui: &Ui, origin: Pos2) {
             Stroke::new(1.0, rgb(150, 150, 154)),
         );
         painter.line_segment(
-            [pos2(wheel.right() - 7.0, y), pos2(wheel.center().x, y + 3.0)],
+            [
+                pos2(wheel.right() - 7.0, y),
+                pos2(wheel.center().x, y + 3.0),
+            ],
             Stroke::new(1.0, rgb(150, 150, 154)),
         );
     }
@@ -878,5 +1089,87 @@ pub fn mouse_top(ui: &Ui, origin: Pos2) {
         let rect = Rect::from_min_size(p(147.0, y), vec2(10.0, 30.0));
         painter.rect_stroke(rect, 4, line, StrokeKind::Inside);
     }
-    painter.text(p(272.0, 395.0), Align2::CENTER_CENTER, "bloody", bold(15.0), rgb(110, 110, 114));
+    painter.text(
+        p(272.0, 395.0),
+        Align2::CENTER_CENTER,
+        "bloody",
+        bold(15.0),
+        rgb(110, 110, 114),
+    );
+}
+
+/// Entry of the 收藏夹 and 文件 lists of OscarDragMacroEditor: a light bar
+/// with dark text, red when selected.
+pub fn list_item(ui: &mut Ui, caption: &str, selected: bool, width: f32) -> Response {
+    let (rect, response) = ui.allocate_exact_size(vec2(width, 34.0), Sense::click());
+    let painter = ui.painter();
+    let (fill, color) = if selected {
+        (RED, TEXT)
+    } else if response.hovered() {
+        (rgb(220, 220, 222), rgb(20, 20, 20))
+    } else {
+        (rgb(196, 196, 198), rgb(20, 20, 20))
+    };
+    painter.rect_filled(rect, 0, fill);
+    painter.text(
+        rect.left_center() + vec2(8.0, 0.0),
+        Align2::LEFT_CENTER,
+        caption,
+        regular(17.0),
+        color,
+    );
+    response
+}
+
+/// Circled-number heading of the macro editors, such as "① 指令区".
+pub fn step(ui: &mut Ui, number: &str, title: &str) {
+    ui.label(
+        egui::RichText::new(format!("{number} {title}"))
+            .font(regular(20.0))
+            .color(LIGHT_GRAY),
+    );
+}
+
+/// Caption and dark value box of an information row, as in AboutHardware.
+pub fn field(ui: &mut Ui, caption: &str, value: &str, width: f32) {
+    ui.horizontal(|ui| {
+        let (rect, _) = ui.allocate_exact_size(vec2(100.0, 28.0), Sense::hover());
+        ui.painter().text(
+            rect.left_center(),
+            Align2::LEFT_CENTER,
+            format!("{caption} :"),
+            regular(16.0),
+            TEXT,
+        );
+        let (rect, _) = ui.allocate_exact_size(vec2(width, 28.0), Sense::hover());
+        ui.painter().rect_filled(rect, 0, VALUE);
+        ui.painter().text(
+            rect.left_center() + vec2(8.0, 0.0),
+            Align2::LEFT_CENTER,
+            value,
+            regular(14.0),
+            TEXT,
+        );
+    });
+}
+
+/// Entry of the template drop-down list below cbbt_MacroTemplate.
+pub fn template_item(ui: &mut Ui, caption: &str, selected: bool) -> Response {
+    let (rect, response) = ui.allocate_exact_size(vec2(274.0, 40.0), Sense::click());
+    let fill = if response.hovered() {
+        RED
+    } else if selected {
+        rgb(52, 53, 57)
+    } else {
+        DASHBOARD
+    };
+    ui.painter().rect_filled(rect, 0, fill);
+    ui.painter().text(
+        rect.left_center() + vec2(10.0, 0.0),
+        Align2::LEFT_CENTER,
+        caption,
+        regular(18.0),
+        TEXT,
+    );
+    response
 }

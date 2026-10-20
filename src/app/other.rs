@@ -35,6 +35,13 @@ impl App {
     }
 
     pub(super) fn backup(&mut self, ui: &mut egui::Ui) {
+        skin::sheet().show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            self.backup_body(ui);
+        });
+    }
+
+    fn backup_body(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             path_field(ui, &mut self.backup_path, "32768 字节备份的文件路径", 480.0);
             let enabled = !self.pending && !self.backup_path.trim().is_empty();
@@ -102,46 +109,59 @@ impl App {
         });
     }
 
+    /// AboutHardware: the 硬件信息 panel with value boxes on the right.
     pub(super) fn hardware(&mut self, ui: &mut egui::Ui) {
-        skin::sheet().show(ui, |ui| {
-            ui.set_width(ui.available_width());
-            ui.label(RichText::new("关于硬件").font(skin::bold(22.0)));
+        ui.add_space(36.0);
+        let help = "硬件信息：设备型号、固件和存储区地址。";
+        skin::card(ui, Some(skin::Icon::Card), "硬件信息", help, |ui| {
             let Some(device) = &self.device else {
                 ui.label(RichText::new("请先连接鼠标。").color(skin::GRAY));
                 return;
             };
             let info = &device.info;
-            egui::Grid::new("hardware").striped(true).show(ui, |ui| {
-                for (name, value) in [
-                    ("接口", device.path.clone()),
-                    ("型号", format!("{:04x}", device.identity.model)),
-                    ("固件", format!("{:02x}", device.identity.firmware)),
-                    ("核心", device.identity.core.to_string()),
-                    ("回报率", format!("{} Hz", info.rate_hz)),
-                    (
-                        "灵敏度区",
-                        format!(
-                            "{:04x}（出厂 {:04x}）",
-                            info.sensitivity, info.factory_sensitivity
-                        ),
+            let rows = [
+                ("机身码ID", format!("{:04x}", device.identity.model)),
+                ("固件", format!("{:02x}", device.identity.firmware)),
+                ("核心", device.identity.core.to_string()),
+                ("接口", device.path.clone()),
+                ("回报率", format!("{} Hz", info.rate_hz)),
+                (
+                    "当前配置",
+                    format!("{} / {}", device.profile.0 + 1, device.profile.1 + 1),
+                ),
+                (
+                    "灵敏度区",
+                    format!(
+                        "{:04x}（出厂 {:04x}）",
+                        info.sensitivity, info.factory_sensitivity
                     ),
-                    (
-                        "按键区",
-                        format!("{:04x}（出厂 {:04x}）", info.buttons, info.factory_buttons),
-                    ),
-                    ("设置区", format!("{:04x}", info.settings)),
-                    ("设备数据", format!("{:04x}", info.device_data)),
-                    (
-                        "当前配置",
-                        format!("{} / {}", device.profile.0 + 1, device.profile.1 + 1),
-                    ),
-                ] {
-                    ui.label(name);
-                    ui.label(value);
-                    ui.end_row();
+                ),
+                (
+                    "按键区",
+                    format!("{:04x}（出厂 {:04x}）", info.buttons, info.factory_buttons),
+                ),
+                ("设置区", format!("{:04x}", info.settings)),
+                ("设备数据", format!("{:04x}", info.device_data)),
+            ];
+            ui.add_space(-56.0);
+            ui.horizontal_top(|ui| {
+                ui.add_space((ui.available_width() - 2.0 * 360.0 - 40.0).max(0.0));
+                for column in rows.chunks(5) {
+                    ui.vertical(|ui| {
+                        ui.spacing_mut().item_spacing.y = 12.0;
+                        for (name, value) in column {
+                            skin::field(ui, name, value, 240.0);
+                        }
+                    });
+                    ui.add_space(40.0);
                 }
             });
-            ui.label(device.backup.shooting_route().description());
+            ui.add_space(8.0);
+            ui.label(
+                RichText::new(device.backup.shooting_route().description())
+                    .font(skin::regular(13.0))
+                    .color(skin::GRAY),
+            );
         });
     }
 
@@ -171,7 +191,7 @@ impl App {
             });
         });
         ui.add_space(15.0);
-        skin::sheet().fill(skin::PANEL).show(ui, |ui| {
+        skin::sheet().show(ui, |ui| {
             ui.set_width(ui.available_width());
             ui.label(RichText::new("Bloody A90 配置工具").font(skin::bold(22.0)));
             ui.label(
@@ -198,7 +218,13 @@ impl App {
 }
 
 /// One 690 × 100 option tile of AboutSoftware.
-fn tile(ui: &mut egui::Ui, width: f32, icon: skin::Icon, caption: &str, control: impl FnOnce(&mut egui::Ui)) {
+fn tile(
+    ui: &mut egui::Ui,
+    width: f32,
+    icon: skin::Icon,
+    caption: &str,
+    control: impl FnOnce(&mut egui::Ui),
+) {
     egui::Frame::new()
         .fill(skin::PANEL)
         .inner_margin(egui::Margin::symmetric(32, 15))
@@ -221,7 +247,9 @@ fn tile(ui: &mut egui::Ui, width: f32, icon: skin::Icon, caption: &str, control:
 fn autostart_file() -> Option<std::path::PathBuf> {
     std::env::var_os("XDG_CONFIG_HOME")
         .map(std::path::PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|home| std::path::PathBuf::from(home).join(".config")))
+        .or_else(|| {
+            std::env::var_os("HOME").map(|home| std::path::PathBuf::from(home).join(".config"))
+        })
         .map(|dir| dir.join("autostart").join("bloody-a90.desktop"))
 }
 
@@ -242,7 +270,8 @@ fn set_autostart(on: bool) -> Result<String, String> {
         exe.display()
     );
     if let Some(dir) = path.parent() {
-        std::fs::create_dir_all(dir).map_err(|error| format!("无法创建 {}：{error}", dir.display()))?;
+        std::fs::create_dir_all(dir)
+            .map_err(|error| format!("无法创建 {}：{error}", dir.display()))?;
     }
     std::fs::write(&path, text).map_err(|error| format!("无法写入 {}：{error}", path.display()))?;
     Ok(format!("已写入 {}", path.display()))

@@ -161,7 +161,7 @@ impl App {
         let mut change_root = None;
         let available = !self.pending;
         skin::sheet().show(ui, |ui| {
-            ui.label(RichText::new("AMC 宏库").font(skin::bold(17.0)));
+            ui.set_width(ui.available_width());
             ui.horizontal(|ui| {
                 path_field(ui, &mut self.library.root_draft, "宏库目录", 440.0);
                 if skin::button(
@@ -179,15 +179,21 @@ impl App {
                     command = Some(Command::List);
                 }
             });
-            ui.label(format!("当前宏库：{}", self.library.root));
-            ui.label("分类对应目录，宏对应 AMC 文件。删除项保留在该宏库的 .trash 目录。");
+            ui.label(
+                RichText::new(format!(
+                    "当前宏库：{} · 分类对应目录，宏对应 AMC 文件。删除项保留在该宏库的 .trash 目录。",
+                    self.library.root
+                ))
+                .color(skin::GRAY),
+            );
             ui.horizontal_top(|ui| {
+                ui.spacing_mut().item_spacing.x = 24.0;
                 ui.vertical(|ui| {
-                    ui.set_min_width(190.0);
-                    ui.strong("分类");
+                    ui.set_min_width(220.0);
+                    ui.spacing_mut().item_spacing.y = 6.0;
+                    skin::step(ui, "①", "收藏夹");
                     for category in &self.library.listing.categories {
-                        if ui
-                            .selectable_label(self.library.category == *category, category)
+                        if skin::list_item(ui, category, self.library.category == *category, 220.0)
                             .clicked()
                         {
                             self.library.category = category.clone();
@@ -201,7 +207,8 @@ impl App {
                 });
                 ui.vertical(|ui| {
                     ui.set_min_width(330.0);
-                    ui.strong("宏文件");
+                    ui.spacing_mut().item_spacing.y = 6.0;
+                    skin::step(ui, "②", "文件");
                     for key in self
                         .library
                         .listing
@@ -209,12 +216,13 @@ impl App {
                         .iter()
                         .filter(|k| k.category == self.library.category)
                     {
-                        if ui
-                            .selectable_label(
-                                self.library.selected.as_ref() == Some(key),
-                                &key.file,
-                            )
-                            .clicked()
+                        if skin::list_item(
+                            ui,
+                            &key.file,
+                            self.library.selected.as_ref() == Some(key),
+                            330.0,
+                        )
+                        .clicked()
                         {
                             self.library.selected = Some(key.clone());
                             self.library.file_name = key.file.clone();

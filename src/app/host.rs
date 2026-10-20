@@ -22,7 +22,12 @@ impl App {
         Some(match field {
             Field::DoubleClick => {
                 let ms = draft.double_click_ms?;
-                (1100 - ms.clamp(200, 900), (200, 900), 10, format!("{ms} ms"))
+                (
+                    1100 - ms.clamp(200, 900),
+                    (200, 900),
+                    10,
+                    format!("{ms} ms"),
+                )
             }
             Field::Lines => {
                 let lines = draft.scroll_lines?;
@@ -111,9 +116,7 @@ impl App {
         }
         if clicked[1] {
             self.host_draft = self.host.clone();
-            if hardware
-                && let Some(source) = self.source.clone()
-            {
+            if hardware && let Some(source) = self.source.clone() {
                 self.load_keys(&source);
             }
         }
@@ -148,44 +151,50 @@ impl App {
         let help = "按键响应：较长的响应时间可以过滤按键触点的抖动。此设置写入鼠标，\
                     并同时保存“按键”页中尚未应用的修改。";
         let mut dirty = false;
-        skin::card(ui, Some(skin::Icon::Speed), "按键响应 (ms)", help, |ui| {
-            ui.add_space(10.0);
-            let Some(config) = &mut self.keys else {
-                ui.label(RichText::new("请先连接鼠标或读取备份。").color(skin::GRAY));
-                return;
-            };
-            let previous = config.debounce_ms();
-            let mut ms = u32::from(previous.unwrap_or(0));
-            ui.horizontal(|ui| {
-                ui.add_space(42.0);
-                let width = ui.available_width() - 160.0;
-                ui.vertical(|ui| {
-                    ui.spacing_mut().item_spacing.y = 0.0;
-                    if skin::trackbar(ui, &mut ms, (0, 16), 1, width).changed() {
-                        let _ = config.set_debounce_ms(ms as u8);
-                        dirty = true;
-                    }
-                    let labels: Vec<String> = (0..=16).map(|i| i.to_string()).collect();
-                    let marks: Vec<(f32, &str)> = labels
-                        .iter()
-                        .enumerate()
-                        .map(|(i, text)| (i as f32 / 16.0, text.as_str()))
-                        .collect();
-                    skin::ticks(ui, width, &marks);
+        skin::card(
+            ui,
+            Some(skin::Icon::Speed),
+            "按键响应 (ms)",
+            help,
+            |ui| {
+                ui.add_space(10.0);
+                let Some(config) = &mut self.keys else {
+                    ui.label(RichText::new("请先连接鼠标或读取备份。").color(skin::GRAY));
+                    return;
+                };
+                let previous = config.debounce_ms();
+                let mut ms = u32::from(previous.unwrap_or(0));
+                ui.horizontal(|ui| {
+                    ui.add_space(42.0);
+                    let width = ui.available_width() - 160.0;
+                    ui.vertical(|ui| {
+                        ui.spacing_mut().item_spacing.y = 0.0;
+                        if skin::trackbar(ui, &mut ms, (0, 16), 1, width).changed() {
+                            let _ = config.set_debounce_ms(ms as u8);
+                            dirty = true;
+                        }
+                        let labels: Vec<String> = (0..=16).map(|i| i.to_string()).collect();
+                        let marks: Vec<(f32, &str)> = labels
+                            .iter()
+                            .enumerate()
+                            .map(|(i, text)| (i as f32 / 16.0, text.as_str()))
+                            .collect();
+                        skin::ticks(ui, width, &marks);
+                    });
+                    ui.add_space(42.0);
+                    ui.vertical(|ui| {
+                        ui.add_space(-6.0);
+                        skin::value(ui, &ms.to_string(), false, [76.0, 30.0]);
+                    });
                 });
-                ui.add_space(42.0);
-                ui.vertical(|ui| {
-                    ui.add_space(-6.0);
-                    skin::value(ui, &ms.to_string(), false, [76.0, 30.0]);
-                });
-            });
-            if previous.is_none() {
-                ui.label(
-                    RichText::new("当前编码不在已确认的范围内。选择时间后可替换此设置。")
-                        .color(skin::GRAY),
-                );
-            }
-        });
+                if previous.is_none() {
+                    ui.label(
+                        RichText::new("当前编码不在已确认的范围内。选择时间后可替换此设置。")
+                            .color(skin::GRAY),
+                    );
+                }
+            },
+        );
         if dirty {
             self.keys_dirty = true;
         }
@@ -194,10 +203,16 @@ impl App {
             "双击速度：写入 {} 的鼠标设置，不写入鼠标。",
             self.host_target()
         );
-        skin::card(ui, Some(skin::Icon::DoubleClick), "双击速度", &help, |ui| {
-            ui.add_space(4.0);
-            self.host_slider(ui, Field::DoubleClick);
-        });
+        skin::card(
+            ui,
+            Some(skin::Icon::DoubleClick),
+            "双击速度",
+            &help,
+            |ui| {
+                ui.add_space(4.0);
+                self.host_slider(ui, Field::DoubleClick);
+            },
+        );
         self.host_footer(ui, Field::DoubleClick, true);
     }
 
@@ -272,10 +287,16 @@ impl App {
             "指针移动速度：写入 {} 中这只鼠标的加速度设置，不写入鼠标。",
             self.host_target()
         );
-        skin::card(ui, Some(skin::Icon::Pointer), "指针移动速度", &help, |ui| {
-            ui.add_space(10.0);
-            self.host_slider(ui, Field::Pointer);
-        });
+        skin::card(
+            ui,
+            Some(skin::Icon::Pointer),
+            "指针移动速度",
+            &help,
+            |ui| {
+                ui.add_space(10.0);
+                self.host_slider(ui, Field::Pointer);
+            },
+        );
         self.host_footer(ui, Field::Pointer, false);
     }
 }
