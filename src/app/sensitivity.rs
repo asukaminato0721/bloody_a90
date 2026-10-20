@@ -1,6 +1,10 @@
 use super::{App, DEFAULT_DPI};
 use crate::{skin, worker::Job};
 use bloody_a90::sensitivity;
+use bloody_a90::{
+    i18n::{tr, tr_text},
+    tf,
+};
 use eframe::egui::{self, RichText, vec2};
 
 impl App {
@@ -15,11 +19,11 @@ impl App {
     }
 
     pub(super) fn sensitivity_block(&self) -> Result<Vec<u16>, String> {
-        self.device.as_ref().ok_or("鼠标未连接")?;
+        self.device.as_ref().ok_or(tr("鼠标未连接"))?;
         let template = self
             .sensitivity_template
             .as_deref()
-            .ok_or("尚未读取灵敏度设置")?;
+            .ok_or(tr("尚未读取灵敏度设置"))?;
         let (presets, selected) = self.active_presets();
         sensitivity::block(template, &presets, selected, None)
     }
@@ -28,7 +32,7 @@ impl App {
         let template = self
             .device
             .as_ref()
-            .ok_or("鼠标未连接")?
+            .ok_or(tr("鼠标未连接"))?
             .backup
             .sensitivity_template()?;
         sensitivity::with_lift_height(&template, self.lift_enabled.then_some(self.lift_level))
@@ -38,7 +42,7 @@ impl App {
         let template = self
             .device
             .as_ref()
-            .ok_or("鼠标未连接")?
+            .ok_or(tr("鼠标未连接"))?
             .backup
             .sensitivity_template()?;
         sensitivity::with_rate(&template, hz)
@@ -48,9 +52,9 @@ impl App {
     /// uses the level of the vertical bar. 校准 measures the surface.
     pub(super) fn lift(&mut self, ui: &mut egui::Ui) {
         ui.add_space(66.0);
-        let help = "鼠标抬起后，传感器停止报告位移。等级不是毫米数值。\n\
-                    校准时在使用表面上持续移动鼠标，保持鼠标接触表面。校准结果先载入此页，再点击“应用”保存。";
-        skin::card(ui, None, "传感器 [微精校准LOD]", help, |ui| {
+        let help = tr("鼠标抬起后，传感器停止报告位移。等级不是毫米数值。\n\
+                    校准时在使用表面上持续移动鼠标，保持鼠标接触表面。校准结果先载入此页，再点击“应用”保存。");
+        skin::card(ui, None, tr("传感器 [微精校准LOD]"), help, |ui| {
             ui.add_space(-20.0);
             ui.horizontal_top(|ui| {
                 ui.add_space(20.0);
@@ -60,23 +64,24 @@ impl App {
                     ui.add_space(16.0);
                     ui.horizontal(|ui| {
                         ui.add_space(28.0);
-                        if skin::button(ui, "⇣  校准", 114.0, self.connected() && !self.pending)
+                        if skin::button(ui, tr("⇣  校准"), 114.0, self.connected() && !self.pending)
                             .clicked()
                         {
                             self.start(Job::CalibrateLift);
                             self.status =
-                                "正在校准。请在使用表面上持续移动鼠标，保持鼠标接触表面。".into();
+                                tr("正在校准。请在使用表面上持续移动鼠标，保持鼠标接触表面。")
+                                    .into();
                         }
                     });
                 });
                 ui.add_space(24.0);
                 ui.vertical(|ui| {
                     ui.add_space(96.0);
-                    if skin::option(ui, !self.lift_enabled, "预设高度").clicked() {
+                    if skin::option(ui, !self.lift_enabled, tr("预设高度")).clicked() {
                         self.lift_enabled = false;
                     }
                     ui.add_space(14.0);
-                    if skin::option(ui, self.lift_enabled, "微精校准").clicked() {
+                    if skin::option(ui, self.lift_enabled, tr("微精校准")).clicked() {
                         self.lift_enabled = true;
                     }
                 });
@@ -105,7 +110,11 @@ impl App {
         let clicked = skin::footer(
             ui,
             self.footer_area,
-            &[("恢复默认", true), ("取消", true), ("应用", connected)],
+            &[
+                (tr("恢复默认"), true),
+                (tr("取消"), true),
+                (tr("应用"), connected),
+            ],
         );
         if clicked[0] {
             self.lift_enabled = false;
@@ -138,7 +147,7 @@ impl App {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 15.0;
             ui.add_space(95.0);
-            ui.label(RichText::new("目前 CPI :").font(skin::regular(16.0)));
+            ui.label(RichText::new(tr("目前 CPI :")).font(skin::regular(16.0)));
             ui.add_space(20.0);
             skin::value(ui, &current[0].to_string(), true, [100.0, 24.0]);
             skin::value(ui, &current[1].to_string(), true, [100.0, 24.0]);
@@ -158,9 +167,9 @@ impl App {
             ui,
             self.footer_area,
             &[
-                ("恢复默认", enabled[0]),
-                ("取消", enabled[1]),
-                ("应用", enabled[2]),
+                (tr("恢复默认"), enabled[0]),
+                (tr("取消"), enabled[1]),
+                (tr("应用"), enabled[2]),
             ],
         );
         if clicked[0] {
@@ -184,18 +193,19 @@ impl App {
         }
         if let Err(error) = &block {
             ui.label(
-                RichText::new(error)
+                RichText::new(tr_text(error))
                     .font(skin::regular(13.0))
                     .color(skin::GRAY),
             );
         }
         ui.add_space(8.0);
-        egui::CollapsingHeader::new("查看编码参数").show(ui, |ui| {
+        egui::CollapsingHeader::new(tr("查看编码参数")).show(ui, |ui| {
             egui::Grid::new("dpi-encoded")
                 .striped(true)
                 .min_col_width(90.0)
                 .show(ui, |ui| {
-                    for label in ["档位", "X 比例", "Y 比例", "传感器编码"] {
+                    for label in [tr("档位"), tr("X 比例"), tr("Y 比例"), tr("传感器编码")]
+                    {
                         ui.strong(label);
                     }
                     ui.end_row();
@@ -211,7 +221,7 @@ impl App {
                                 ui.monospace(format!("{:04x}", record.sensor_code));
                             }
                             Err(error) => {
-                                ui.colored_label(skin::ERROR, error);
+                                ui.colored_label(skin::ERROR, tr_text(&error));
                             }
                         }
                         ui.end_row();
@@ -253,9 +263,9 @@ impl App {
                         ui.add_space(18.0);
                         ui.label(
                             RichText::new(if axis == 0 {
-                                "X轴 设定 :"
+                                tr("X轴 设定 :")
                             } else {
-                                "Y轴 设定 :"
+                                tr("Y轴 设定 :")
                             })
                             .font(skin::regular(16.0)),
                         );
@@ -263,7 +273,7 @@ impl App {
                     if axis == 0 {
                         let used = ui.min_rect().width();
                         ui.add_space(439.0 - used);
-                        skin::check(ui, &mut self.separate, "启用X/Y");
+                        skin::check(ui, &mut self.separate, tr("启用X/Y"));
                     }
                 });
                 ui.add_space(14.0);
@@ -305,7 +315,7 @@ impl App {
                             ui.add_space(12.0);
                             let text = self.dpi[index][axis].to_string();
                             if skin::value(ui, &text, self.selected == index, [76.0, 30.0])
-                                .on_hover_text("点击设为当前档位")
+                                .on_hover_text(tr("点击设为当前档位"))
                                 .clicked()
                             {
                                 self.selected = index;
@@ -336,67 +346,77 @@ impl App {
             let code = device.backup.sensitivity_template().ok()?[0x1e];
             RATES.into_iter().find(|hz| u32::from(code) * hz == 1000)
         });
-        let help = "报告率：鼠标每秒向电脑报告位置的次数。点击“应用”保存并立即生效。";
+        let help = tr("报告率：鼠标每秒向电脑报告位置的次数。点击“应用”保存并立即生效。");
         let mut notes = Vec::new();
         if let Some(device) = &self.device {
             let (code, register) = device.rate;
             let running = match code {
                 1 | 2 | 4 | 8 => format!("{} Hz", 1000 / u32::from(code)),
-                other => format!("编码 {other:02x}"),
+                other => tf!("编码 {other:02x}"),
             };
-            notes.push((format!("当前运行：{running}"), skin::GRAY));
+            notes.push((tf!("当前运行：{running}"), skin::GRAY));
             if register & 0xc0 == 0x80 {
                 notes.push((
-                    "硬件切换键的回报率设置仍启用。重新插入后，鼠标会使用该设置。".into(),
+                    tr("硬件切换键的回报率设置仍启用。重新插入后，鼠标会使用该设置。").into(),
                     skin::CAPTION_RED,
                 ));
             }
         } else {
-            notes.push(("请先连接鼠标。".into(), skin::GRAY));
+            notes.push((tr("请先连接鼠标。").into(), skin::GRAY));
         }
         let shown = self.rate_draft.or(saved);
-        skin::card(ui, Some(skin::Icon::Rate), "报告率（Hz)", help, |ui| {
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-                ui.add_space(30.0);
-                let width = ui.available_width() - 150.0;
-                ui.add_enabled_ui(self.device.is_some(), |ui| {
-                    ui.vertical(|ui| {
-                        ui.spacing_mut().item_spacing.y = 2.0;
-                        let mut index = shown
-                            .and_then(|hz| RATES.iter().position(|r| *r == hz))
-                            .unwrap_or(3) as u32;
-                        if skin::trackbar(ui, &mut index, (0, 3), 1, width).changed() {
-                            self.rate_draft = Some(RATES[index as usize]);
-                        }
-                        skin::ticks(
-                            ui,
-                            width,
-                            &[
-                                (0.0, "125"),
-                                (1.0 / 3.0, "250"),
-                                (2.0 / 3.0, "500"),
-                                (1.0, "1000"),
-                            ],
-                        );
+        skin::card(
+            ui,
+            Some(skin::Icon::Rate),
+            tr("报告率（Hz)"),
+            help,
+            |ui| {
+                ui.add_space(10.0);
+                ui.horizontal(|ui| {
+                    ui.add_space(30.0);
+                    let width = ui.available_width() - 150.0;
+                    ui.add_enabled_ui(self.device.is_some(), |ui| {
+                        ui.vertical(|ui| {
+                            ui.spacing_mut().item_spacing.y = 2.0;
+                            let mut index = shown
+                                .and_then(|hz| RATES.iter().position(|r| *r == hz))
+                                .unwrap_or(3) as u32;
+                            if skin::trackbar(ui, &mut index, (0, 3), 1, width).changed() {
+                                self.rate_draft = Some(RATES[index as usize]);
+                            }
+                            skin::ticks(
+                                ui,
+                                width,
+                                &[
+                                    (0.0, "125"),
+                                    (1.0 / 3.0, "250"),
+                                    (2.0 / 3.0, "500"),
+                                    (1.0, "1000"),
+                                ],
+                            );
+                        });
                     });
+                    ui.add_space(40.0);
+                    let text = shown.map_or("—".into(), |hz| hz.to_string());
+                    skin::value(ui, &text, false, [76.0, 30.0]);
                 });
-                ui.add_space(40.0);
-                let text = shown.map_or("—".into(), |hz| hz.to_string());
-                skin::value(ui, &text, false, [76.0, 30.0]);
-            });
-            for (note, color) in &notes {
-                ui.label(RichText::new(note).font(skin::regular(13.0)).color(*color));
-            }
-        });
+                for (note, color) in &notes {
+                    ui.label(
+                        RichText::new(tr_text(note))
+                            .font(skin::regular(13.0))
+                            .color(*color),
+                    );
+                }
+            },
+        );
         let changed = self.rate_draft.is_some() && self.rate_draft != saved;
         let clicked = skin::footer(
             ui,
             self.footer_area,
             &[
-                ("恢复默认", self.device.is_some()),
-                ("取消", self.rate_draft.is_some()),
-                ("应用", changed && !self.pending),
+                (tr("恢复默认"), self.device.is_some()),
+                (tr("取消"), self.rate_draft.is_some()),
+                (tr("应用"), changed && !self.pending),
             ],
         );
         if clicked[0] {
@@ -422,9 +442,11 @@ impl App {
     pub(super) fn brightness(&mut self, ui: &mut egui::Ui) {
         ui.add_space(66.0);
         let current = self.device.as_ref().map(|device| device.brightness);
-        let help = "灯光亮度调整：\n提供鼠标四种背光亮度的设置。A90 是单色灯光，RGB 与灯效编辑不适用于此型号。";
+        let help = tr(
+            "灯光亮度调整：\n提供鼠标四种背光亮度的设置。A90 是单色灯光，RGB 与灯效编辑不适用于此型号。",
+        );
         let mut chosen = None;
-        skin::card(ui, Some(skin::Icon::Light), "灯光亮度", help, |ui| {
+        skin::card(ui, Some(skin::Icon::Light), tr("灯光亮度"), help, |ui| {
             ui.add_space(6.0);
             ui.horizontal(|ui| {
                 let width = 806.0;
@@ -435,13 +457,13 @@ impl App {
             });
             ui.add_space(110.0);
             if current.is_none() {
-                ui.label(RichText::new("请先连接鼠标。").color(skin::GRAY));
+                ui.label(RichText::new(tr("请先连接鼠标。")).color(skin::GRAY));
             }
         });
         if skin::footer(
             ui,
             self.footer_area,
-            &[("恢复默认", current.is_some() && !self.pending)],
+            &[(tr("恢复默认"), current.is_some() && !self.pending)],
         )[0]
         {
             chosen = Some(3);

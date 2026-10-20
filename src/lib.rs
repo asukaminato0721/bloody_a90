@@ -18,6 +18,7 @@ pub mod host_open;
 pub mod host_program;
 pub mod host_text;
 pub mod host_window;
+pub mod i18n;
 pub mod library;
 pub mod linux_input;
 pub mod macros;

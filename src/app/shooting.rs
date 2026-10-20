@@ -5,6 +5,10 @@ use bloody_a90::{
     shooting::{self, Cycle, Shot},
     storage::{self, END},
 };
+use bloody_a90::{
+    i18n::{tr, tr_text},
+    tf,
+};
 use eframe::egui::{self, RichText};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -144,9 +148,9 @@ impl App {
     /// switch key, ② the shooting type, ③ the shots of the program.
     pub(super) fn shooting_page(&mut self, ui: &mut egui::Ui, sniper: bool) {
         let titles = if sniper {
-            ["狙击设置", "狙击类别", "编程区"]
+            [tr("狙击设置"), tr("狙击类别"), tr("编程区")]
         } else {
-            ["左键编程", "编程文件", "编程区"]
+            [tr("左键编程"), tr("编程文件"), tr("编程区")]
         };
         let column = egui::Color32::from_rgb(29, 30, 32);
         let mut assign = false;
@@ -170,7 +174,7 @@ impl App {
                         skin::step(ui, "①", titles[0]);
                         ui.add_space(40.0);
                         ui.label(
-                            RichText::new("程序槽位")
+                            RichText::new(tr("程序槽位"))
                                 .font(skin::regular(16.0))
                                 .color(skin::DISABLED),
                         );
@@ -182,9 +186,9 @@ impl App {
                         };
                         for index in if sniper { 5..=7 } else { 1..=4 } {
                             let caption = if sniper {
-                                format!("狙击键 {}", index - 4)
+                                tf!("狙击键 {}", index - 4)
                             } else {
-                                format!("程序槽位 {index}")
+                                tf!("程序槽位 {index}")
                             };
                             if skin::list_item(ui, &caption, *slot == index, 273.0).clicked() {
                                 *slot = index;
@@ -192,7 +196,7 @@ impl App {
                         }
                         ui.add_space(30.0);
                         ui.label(
-                            RichText::new("切换按键")
+                            RichText::new(tr("切换按键"))
                                 .font(skin::regular(16.0))
                                 .color(skin::DISABLED),
                         );
@@ -208,9 +212,9 @@ impl App {
                                     );
                                 }
                             });
-                        skin::check(ui, &mut editor.all_profiles, "全部配置");
-                        assign = skin::button(ui, "指定切换按键", 273.0, self.keys.is_some())
-                            .on_hover_text("把切换按键设为执行此槽位，点击“应用”后写入")
+                        skin::check(ui, &mut editor.all_profiles, tr("全部配置"));
+                        assign = skin::button(ui, tr("指定切换按键"), 273.0, self.keys.is_some())
+                            .on_hover_text(tr("把切换按键设为执行此槽位，点击“应用”后写入"))
                             .clicked();
                     });
                 });
@@ -237,11 +241,11 @@ impl App {
                         ui.add_space(46.0);
                         ui.spacing_mut().item_spacing.y = 20.0;
                         for (kind, name) in [
-                            (Kind::A, "A-多连"),
-                            (Kind::B, "B-循环"),
-                            (Kind::C, "C-机枪"),
-                            (Kind::D, "D-临阵"),
-                            (Kind::Macro, "M-宏枪"),
+                            (Kind::A, tr("A-多连")),
+                            (Kind::B, tr("B-循环")),
+                            (Kind::C, tr("C-机枪")),
+                            (Kind::D, tr("D-临阵")),
+                            (Kind::Macro, tr("M-宏枪")),
                         ] {
                             if mode(ui, name, draft.kind == kind).clicked() {
                                 draft.kind = kind;
@@ -305,13 +309,14 @@ impl App {
         });
         match &binding {
             Ok(binding) => {
-                ui.collapsing("查看编译程序", |ui| {
-                    for (caption, action) in [("按下", &binding.press), ("弹起", &binding.release)]
+                ui.collapsing(tr("查看编译程序"), |ui| {
+                    for (caption, action) in
+                        [(tr("按下"), &binding.press), (tr("弹起"), &binding.release)]
                     {
                         ui.label(caption);
                         match action {
                             Action::Direct(word) => {
-                                ui.monospace(storage::describe(*word));
+                                ui.monospace(tr_text(&storage::describe(*word)));
                             }
                             Action::Macro(words) => {
                                 for instruction in storage::list(words).instructions {
@@ -326,7 +331,7 @@ impl App {
                 });
             }
             Err(error) => {
-                ui.colored_label(skin::ERROR, error);
+                ui.colored_label(skin::ERROR, tr_text(error));
             }
         }
         if assign && let Some(config) = &mut self.keys {
@@ -348,9 +353,9 @@ impl App {
             .map_or(bloody_a90::backup::ShootingRoute::Unknown, |backup| {
                 backup.shooting_route()
             });
-        ui.colored_label(skin::ERROR, route.description());
+        ui.colored_label(skin::ERROR, tr_text(route.description()));
         let config = binding.and_then(|binding| {
-            let mut config = self.keys.clone().ok_or("请先连接鼠标或读取备份")?;
+            let mut config = self.keys.clone().ok_or(tr("请先连接鼠标或读取备份"))?;
             config.set_shooting(slot, binding)?;
             config.set_shooting_parameters(slot, vertical)?;
             configuration::build(&config)?;
@@ -360,9 +365,9 @@ impl App {
             ui,
             self.footer_area,
             &[
-                ("载入按键草稿", config.is_ok()),
+                (tr("载入按键草稿"), config.is_ok()),
                 (
-                    "应用",
+                    tr("应用"),
                     config.is_ok() && self.device.is_some() && !self.pending,
                 ),
             ],
@@ -379,7 +384,7 @@ impl App {
             self.start(Job::SaveButtons(Box::new(config.clone())));
         }
         if let Err(error) = config {
-            ui.colored_label(skin::ERROR, error);
+            ui.colored_label(skin::ERROR, tr_text(&error));
         }
     }
 }
@@ -419,7 +424,9 @@ fn shots(ui: &mut egui::Ui, draft: &mut Draft) {
             .color(skin::LIGHT_GRAY)
     };
     if draft.kind == Kind::Macro {
-        ui.label(gray("M-宏枪：使用“奥斯卡II”页当前编译的按下和弹起程序。"));
+        ui.label(gray(tr(
+            "M-宏枪：使用“奥斯卡II”页当前编译的按下和弹起程序。",
+        )));
         statement(ui, draft.kind);
         return;
     }
@@ -432,19 +439,19 @@ fn shots(ui: &mut egui::Ui, draft: &mut Draft) {
     draft.loop_start = draft.loop_start.clamp(1, draft.count);
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 8.0;
-        ui.label(gray("设定弹数"));
+        ui.label(gray(tr("设定弹数")));
         ui.add(egui::DragValue::new(&mut draft.count).range(1..=limit));
         ui.add_space(14.0);
-        ui.label(gray("准心回位"));
+        ui.label(gray(tr("准心回位")));
         skin::check(ui, &mut draft.recover, "");
         if matches!(draft.kind, Kind::B | Kind::C) {
             ui.add_space(14.0);
-            ui.label(gray("次循环 从"));
+            ui.label(gray(tr("次循环 从")));
             ui.add(egui::DragValue::new(&mut draft.loop_start).range(1..=draft.count));
-            ui.label(gray(&format!("到 {} 发", draft.count)));
+            ui.label(gray(&tf!("到 {} 发", draft.count)));
         }
         ui.add_space(14.0);
-        skin::check(ui, &mut draft.special, "等待左键状态");
+        skin::check(ui, &mut draft.special, tr("等待左键状态"));
     });
     ui.add_space(18.0);
     egui::Frame::new()
@@ -458,19 +465,19 @@ fn shots(ui: &mut egui::Ui, draft: &mut Draft) {
                 .show(ui, |ui| {
                     ui.label(gray(""));
                     for i in 0..draft.count {
-                        ui.label(RichText::new(format!("第 {} 发", i + 1)).font(skin::bold(15.0)));
+                        ui.label(RichText::new(tf!("第 {} 发", i + 1)).font(skin::bold(15.0)));
                     }
                     ui.end_row();
-                    ui.label(gray("连击间歇\n(毫秒)"));
+                    ui.label(gray(tr("连击间歇\n(毫秒)")));
                     for shot in &mut draft.shots[..draft.count] {
                         ui.add(egui::DragValue::new(&mut shot.interval_ms).range(1..=999));
                     }
                     ui.end_row();
                     let vertical = draft.kind == Kind::D;
                     ui.label(gray(if vertical {
-                        "修正Y轴  Y="
+                        tr("修正Y轴  Y=")
                     } else {
-                        "修正(X,Y)  Y="
+                        tr("修正(X,Y)  Y=")
                     }));
                     let count = draft.count;
                     for (i, shot) in draft.shots[..count].iter_mut().enumerate() {
@@ -481,7 +488,7 @@ fn shots(ui: &mut egui::Ui, draft: &mut Draft) {
                         );
                     }
                     ui.end_row();
-                    ui.label(gray("偏移量  X="));
+                    ui.label(gray(tr("偏移量  X=")));
                     for (i, shot) in draft.shots[..count].iter_mut().enumerate() {
                         let movement = draft.kind != Kind::A || i + 1 < count;
                         ui.add_enabled(
@@ -498,15 +505,15 @@ fn shots(ui: &mut egui::Ui, draft: &mut Draft) {
 /// htmlb_ModeStatement: what the chosen type is for.
 fn statement(ui: &mut egui::Ui, kind: Kind) {
     let text = match kind {
-        Kind::A => "A-多连：限使用于 [手枪与连狙及机枪类] 的多连发压枪射击。",
-        Kind::B => "B-循环：限使用于 [手枪与连狙及机枪类] 的循环压枪射击。",
-        Kind::C => "C-机枪：限使用于 [连狙及机枪类] 的机枪压枪射击。",
-        Kind::D => "D-临阵：限使用于 [手枪与连狙及机枪类] 临阵可调的循环压枪射击。",
-        Kind::Macro => "M-宏枪：限转换 [奥斯卡宏指令] 角色动作与射击合并于左键。",
+        Kind::A => tr("A-多连：限使用于 [手枪与连狙及机枪类] 的多连发压枪射击。"),
+        Kind::B => tr("B-循环：限使用于 [手枪与连狙及机枪类] 的循环压枪射击。"),
+        Kind::C => tr("C-机枪：限使用于 [连狙及机枪类] 的机枪压枪射击。"),
+        Kind::D => tr("D-临阵：限使用于 [手枪与连狙及机枪类] 临阵可调的循环压枪射击。"),
+        Kind::Macro => tr("M-宏枪：限转换 [奥斯卡宏指令] 角色动作与射击合并于左键。"),
     };
     ui.add_space(20.0);
     ui.label(
-        RichText::new("说明>>")
+        RichText::new(tr("说明>>"))
             .font(skin::regular(15.0))
             .color(skin::CAPTION_RED),
     );
@@ -516,7 +523,7 @@ fn statement(ui: &mut egui::Ui, kind: Kind) {
             .color(egui::Color32::from_rgb(138, 138, 138)),
     );
     ui.label(
-        RichText::new("X 向右为正，Y 向下为正，位移使用鼠标计数值。")
+        RichText::new(tr("X 向右为正，Y 向下为正，位移使用鼠标计数值。"))
             .font(skin::regular(13.0))
             .color(egui::Color32::from_rgb(138, 138, 138)),
     );
@@ -524,11 +531,11 @@ fn statement(ui: &mut egui::Ui, kind: Kind) {
 
 fn trigger_name(button: usize) -> &'static str {
     match button {
-        9 => "“1”键",
-        10 => "“C”键",
-        11 => "“3”键",
-        3 => "中键",
-        4 => "后侧键",
-        _ => "前侧键",
+        9 => tr("“1”键"),
+        10 => tr("“C”键"),
+        11 => tr("“3”键"),
+        3 => tr("中键"),
+        4 => tr("后侧键"),
+        _ => tr("前侧键"),
     }
 }

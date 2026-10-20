@@ -1,0 +1,1038 @@
+# English. Captions of the official program come from its English texts.
+AMC 文件不是有效的 UTF-16	The AMC file is not valid UTF-16
+无法识别 AMC 文件编码	Cannot detect the AMC file encoding
+缺少 Macro 元素	Missing Macro element
+未知的重复方式 {}	Unknown repeat mode {}
+配置 {}	Profile {}
+应用程序配置关联	Application Profile Association
+支持 KDE Plasma Wayland 和 X11。使用窗口的应用标识，不使用窗口标题。	Supports KDE Plasma Wayland and X11. Uses the window's application ID, not the window title.
+无匹配项时使用默认配置。应用保持不变时，可以用鼠标按键手动切换配置。	The default profile is used when nothing matches. While the application stays the same, profiles can be switched manually with mouse buttons.
+前台应用：{}	Foreground application: {}
+尚未读取	Not read yet
+读取前台应用	Read Foreground App
+自动切换已停止。处理错误后，点击“读取前台应用”重试。	Automatic switching has stopped. Fix the error, then click "Read Foreground App" to retry.
+启用自动配置切换	Enable automatic profile switching
+默认配置	Default profile
+鼠标当前配置：{} / {}	Current mouse profile: {} / {}
+应用标识	Application ID
+鼠标配置	Mouse profile
+删除	Delete
+添加应用	Add Application
+应用	APPLY
+取消修改	Discard Changes
+自动切换已停止	Automatic switching stopped
+等待鼠标连接	Waiting for the mouse
+自动切换已启用	Automatic switching enabled
+自动切换已关闭	Automatic switching disabled
+全局手势未启用	Global gestures not enabled
+缺少手势文件路径	Missing gesture file path
+已载入手势文件。修改后点击“保存”。	Gesture file loaded. Click "Save" after editing.
+已保存手势文件：{}	Gesture file saved: {}
+普通触发键需在按键页设为对应鼠标按键。顶键或按配置指定的手势，请在按键页选择“主机动作 → 手势”。	Ordinary trigger buttons must be set to the matching mouse button on the Keys page. For the top button or per-profile gestures, choose "Host Action → Gesture" on the Keys page.
+全局手势	Global Gestures
+左键	Left
+右键	Right
+中键	Middle
+后退键	Back Button
+前进键	Forward Button
+应用全局设置	Apply Global Settings
+停止全局手势	Stop Global Gestures
+中断宏	Interrupt Macro
+按键页指定的手势与普通触发键共用此处的动作。停止全局手势会停止两种触发方式。	Gestures assigned on the Keys page share the actions here with the ordinary trigger buttons. Stopping global gestures stops both kinds of trigger.
+载入已保存的按键手势	Load Saved Button Gestures
+同时按下右键和中键可停止全局手势。普通触发键未移动时保留原点击。	Press the right and middle buttons together to stop global gestures. An ordinary trigger button that did not move keeps its original click.
+编辑后需重新应用。手势距离使用鼠标原始位移。关闭本工具会解除输入接管。	Apply again after editing. Gesture distances use raw mouse motion. Closing this tool releases the input grab.
+按住重复宏：即时手势中按住触发键时循环，释放识别时执行一遍。开关宏再次匹配同一手势时停止。	Repeat-while-held macros loop while the trigger is held in instant gestures and run once when recognized on release. Toggle macros stop when the same gesture matches again.
+手势文件路径	Gesture file path
+载入	Load
+保存	Save
+更换路径可另存为新文件。载入会替换该套手势的编辑内容。	Change the path to save as a new file. Loading replaces the edits of this gesture set.
+按距离即时响应	Respond instantly by distance
+即时响应距离：	Instant response distance:
+即时响应使用前八个单方向。折线动作保持原值。	Instant response uses the first eight single directions. Polyline actions keep their values.
+显示浮动手势提示板	Show the floating gesture hint panel
+当前动作：{}	Current action: {}
+程序参数：	Program arguments:
+未设置	Not set
+键盘	Keyboard
+媒体键	Media Key
+鼠标按键	Mouse Button
+滚轮向上	Wheel Up
+滚轮向下	Wheel Down
+AMC 宏	AMC Macro
+滚轮向左	Wheel Left
+滚轮向右	Wheel Right
+打开文件或程序	Open File or Program
+输入文字	Type Text
+最小化指针下的窗口	Minimize Window Under Pointer
+最大化指针下的窗口	Maximize Window Under Pointer
+应用放大（Ctrl+滚轮）	App Zoom In (Ctrl+Wheel)
+应用缩小（Ctrl+滚轮）	App Zoom Out (Ctrl+Wheel)
+全部最小化（KDE Wayland）	Minimize All (KDE Wayland)
+其他按键	Other Key
+仅修饰键	Modifiers only
+USB HID 键码：	USB HID usage:
+左 Ctrl	Left Ctrl
+左 Shift	Left Shift
+左 Alt	Left Alt
+左 Super	Left Super
+右 Ctrl	Right Ctrl
+右 Shift	Right Shift
+右 Alt	Right Alt
+右 Super	Right Super
+例如：A=4，V=25，X=27，Enter=40，Esc=41。	For example: A=4, V=25, X=27, Enter=40, Esc=41.
+Consumer HID 键码：	Consumer HID usage:
+播放/暂停=205，静音=226，音量加=233，音量减=234。	Play/Pause=205, Mute=226, Volume Up=233, Volume Down=234.
+鼠标按键：	Mouse button:
+AMC 文件路径	AMC file path
+文件、程序路径或 URL	File, program path or URL
+可执行文件直接启动。其他文件和 URL 使用默认应用。目标按完整路径处理。	Executables start directly. Other files and URLs open with the default application. The target is treated as a full path.
+程序参数，可留空。每行一个参数。	Program arguments, may be empty. One argument per line.
+截图、桌面画笔和语音功能可调用已安装的 Linux 工具。	Screenshots, desktop pen and voice features can call installed Linux tools.
+参数中的空格和引号按原文传递。带参数时，目标必须是可执行程序。	Spaces and quotes in arguments are passed as written. With arguments, the target must be an executable.
+要输入的文字	Text to type
+支持 KWin EIS，或提供虚拟键盘接口的 Wayland 桌面。换行发送 Enter。	Supports KWin EIS, or Wayland desktops with a virtual keyboard interface. Line breaks send Enter.
+应用需支持 Ctrl+滚轮缩放。使用其他绑定的应用可设置键盘动作或 AMC 宏。	The application must support Ctrl+Wheel zoom. For applications with other bindings, use a keyboard action or an AMC macro.
+替换当前方向的动作	Replace the Action of This Direction
+键盘 {} + {}	Keyboard {} + {}
+媒体键 {}	Media key {}
+鼠标按键 {}	Mouse button {}
+放大	Zoom In
+缩小	Zoom Out
+全部最小化	All Minimum
+仅点击“替换”才改变动作。载入的其他动作保持原值。	The action changes only when you click "Replace". Other loaded actions keep their values.
+{}：释放时识别预览	{}: recognition preview on release
+按住左键绘图。松开后显示匹配动作。此区域不执行动作。	Hold the left button to draw. The matching action shows after release. Nothing is executed in this area.
+{}：{}	{}: {}
+没有匹配的手势	No matching gesture
+方向序列：{}  {}	Direction sequence: {}  {}
+当前桌面	the current desktop
+正在读取桌面设置…	Reading desktop settings…
+当前桌面不提供此设置，或没有找到 A90。	The current desktop does not provide this setting, or no A90 was found.
+慢	Slow
+快	Fast
+恢复默认	RESET
+取消	CANCEL
+按键响应：较长的响应时间可以过滤按键触点的抖动。此设置写入鼠标，并同时保存“按键”页中尚未应用的修改。	Key Response: a longer response time filters contact bounce of the buttons. This setting is written to the mouse, together with unapplied changes of the "Keys" page.
+按键响应 (ms)	Key  Response(ms)
+请先连接鼠标或读取备份。	Connect the mouse or read a backup first.
+当前编码不在已确认的范围内。选择时间后可替换此设置。	The current code is outside the confirmed range. Choose a time to replace it.
+双击速度：写入 {} 的鼠标设置，不写入鼠标。	Double-click speed: written to the mouse settings of {}, not to the mouse.
+双击速度	Double-click speed
+滚轮调节：写入 {} 的鼠标设置，不写入鼠标。	Wheel adjustment: written to the mouse settings of {}, not to the mouse.
+滚轮调节	Roller Adjustment
+垂直滚动	Vertical Scrolling
+一次滚动行数	Number of rows scrolled at once
+一次滚动屏幕	Scrolling the screen at once
+桌面没有提供整页滚动设置。	The desktop does not offer page-wise scrolling.
+指针移动速度：写入 {} 中这只鼠标的加速度设置，不写入鼠标。	Pointer speed: written to this mouse's acceleration setting in {}, not to the mouse.
+指针移动速度	Pointer movement speed
+按键主机动作未启用	Button host actions not enabled
+16 合一手势	16-in-1 Gestures
+鼠标手势	Mouse Gestures
+无效的主机动作	Invalid host action
+应用放大	App Zoom In
+应用缩小	App Zoom Out
+每行一个程序参数，可留空	One program argument per line, may be empty
+截图、桌面画笔和语音可调用已安装的 Linux 应用。	Screenshots, desktop pen and voice can call installed Linux applications.
+按下时输入的文字	Text typed on press
+应用需支持 Ctrl+滚轮缩放。	The application must support Ctrl+Wheel zoom.
+按住此键移动鼠标。设定此按键时，载入手势页的当前动作。修改方向后，在手势页重新应用。	Hold this button and move the mouse. Setting this button loads the current actions of the Gestures page. After changing directions, apply again on the Gestures page.
+最小化当前桌面和活动中的所有可最小化窗口。需要 KDE Wayland。	Minimizes all minimizable windows of the current desktop and activity. Requires KDE Wayland.
+每次按下或每格滚动执行一格水平滚动。	Each press or wheel notch scrolls one step horizontally.
+主机动作需要本程序保持运行。手势按住绘图，其他动作按下执行。	Host actions need this program to keep running. Gestures draw while held; other actions run on press.
+停止主机动作	Stop Host Actions
+启用已保存的主机动作	Enable Saved Host Actions
+键盘按键	Keyboard Key
+多媒体	Multimedia
+系统按键	System Key
+快捷操作	Shortcut
+功能	Function
+射击模式	Shooting Mode
+宏	Macro
+主机动作	Host Action
+禁用	Disabled
+后退键（四键）	Back button (button 4)
+前进键（五键）	Forward button (button 5)
+播放/暂停	Play/Pause
+停止	Stop
+上一曲	Previous Track
+下一曲	Next Track
+静音	Mute
+音量加	Volume Up
+音量减	Volume Down
+浏览器后退	Browser Back
+浏览器前进	Browser Forward
+停止加载	Stop Loading
+刷新	Refresh
+搜索	Search
+收藏夹	Favorites
+浏览器主页	Browser Home
+打开浏览器	Open Browser
+电子邮件	Email
+媒体播放器	Media Player
+媒体控制设置	Media Control Settings
+计算器	Calculator
+文件管理器	File Manager
+电源	Power
+睡眠	Sleep
+唤醒	Wake
+剪切 Ctrl+X	Cut Ctrl+X
+复制 Ctrl+C	Copy Ctrl+C
+粘贴 Ctrl+V	Paste Ctrl+V
+删除 Delete	Delete Delete
+查找 Ctrl+F	Find Ctrl+F
+全选 Ctrl+A	Select All Ctrl+A
+重做 Ctrl+Y	Redo Ctrl+Y
+撤销 Ctrl+Z	Undo Ctrl+Z
+新建 Ctrl+N	New Ctrl+N
+打开 Ctrl+O	Open Ctrl+O
+保存 Ctrl+S	Save Ctrl+S
+打印 Ctrl+P	Print Ctrl+P
+左键双击	Double_click_left_key
+左键三击	Left Triple Click
+DPI 档位上移	DPI Level Up
+DPI 档位下移	DPI Level Down
+DPI 增加	DPI Increase
+DPI 减少	DPI Decrease
+精确模式（按住生效）	Precision Mode (while held)
+配置上移	Profile Up
+配置下移	Profile Down
+配置循环	Profile Cycle
+灯光上移	Light Up
+灯光下移	Light Down
+灯光循环	Light Cycle
+回报率循环	Report Rate Cycle
+抬起高度切换	Lift-off Height Toggle
+切换 Y 轴	Toggle Y Axis
+锁定右键	Lock Right Button
+宏（{} 字）	Macro ({} words)
+后侧键	Back side button
+前侧键	Front side button
+“1”键	"1" button
+“C”键	"C" button
+“3”键	"3" button
+记录 {}	Record {}
+无主键（仅修饰键）	No main key (modifiers only)
+无效按键	Invalid key
+无效功能	Invalid function
+奥斯卡宏编译失败：{}	Oscar macro compilation failed: {}
+主机：{}	Host: {}
+鼠标{}	Mouse {}
+键盘：{}	Keyboard: {}
+模式{}	Mode {}
+按键设置	Key settings
+请连接鼠标，或在 其他设置 → 已有备份 中读取文件。	Connect the mouse, or read a file under Other Settings → Existing Backup.
+其他记录（A90 没有对应的物理按键）	Other records (no physical button on the A90)
+当前：{} / {}	Current: {} / {}
+动作由桌面处理。实际效果取决于桌面快捷键和默认应用设置。	The desktop handles the action. The effect depends on desktop shortcuts and default applications.
+使用奥斯卡II中的单次滚轮程序：{} 字	Uses the single wheel program from Oscar II: {} words
+使用奥斯卡II中的直接滚轮动作	Uses the direct wheel action from Oscar II
+滚轮程序无法编译：{}	The wheel program cannot be compiled: {}
+使用奥斯卡II中的程序：按下 {} 字，弹起 {} 字	Uses the program from Oscar II: press {} words, release {} words
+奥斯卡II中的程序无法编译：{}	The program from Oscar II cannot be compiled: {}
+每格滚动执行一次按下程序，再执行释放程序。滚轮不使用按住或开关重复。	Each wheel notch runs the press program, then the release program. The wheel does not use hold or toggle repeat.
+射击模式索引由固件解释，效果取决于射击设置。	The firmware interprets the shooting mode index; the effect depends on the shooting settings.
+设定此按键	Set This Button
+手势不能指定给滚轮	Gestures cannot be assigned to the wheel
+停止查询	Stop Query
+按键查询	Key queries
+按住鼠标上的按键，自动选中对应记录	Hold a button on the mouse to select its record
+恢复此方向滚动	Restore scrolling in this direction
+请按下鼠标按键	Press mouse button please
+按住：{}	Held: {}
+修改只影响当前模式。点击“应用”后写入鼠标并读回核对。	Changes affect only the current mode. Click "Apply" to write them to the mouse and verify by reading back.
+新宏	New Macro
+宏库目录	Macro library folder
+打开宏库	Open Library
+当前宏库：{} · 分类对应目录，宏对应 AMC 文件。删除项保留在该宏库的 .trash 目录。	Current library: {} · Categories are folders and macros are AMC files. Deleted items stay in the library's .trash folder.
+暂无分类	No categories
+文件	File
+暂无宏文件	No macro files
+分类名称	Category name
+新建分类	New Category
+分类重命名	Rename Category
+删除分类	Delete Category
+宏名称	Macro name
+新建空宏	New Empty Macro
+另存为新宏	Save as New Macro
+载入编辑器	Load into Editor
+宏重命名	Rename Macro
+删除宏	Delete
+恢复上次删除	Restore Last Deleted
+当前编辑文件：{} / {}	Editing: {} / {}
+分辨率	Resolution
+按键响应	Key Response
+回报率	Reporting Rate
+微精校准	Calibration
+滚轮	Scroll Wheel
+指针	Pointer
+左键编程	Left Click Macro
+狙击键	Sniper Key
+奥斯卡II	Oscar II
+奥斯卡III	Oscar III
+灯光亮度	Lighting Brightness
+关于软件	About Software
+关于硬件	About Hardware
+已有备份	Existing Backup
+配置文件	Profile File
+应用关联	App Association
+手势	Gestures
+手势：配置全局触发键、编辑动作和文件，并在绘图区域预览识别结果。	Gestures: set global trigger buttons, edit actions and files, and preview recognition in the drawing area.
+按键设置：选择记录并指定动作，点击“应用”写入鼠标。按键查询可找出物理按键对应的记录。	Key settings: choose a record and assign an action, then click "Apply" to write it to the mouse. Key Query finds the record of a physical button.
+分辨率：设置各档 X / Y 轴 CPI。点击“应用”保存并立即生效。	Resolution: set the X / Y CPI of each level. Click "Apply" to save; it takes effect immediately.
+奥斯卡宏编辑器：编辑 M 型文本，导入或导出 AMC 文件。在“按键”页把宏指定给按键。	Oscar macro editor: edit M text and import or export AMC files. Assign the macro to a button on the "Keys" page.
+奥斯卡III：按分类管理 AMC 宏，编辑后可保存、另存为或指定给按键。	Oscar III: manage AMC macros by category. After editing, save, save as, or assign to a button.
+射击编程：编辑连击或循环程序，保存到鼠标，并指定切换按键。	Shooting programs: edit burst or loop programs, save them to the mouse and assign the switch button.
+按键响应：硬件响应时间写入鼠标。双击速度写入 KDE 或 GNOME。	Key Response: the hardware response time is written to the mouse. Double-click speed is written to KDE or GNOME.
+滚轮：一次滚动的行数，写入桌面设置。	Scroll Wheel: lines per scroll, written to the desktop settings.
+指针：指针移动速度，写入桌面中这只鼠标的加速度设置。	Pointer: pointer speed, written to this mouse's acceleration setting on the desktop.
+回报率：保存所选回报率，并立即应用。	Reporting Rate: saves the chosen rate and applies it immediately.
+微精校准：设置抬起高度，或在使用表面上移动鼠标进行校准。应用后立即生效。	Calibration: set the lift-off height, or calibrate by moving the mouse on its surface. Takes effect when applied.
+灯光亮度：调整鼠标灯光亮度，立即生效。	Brightness: adjust the mouse light brightness; takes effect immediately.
+关于软件：独立 Rust 工具的适配进度。	About Software: migration progress of the standalone Rust tool.
+关于硬件：设备型号、固件和存储区地址。	About Hardware: device model, firmware and storage addresses.
+读取已有的 A90 固件 07 备份，查看灵敏度、按键表和宏程序。	Read an existing A90 firmware 07 backup to view sensitivity, key tables and macro programs.
+配置文件：导出当前灵敏度和按键设置，或导入后在各页应用。	Profile File: export the current sensitivity and key settings, or import them and apply on each page.
+应用关联：按前台应用切换鼠标配置。关闭本工具后停止自动切换。	App Association: switch mouse profiles by the foreground application. Automatic switching stops when this tool closes.
+就绪	Ready
+正在处理…	Working…
+工作线程已关闭	The worker thread has stopped
+无法转换按键表：{}	Cannot convert the key table: {}
+按键	Button
+灵敏度	Sensitivity
+编程设置	Macro Settings
+灯光设置	Lighting Settings
+其他设置	Other Settings
+重新读取	Read Again
+连接鼠标	Connect Mouse
+A90 · 固件 {} · 核心 {} · {}	A90 · firmware {} · core {} · {}
+未连接鼠标 · 可离线编辑	No mouse connected · offline editing
+全键编程模板 : 提供MMORPG等游戏所需的多按键自定义编程功能，若FPS/TPS射击类游戏玩家可选用更专业的左键编程模板进行设置。	Full key programming template (+/-/M): Provides custom multi-key programming functions for MMORPG and other games.  For FPS/TPS shooting games, players can choose a specialized left key programming template
+灵敏度设置 : 提供鼠标的分辨率CPI，按键响应，报告率，微精校准LOD，滚轮及指针等灵敏度的功能设置。	Sensitivity settings: Offers sensitivity adjustments for mouse resolution (CPI), button response, report rate, fine calibration (LOD), scroll wheel, pointer, and other functions.
+编程设置 : 提供多种编程平台的“组合键”“左键编程”“奥斯卡II”“狙击键”等编程组合设置，并在按键设置中绑定编程按键使用。	Programming Settings: Provides programming combinations such as "combination keys," "left key programming," "Oscar II," and "sniper keys" for various programming platforms, and binds programming keys in the key settings.
+灯光设置：提供鼠标灯光亮度，灯效控制及RGB编辑等设置。（因产品功能不同，灯光设置会有所差异)	Lighting settings: Offers settings for mouse lighting brightness, lightning effect control, and RGB editing. (Light settings may vary by product.)
+其他设置 : 提供鼠标软件与硬件等设备设置。	Other Settings: Offers device settings for mouse software and hardware.
+全键编程模板	Full Key Programming
+左键编程模板	Left Click Programming
+A90 为单色灯光，不使用 RGB 灯效控制。	The A90 has single-color lighting and does not use RGB effect control.
+备份读取完成	Backup read
+亮度已设为 {}	Brightness set to {}
+校准结果：{} 级。点击“应用”保存。	Calibration result: level {}. Click "Apply" to save.
+应用关联设置已应用	App association settings applied
+鼠标未连接	Mouse not connected
+已导入 AMC：{}{}	AMC imported: {}{}
+（HighLanguage 已转换为 M 文本）	 (HighLanguage converted to M text)
+指令区	Command Zone
+仿真区	Simulation Zone
+重复方式	Repeat Mode
+单次	Once
+不重复执行	Non-repeat
+按住	Hold
+按下：执行\n弹起：终止执行	Press: run\nRelease: stop
+按下：执行	Press: run
+弹起：终止执行	Release: stop
+开关	Toggle
+按下：执行\n再按：终止执行	Press: run\nPress again: stop
+再按：终止执行	Press again: stop
+编程区	Macro Zone
+AMC 或二进制文件路径	AMC or binary file path
+功能注解	Notes
+测试	Test
+跳转使用源代码行号。gowhile X N 把第 X 行至此行重复 N 次；\nifkey K S L 在按键 K 按住（S=1）或松开（S=0）时跳到第 L 行。	Jumps use source line numbers. gowhile X N repeats lines X to this one N times;\nifkey K S L jumps to line L while key K is held (S=1) or released (S=0).
+跳转使用源代码行号。gowhile X N 把第 X 行至此行重复 N 次；	Jumps use source line numbers. gowhile X N repeats lines X to this one N times;
+ifkey K S L 在按键 K 按住（S=1）或松开（S=0）时跳到第 L 行。	ifkey K S L jumps to line L while key K is held (S=1) or released (S=0).
+HighLanguage 格式的 AMC 文件导入时会转换为 M 文本。\n详细语法见 docs/research/TEXT.md。	AMC files in HighLanguage format are converted to M text on import.\nSee docs/research/TEXT.md for the full syntax.
+HighLanguage 格式的 AMC 文件导入时会转换为 M 文本。	AMC files in HighLanguage format are converted to M text on import.
+详细语法见 docs/research/TEXT.md。	See docs/research/TEXT.md for the full syntax.
+测试：写入当前配置的后侧键（第四键）。\n宏无法停止时，同时按下 Caps Lock、Scroll Lock、Num Lock 中断。	Test: writes to the back side button (button 4) of the current profile.\nIf the macro cannot stop, press Caps Lock, Scroll Lock and Num Lock together to interrupt it.
+测试：写入当前配置的后侧键（第四键）。	Test: writes to the back side button (button 4) of the current profile.
+宏无法停止时，同时按下 Caps Lock、Scroll Lock、Num Lock 中断。	If the macro cannot stop, press Caps Lock, Scroll Lock and Num Lock together to interrupt it.
+实体键盘输入	Physical keyboard input
+开启后，在本窗口按下的键盘按键会插入编程区。	When on, keys pressed in this window are inserted into the programming area.
+：预设延迟时间(毫秒)	:Preset Delay Time(ms)
+四键	4th
+五键	5th
+按下	Press
+弹起	Release
+单击	Click
+前滚	Forward
+后滚	Backward
+鼠标相对移动坐标(X,Y)	Mouse relative coordinate(X,Y)
+插入	Insert
+鼠标绝对坐标(X,Y)	Absolute mouse position (X,Y)
+延时	Delay
+跳跃前往第	Jump to line
+行	
+从第	From line
+行起循环	loop
+次	times
+按住时前往第	While held, go to line
+变量 VarA ~ VarZ	Variables VarA ~ VarZ
+定义变量 VarA = 0	Define VarA = 0
+VarA 加 1	VarA plus 1
+VarA 减 1	VarA minus 1
+VarA 不等于 3 时前往第 1 行	Go to line 1 while VarA is not 3
+导出 AMC 到文件路径	Export AMC to File Path
+从文件路径导入 AMC	Import AMC from File Path
+撤销	Undo
+重做	Redo
+清空编程区	Clear Programming Area
+弹起程序	Release Program
+弹起程序由重复方式决定	The release program follows the repeat mode
+编译通过 · 按下 {} 字 · 弹起 {} 字 · 在“按键”页选择“宏”即可指定给按键	Compiled · press {} words · release {} words · choose "Macro" on the "Keys" page to assign it
+⚠ 测试宏无法停止时，同时按下 Caps Lock、Scroll Lock、Num Lock 中断。	⚠ If a test macro cannot stop, press Caps Lock, Scroll Lock and Num Lock together to interrupt it.
+编码与导出	Encoding and Export
+复制按下字节	Copy Press Bytes
+复制弹起字节	Copy Release Bytes
+导出按下程序	Export Press Program
+先填写文件路径	Enter a file path first
+导出弹起程序	Export Release Program
+鼠标	Mouse
+动作	Action
+控制	Control
+运算	Arithmetic
+请先连接鼠标或读取备份，导入需要以它为底	Connect the mouse or read a backup first; the import is based on it
+已导入配置文件。请在“分辨率”和“按键”页点击“应用”写入鼠标。	Profile file imported. Click "Apply" on the "Resolution" and "Keys" pages to write it to the mouse.
+32768 字节备份的文件路径	File path of a 32768-byte backup
+读取文件	Read File
+解析鼠标闪存	Parse Mouse Flash
+请先连接鼠标	Connect the mouse first
+尚未读取文件。	No file read yet.
+复制解析结果	Copy Result
+未连接鼠标时，读取的备份会载入分辨率和按键页供查看与编辑。	Without a connected mouse, a backup that is read loads into the Resolution and Keys pages for viewing and editing.
+配置文件 :	Profile file:
+配置文件路径，例如 a90.cfg	Profile file path, e.g. a90.cfg
+导出	Export
+需要文件路径，以及已连接的鼠标或已读取的备份	Needs a file path and a connected mouse or a read backup
+导入	Import
+文件保存当前生效的灵敏度、全部按键配置、宏和已保存的主机动作。导入不会直接写入鼠标。	The file holds the active sensitivity, all key profiles, macros and saved host actions. Importing does not write to the mouse directly.
+硬件信息：设备型号、固件和存储区地址。	Hardware information: device model, firmware and storage addresses.
+硬件信息	Hardware information
+请先连接鼠标。	Connect the mouse first.
+机身码ID	Body ID
+固件	Firmware
+核心	Core
+接口	Interface
+当前配置	Current profile
+灵敏度区	Sensitivity area
+{}（出厂 {}）	{} (factory {})
+按键区	Key area
+设置区	Settings area
+设备数据	Device data
+开机自动启动	Automatically start up
+显示语言	Display Language
+Bloody A90 配置工具	Bloody A90 Configuration Tool
+独立 Rust 工具 · egui / eframe 0.37 · 版本 {}	Standalone Rust tool · egui / eframe 0.37 · version {}
+已接入：设备识别、闪存读取、灯光亮度、DPI 和回报率保存、按键与宏保存、射击编程、抬起高度、表面校准、硬件响应时间、配置文件、AMC 宏文件、HighLanguage。	Supported: device detection, flash reading, brightness, DPI and reporting rate saving, key and macro saving, shooting programs, lift-off height, surface calibration, hardware response time, profile files, AMC macro files, HighLanguage.
+写入只使用与官方程序相同的保存流程，并限制在灵敏度页和 2600 至 3cff 的按键区。每次连接都会先保存完整备份。	Writes use only the same save procedure as the official program and are limited to the sensitivity page and the key area 2600 to 3cff. A full backup is saved on every connection.
+即时 DPI 和回报率使用已验证的命令 0d。不发送传感器传输、引导程序覆盖或授权写入命令。	Instant DPI and reporting rate use the verified command 0d. No sensor transfer, bootloader overwrite or authorization write commands are sent.
+桌面设置：双击速度、滚轮行数、指针速度。应用关联支持 KDE Wayland 和 X11。手势支持文件编辑、全局触发和主机宏。A90 不支持 RGB 灯效。	Desktop settings: double-click speed, wheel lines, pointer speed. App association supports KDE Wayland and X11. Gestures support file editing, global triggers and host macros. The A90 does not support RGB effects.
+研究记录见 docs/research。	Research notes are in docs/research.
+egui 文档	egui documentation
+找不到配置目录	Cannot find the configuration folder
+已关闭开机自动启动	Launch at startup disabled
+无法删除 {}：{}	Cannot delete {}: {}
+找不到程序路径：{}	Cannot find the program path: {}
+无法创建 {}：{}	Cannot create {}: {}
+无法写入 {}：{}	Cannot write {}: {}
+已写入 {}	Written {}
+尚未读取灵敏度设置	Sensitivity settings not read yet
+鼠标抬起后，传感器停止报告位移。等级不是毫米数值。\n校准时在使用表面上持续移动鼠标，保持鼠标接触表面。校准结果先载入此页，再点击“应用”保存。	After the mouse is lifted, the sensor stops reporting motion. Levels are not millimeters.\nWhile calibrating, keep moving the mouse on its surface without lifting it. The result loads into this page first; click "Apply" to save.
+鼠标抬起后，传感器停止报告位移。等级不是毫米数值。	After the mouse is lifted, the sensor stops reporting motion. Levels are not millimeters.
+校准时在使用表面上持续移动鼠标，保持鼠标接触表面。校准结果先载入此页，再点击“应用”保存。	While calibrating, keep moving the mouse on its surface without lifting it. The result loads into this page first; click "Apply" to save.
+传感器 [微精校准LOD]	Sensor calibration
+⇣  校准	⇣  Calibrate
+正在校准。请在使用表面上持续移动鼠标，保持鼠标接触表面。	Calibrating. Keep moving the mouse on its surface without lifting it.
+预设高度	Preset
+目前 CPI :	Current CPI :
+查看编码参数	View Encoding Parameters
+档位	Level
+X 比例	X scale
+Y 比例	Y scale
+传感器编码	Sensor code
+X轴 设定 :	Axirs X Setting :
+Y轴 设定 :	Axirs Y Setting :
+启用X/Y	Enabled X/Y
+点击设为当前档位	Click to make this the current level
+报告率：鼠标每秒向电脑报告位置的次数。点击“应用”保存并立即生效。	Reporting rate: how many times per second the mouse reports its position. Click "Apply" to save; it takes effect immediately.
+编码 {}	Code {}
+当前运行：{}	Running: {}
+硬件切换键的回报率设置仍启用。重新插入后，鼠标会使用该设置。	The reporting rate setting of the hardware switch button is still enabled. After replugging, the mouse uses that setting.
+报告率（Hz)	Report Rate（Hz)
+灯光亮度调整：\n提供鼠标四种背光亮度的设置。A90 是单色灯光，RGB 与灯效编辑不适用于此型号。	Brightness adjustment:\nfour backlight brightness levels. The A90 has single-color lighting; RGB and effect editing do not apply to this model.
+灯光亮度调整：	Brightness adjustment:
+提供鼠标四种背光亮度的设置。A90 是单色灯光，RGB 与灯效编辑不适用于此型号。	Four backlight brightness levels. The A90 has single-color lighting; RGB and effect editing do not apply to this model.
+狙击设置	Sniper Settings
+狙击类别	Sniper Type
+编程文件	Macro Type
+程序槽位	Program Slot
+狙击键 {}	Sniper Key {}
+程序槽位 {}	Program slot {}
+切换按键	Switch Button
+全部配置	All profiles
+指定切换按键	Assign Switch Button
+把切换按键设为执行此槽位，点击“应用”后写入	Sets the switch button to run this slot; written after clicking "Apply"
+A-多连	A-Burst
+B-循环	B-Strafe
+C-机枪	C-Machine
+D-临阵	D-In_Game
+M-宏枪	M-Macro
+查看编译程序	View Compiled Program
+请先连接鼠标或读取备份	Connect the mouse or read a backup first
+载入按键草稿	Load Key Draft
+M-宏枪：使用“奥斯卡II”页当前编译的按下和弹起程序。	M-Macro: uses the press and release programs currently compiled on the "Oscar II" page.
+设定弹数	Numbers
+准心回位	Return
+次循环 从	loops, from
+到 {} 发	to round {}
+等待左键状态	Waiting for left button state
+第 {} 发	Round {}
+连击间歇\n(毫秒)	Shot Interval\n(ms)
+连击间歇	Shot Interval
+(毫秒)	(ms)
+修正Y轴  Y=	Correct Y  Y=
+修正(X,Y)  Y=	Correct (X,Y)  Y=
+偏移量  X=	Offset  X=
+A-多连：限使用于 [手枪与连狙及机枪类] 的多连发压枪射击。	A-Burst: only for burst recoil control of [pistols, semi-auto snipers and machine guns].
+B-循环：限使用于 [手枪与连狙及机枪类] 的循环压枪射击。	B-Strafe: only for looping recoil control of [pistols, semi-auto snipers and machine guns].
+C-机枪：限使用于 [连狙及机枪类] 的机枪压枪射击。	C-Machine: only for machine gun recoil control of [semi-auto snipers and machine guns].
+D-临阵：限使用于 [手枪与连狙及机枪类] 临阵可调的循环压枪射击。	D-In_Game: only for looping recoil control adjustable on the fly for [pistols, semi-auto snipers and machine guns].
+M-宏枪：限转换 [奥斯卡宏指令] 角色动作与射击合并于左键。	M-Macro: only for merging [Oscar macro] character actions with shooting on the left button.
+说明>>	Explain>>
+X 向右为正，Y 向下为正，位移使用鼠标计数值。	X is positive to the right, Y is positive downward; offsets use mouse counts.
+已读取或应用滚轮设置	Wheel settings read or applied
+4-Way Wheel 正在运行	4-Way Wheel running
+4-Way Wheel 已关闭	4-Way Wheel off
+4-Way Wheel · 区域滚动	4-Way Wheel · Zone Scrolling
+正在读取滚轮设置…	Reading wheel settings…
+按鼠标核心启用区域滚动：	Enable zone scrolling for mouse cores:
+核心 {}	Core {}
+鼠标当前核心：{}	Current mouse core: {}
+左侧区域宽度	Left zone width
+左侧横向滚动，右侧纵向滚动	Left zone scrolls horizontally, right zone vertically
+显示横向滚动方向图标	Show the horizontal scrolling direction icon
+显示可拖动分隔图标	Show the draggable divider icon
+拖动后，程序保存该应用的分界。点击“重新读取”可载入更新后的设置。	After dragging, the program saves the divider for that application. Click "Read Again" to load the updated settings.
+默认左侧纵向滚动，右侧横向滚动。区域按指针所在窗口计算。	By default the left zone scrolls vertically and the right zone horizontally. Zones follow the window under the pointer.
+每应用分界	Per-application divider
+使用 KDE 应用标识。未匹配的应用使用上方默认分界。	Uses KDE application IDs. Unmatched applications use the default divider above.
+例如 org.kde.kwrite	e.g. org.kde.kwrite
+添加应用分界	Add Application Divider
+适用于 KDE Wayland。桌面和面板保留纵向滚动。关闭本工具会停止区域滚动。	For KDE Wayland. Desktop and panels keep vertical scrolling. Closing this tool stops zone scrolling.
+同时按下右键和中键可停止输入接管。再次点击“应用区域滚动”可恢复。	Press the right and middle buttons together to stop the input grab. Click "Apply Zone Scrolling" again to resume.
+应用区域滚动	Apply Zone Scrolling
+关联配置应为 1 至 7	The associated profile must be 1 to 7
+应用标识不能为空，也不能包含控制字符	The application ID must not be empty or contain control characters
+应用标识重复：{}	Duplicate application ID: {}
+关联设置头不完整	Incomplete association settings header
+关联设置开关无效	Invalid association settings switch
+默认关联配置无效	Invalid default association profile
+关联设置记录不完整	Incomplete association settings record
+关联配置无效	Invalid association profile
+当前固件缺少左键射击入口。保存槽位后，左键不会执行槽位程序。	The current firmware lacks the left-button shooting entry. After saving the slot, the left button will not run the slot program.
+当前固件包含左键射击入口。执行效果尚未实机验证。	The current firmware has the left-button shooting entry. The effect has not been verified on hardware.
+尚未识别当前固件的左键射击入口。执行效果尚未验证。	The left-button shooting entry of the current firmware is not recognized. The effect is unverified.
+无法读取备份：{}	Cannot read the backup: {}
+备份必须恰好包含 32768 字节	A backup must be exactly 32768 bytes
+备份不匹配 A90 型号 04fd、固件 07	The backup does not match A90 model 04fd, firmware 07
+地址超出备份范围	Address outside the backup
+表格超出备份范围	Table outside the backup
+宏 {} 没有完整的结束指令	Macro {} has no complete end instruction
+宏 {}：{}	Macro {}: {}
+{} 不是可转换的动作	{} is not a convertible action
+按键表中的配置数量或选择值无效	Invalid profile count or selection in the key table
+备份中的 DPI 档位数量或选择值无效	Invalid DPI level count or selection in the backup
+Bloody A90 · 型号 04fd · 固件 07\n	Bloody A90 · model 04fd · firmware 07\n
+Bloody A90 · 型号 04fd · 固件 07	Bloody A90 · model 04fd · firmware 07
+DPI 参数：{}\n	DPI parameters: {}\n
+DPI 参数：{}	DPI parameters: {}
+\n按键表：{}\n	\nKey table: {}\n
+按键表：{}	Key table: {}
+DPI 参数来源：{} · 字地址 {}\n启用档位：{} · 当前档位：{}\n回报率原始编码：{}\n校验：{}\n	DPI parameter source: {} · word address {}\nEnabled levels: {} · current level: {}\nRaw reporting rate code: {}\nChecksum: {}\n
+DPI 参数来源：{} · 字地址 {}	DPI parameter source: {} · word address {}
+启用档位：{} · 当前档位：{}	Enabled levels: {} · current level: {}
+回报率原始编码：{}	Raw reporting rate code: {}
+校验：{}	Checksum: {}
+出厂表	factory table
+保存表	saved table
+通过	passed
+不匹配	mismatch
+出厂表不使用此校验	the factory table does not use this checksum
+档位 {}：X 比例 {} · Y 比例 {} · 传感器编码 {}{}\n	Level {}: X scale {} · Y scale {} · sensor code {}{}\n
+档位 {}：X 比例 {} · Y 比例 {} · 传感器编码 {}{}	Level {}: X scale {} · Y scale {} · sensor code {}{}
+\n按键表来源：{} · 字地址 {}\n保存的配置数量：{} · 解析配置数量：{} · 当前配置：{}\n	\nKey table source: {} · word address {}\nSaved profiles: {} · parsed profiles: {} · current profile: {}\n
+按键表来源：{} · 字地址 {}	Key table source: {} · word address {}
+保存的配置数量：{} · 解析配置数量：{} · 当前配置：{}	Saved profiles: {} · parsed profiles: {} · current profile: {}
+\n配置 {} · 按键表 {}	\nProfile {} · key table {}
+配置 {} · 按键表 {}	Profile {} · key table {}
+ · 与配置 {} 共用	 · shared with profile {}
+  记录 {}：{}\n	  Record {}: {}\n
+  记录 {}：{}	  Record {}: {}
+  滚轮 {}：向下 {} · 向上 {}\n	  Wheel {}: down {} · up {}\n
+  滚轮 {}：向下 {} · 向上 {}	  Wheel {}: down {} · up {}
+未列出的按键记录为空操作。记录序号不是物理按键编号。\n	Unlisted key records are no-ops. Record numbers are not physical button numbers.\n
+未列出的按键记录为空操作。记录序号不是物理按键编号。	Unlisted key records are no-ops. Record numbers are not physical button numbers.
+\n辅助动作 · 字地址 {}\n	\nAuxiliary actions · word address {}\n
+辅助动作 · 字地址 {}	Auxiliary actions · word address {}
+  {}：{}\n	  {}: {}\n
+  {}：{}	  {}: {}
+\n宏 {} · 字地址 {} · {}\n	\nMacro {} · word address {} · {}\n
+宏 {} · 字地址 {} · {}	Macro {} · word address {} · {}
+结束指令	end instruction
+达到 256 字检查上限	reached the 256-word check limit
+指令不完整	incomplete instruction
+含未解析指令	contains unparsed instructions
+需要有效键盘按键或修饰键	Needs a valid keyboard key or modifier
+按键记录包含无效的直接动作	The key record contains an invalid direct action
+连击预设需要 2 或 3 次点击	Click presets need 2 or 3 clicks
+射击槽位应为 1 至 7	The shooting slot must be 1 to 7
+硬件按键响应时间应为 0 至 16 ms	The hardware key response time must be 0 to 16 ms
+{} 不是直接动作	{} is not a direct action
+配置超过 1700 个字，无法存入 2600 至 3d00	The configuration exceeds 1700 words and does not fit into 2600 to 3d00
+配置数量应为 1 至 7，当前配置必须存在	The profile count must be 1 to 7 and the current profile must exist
+头部标志包含未确认的位	The header flags contain unconfirmed bits
+校准没有收到有效样本。请在使用表面上移动鼠标后重试。	Calibration received no valid samples. Move the mouse on its surface and try again.
+无法打开 {}：{}	Cannot open {}: {}
+未找到 A90 的键盘接口	The A90 keyboard interface was not found
+无法列出 hidraw：{}	Cannot list hidraw: {}
+未找到 A90 的厂商接口（USB 09da:fafd）	The A90 vendor interface (USB 09da:fafd) was not found
+{} 正由其他操作使用。请等待该操作结束后重试。	{} is in use by another operation. Wait for it to finish and try again.
+无法打开 {}：{}。请安装 contrib/70-bloody-a90.rules 并重新插入鼠标。	Cannot open {}: {}. Install contrib/70-bloody-a90.rules and replug the mouse.
+无法锁定 {}：{}	Cannot lock {}: {}
+设备型号 {}、固件 {} 不是已分析的 A90 固件 07	Device model {}, firmware {} is not the analyzed A90 firmware 07
+HID 请求失败：{}	HID request failed: {}
+HID 请求只传输了 {} 字节	The HID request transferred only {} bytes
+命令 {} 的响应头不匹配	The response header of command {} does not match
+亮度响应 {} 超出 0 至 3	Brightness response {} is outside 0 to 3
+亮度应为 0 至 3	Brightness must be 0 to 3
+亮度读回 {}，期望 {}	Brightness read back {}, expected {}
+配置序号超出鼠标的配置数量	The profile number exceeds the mouse's profile count
+鼠标仍在等待上一次配置切换。请松开全部按键后重试。	The mouse is still waiting for the previous profile switch. Release all buttons and try again.
+配置切换尚未完成。松开全部按键后，鼠标会执行待处理的切换。	The profile switch has not finished. After all buttons are released, the mouse performs the pending switch.
+传感器尚未完成初始化	The sensor has not finished initializing
+即时灵敏度的运行参数或传感器状态读回不一致	The runtime parameters or sensor state of the instant sensitivity read back differently
+灵敏度已保存，但即时应用未完成：{}	Sensitivity saved, but the instant apply did not finish: {}
+灵敏度模板长度无效	Invalid sensitivity template length
+回报率编码无效	Invalid reporting rate code
+回报率已保存，但即时应用未完成：{}	Reporting rate saved, but the instant apply did not finish: {}
+抬起高度已保存，但即时应用未完成：{}	Lift-off height saved, but the instant apply did not finish: {}
+硬件按键响应时间的运行值读回不一致	The runtime value of the hardware key response time read back differently
+抬起高度应为 1 至 16 级	The lift-off height must be level 1 to 16
+抬起高度的运行值读回不一致	The runtime value of the lift-off height read back differently
+校准状态读回不一致	The calibration state read back differently
+校准时间应为 1 至 30 秒	The calibration time must be 1 to 30 seconds
+鼠标已经处于校准状态	The mouse is already calibrating
+鼠标通知模式读回不一致	The mouse notification mode read back differently
+读取范围超出 16384 个字	The read range exceeds 16384 words
+设备在 1000 次查询后仍未就绪	The device is still not ready after 1000 queries
+恢复范围必须按页对齐，并位于允许写入的区域	The restore range must be page aligned and inside the writable area
+恢复后读回不一致	Read back differently after restore
+保存地址或长度不在允许范围内	Save address or length outside the allowed range
+保存块的头部或校验值无效	Invalid header or checksum of the save block
+鼠标正在使用配置 {}，新按键表只有 {} 个配置。请先切换到范围内的配置。	The mouse is using profile {}, but the new key table has only {} profiles. Switch to a profile in range first.
+保存后读回不一致：字地址 {} 读到 {}，期望 {}	Read back differently after saving: word address {} read {}, expected {}
+无法连接 Wayland：{}	Cannot connect to Wayland: {}
+无法读取 KWin 窗口：{}	Cannot read KWin windows: {}
+当前 Wayland 桌面不提供 KWin 窗口接口。应用关联不可用。	The current Wayland desktop does not provide the KWin window interface. App association is unavailable.
+KWin 窗口连接已关闭	KWin window connection closed
+无法连接 X11：{}	Cannot connect to X11: {}
+文件已改变。请先重新读取文件，或另存为新文件。	The file has changed. Read it again first, or save as a new file.
+无法创建临时文件：{}	Cannot create a temporary file: {}
+无法创建手势临时文件	Cannot create the gesture temporary file
+已同时按下右键和中键。全局手势已停止。	Right and middle buttons pressed together. Global gestures stopped.
+按键手势通知队列已满或服务已停止	The button gesture notification queue is full or the service has stopped
+鼠标输入队列丢失事件。手势已停止，请重新启用。	The mouse input queue lost events. Gestures stopped; enable them again.
+等待方向	Waiting for direction
+按住触发键移动	Hold the trigger and move
+未匹配手势	No matching gesture
+继续移动，松开结束	Keep moving, release to finish
+文字输入服务未启用	Text input service not enabled
+窗口动作服务未启用	Window action service not enabled
+两套手势的方向表无效	Invalid direction tables of the two gesture sets
+请至少启用一套手势	Enable at least one gesture set
+手势触发键必须是五个普通鼠标按键之一	The gesture trigger must be one of the five ordinary mouse buttons
+两套手势不能使用同一个触发键	The two gesture sets cannot use the same trigger
+全局手势和区域滚动	Global gestures and zone scrolling
+区域滚动	Zone scrolling
+{}已启用：{}	{} enabled: {}
+全局手势已停止	Global gestures stopped
+全局手势线程异常退出，输入接管已释放	The global gesture thread exited abnormally; the input grab was released
+全局手势线程异常退出	The global gesture thread exited abnormally
+主机手势宏已中断	Host gesture macro interrupted
+{}：等待方向	{}: waiting for direction
+按键手势通知源已停止	The button gesture notification source has stopped
+鼠标移动积压过多，按键手势已停止	Too much mouse motion queued; button gestures stopped
+手势动作队列已满。请增加即时响应距离。	The gesture action queue is full. Increase the instant response distance.
+缺少宏的按键状态读取服务	Missing the button state service for macros
+手势宏已停止：{}	Gesture macro stopped: {}
+剪切	Cut
+右键和中键	right and middle buttons
+窗口	Window
+文字	Text
+未知	Unknown
+下 → 左	Down → Left
+鼠标手势，上	Mouse gesture, Up
+上	Up
+无法打开目标	Cannot open the target
+按键状态读取已停止	Button state reading stopped
+鼠标接口持续被占用，无法读取宏需要的按键状态	The mouse interface stays busy; cannot read the button state macros need
+按键状态读取线程已退出	The button state reading thread has exited
+无法请求按键状态	Cannot request the button state
+提示板状态不可用	Hint panel state unavailable
+提示板线程未能启动	The hint panel thread failed to start
+手势提示板线程已退出	The gesture hint panel thread has exited
+未找到手势提示板字体	Font for the gesture hint panel not found
+无法连接手势提示层：{}	Cannot connect the gesture hint layer: {}
+当前 Wayland 桌面不提供手势提示层。请关闭提示板选项后重试。	The current Wayland desktop does not provide a gesture hint layer. Turn off the hint panel option and try again.
+提示板像素长度无效	Invalid hint panel pixel length
+桌面关闭了手势提示层	The desktop closed the gesture hint layer
+手势提示层连接已关闭	Gesture hint layer connection closed
+提示板需要 24 或 32 位 X11 色深	The hint panel needs a 24 or 32-bit X11 color depth
+X11 不支持提示板鼠标穿透：{}	X11 does not support click-through for the hint panel: {}
+下	Down
+左	Left
+右	Right
+上 → 左	Up → Left
+上 → 右	Up → Right
+下 → 右	Down → Right
+左 → 上	Left → Up
+左 → 下	Left → Down
+右 → 上	Right → Up
+右 → 下	Right → Down
+右上斜向	Diagonal up-right
+左下斜向	Diagonal down-left
+左上斜向	Diagonal up-left
+右下斜向	Diagonal down-right
+上 → 下	Up → Down
+下 → 上	Down → Up
+右 → 左	Right → Left
+左 → 右	Left → Right
+动作元素不能包含属性	Action elements cannot have attributes
+动作属性 {} 重复	Duplicate action attribute {}
+手势动作的 {} 不是非负整数	Gesture action {} is not a non-negative integer
+请填写 AMC 文件路径	Enter the AMC file path
+奥斯卡宏	Oscar Macro
+请填写打开目标的路径或 URL	Enter the path or URL of the target to open
+手势文件超过 1 MiB	The gesture file exceeds 1 MiB
+手势 XML 无效：{}	Invalid gesture XML: {}
+手势文件不支持 XML 命名空间	Gesture files do not support XML namespaces
+手势文件需要无属性的 Root 元素	The gesture file needs a Root element without attributes
+Gesture 元素重复	Duplicate Gesture element
+手势属性 {} 重复	Duplicate gesture attribute {}
+无法区分两套手势格式：需要 Mode 或 EnabledTipBoard	Cannot tell the two gesture formats apart: needs Mode or EnabledTipBoard
+手势属性 {} 应为 0 或 1	Gesture attribute {} must be 0 or 1
+手势距离应为正整数	The gesture distance must be a positive integer
+缺少 Gesture 元素	Missing Gesture element
+Gesture 元素不能包含属性	The Gesture element cannot have attributes
+方向元素不能包含属性	Direction elements cannot have attributes
+该手势格式不包含方向 {}	This gesture format has no direction {}
+方向 {} 重复	Duplicate direction {}
+方向 {} 的属性 {} 重复	Duplicate attribute {} of direction {}
+手势文件必须包含全部 16 个方向	The gesture file must contain all 16 directions
+属性 {} 需要纯文本内容	Attribute {} needs plain text content
+UTF-16 手势文件的字节数无效	Invalid byte count of the UTF-16 gesture file
+手势文件不是有效的 UTF-16	The gesture file is not valid UTF-16
+手势文件需要 UTF-8 或带 BOM 的 UTF-16	The gesture file needs UTF-8 or UTF-16 with a BOM
+第 {} 行后缺少 {	Missing { after line {}
+第 {} 行的 { 没有对应的 }	The { on line {} has no matching }
+找不到标记 {}	Label {} not found
+第 {} 行：{}	Line {}: {}
+条件只支持 == 和 !=	Conditions support only == and !=
+ifkey 的按键应为 1 至 24	The ifkey button must be 1 to 24
+未知按键名称 {}	Unknown key name {}
+未知鼠标按键	Unknown mouse button
+滚轮方向应为 forward 或 backward	The wheel direction must be forward or backward
+滚轮次数无效	Invalid wheel count
+移动方式应为 absolute 或 relative	The move mode must be absolute or relative
+延迟单位应为 ms、s 或 min	The delay unit must be ms, s or min
+无法运行 {}：{}	Cannot run {}: {}
+{} 失败：{}	{} failed: {}
+KWin 中没有找到 A90	A90 not found in KWin
+已写入 KDE 设置。指针速度立即生效，双击和滚动行数在程序重新启动后生效。	KDE settings written. Pointer speed takes effect immediately; double-click and scroll lines after the program restarts.
+已写入 GNOME 设置。GNOME 没有滚动行数设置。	GNOME settings written. GNOME has no scroll line setting.
+当前桌面不受支持。请在桌面的鼠标设置中调整。	The current desktop is not supported. Adjust it in the desktop's mouse settings.
+手势状态读取失败	Failed to read the gesture state
+没有启用按键主机动作	No button host actions enabled
+主机动作尚未绑定保存的按键表	Host actions are not bound to a saved key table yet
+按键手势已启用	Button gestures enabled
+按键手势未启用	Button gestures not enabled
+鼠标按键表已改变，按键主机动作已停止。请重新读取并应用设置。	The mouse key table changed and button host actions stopped. Read and apply the settings again.
+鼠标通知模式已关闭，按键主机动作已停止。	The mouse notification mode was turned off and button host actions stopped.
+{}；恢复通知模式失败：{}	{}; restoring the notification mode failed: {}
+按键主机动作已启用	Button host actions enabled
+按键主机动作线程异常退出	The button host action thread exited abnormally
+按键主机动作已停止	Button host actions stopped
+按键主机动作队列已满	The button host action queue is full
+主机动作的配置数量与鼠标不一致	The profile count of the host actions does not match the mouse
+配置 {} 的记录 {} 仍有硬件动作	Record {1} of profile {0} still has a hardware action
+按键主机动作设置超过 1 MiB	Button host action settings exceed 1 MiB
+主机动作类型或执行阶段无效	Invalid host action type or stage
+按键手势需要完整的两套手势定义，且不能指定给滚轮	Button gestures need both complete gesture set definitions and cannot be assigned to the wheel
+按键手势的方向表类型无效	Invalid direction table type of the button gesture
+按键表与主机动作文件不一致。请重新读取并应用按键设置。	The key table and the host action file differ. Read and apply the key settings again.
+主机动作的硬件表指针超出配置范围	The hardware table pointer of the host actions is outside the profiles
+配置 {} 的滚轮仍有硬件动作	The wheel of profile {} still has a hardware action
+主机动作文件需要 UTF-8	The host action file needs UTF-8
+主机动作 XML 无效：{}	Invalid host action XML: {}
+主机动作不支持 XML 命名空间	Host actions do not support XML namespaces
+主机动作文件头无效	Invalid host action file header
+主机动作开关无效	Invalid host action switch
+按键手势开关无效	Invalid button gesture switch
+按键手势包含未知方向表	Button gestures contain an unknown direction table
+按键手势方向表重复或不完整	Button gesture direction tables are duplicated or incomplete
+按键手势方向表类型不匹配	Button gesture direction table types do not match
+按键手势需要两套方向表	Button gestures need two direction tables
+主机动作签名无效	Invalid host action signature
+主机动作签名长度无效	Invalid host action signature length
+主机动作记录无效	Invalid host action record
+主机动作记录序号无效	Invalid host action record number
+主机动作记录重复或不完整	Host action records are duplicated or incomplete
+主机动作包含未知或重复元素	Host actions contain unknown or duplicate elements
+无法读取 {}：{}	Cannot read {}: {}
+{}；恢复主机动作文件失败：{}	{}; restoring the host action file failed: {}
+程序参数超过 64 KiB，或包含不支持的控制字符	Program arguments exceed 64 KiB or contain unsupported control characters
+程序参数超过 128 个	More than 128 program arguments
+带参数的目标必须是 Linux 可执行文件。请填写程序路径。	A target with arguments must be a Linux executable. Enter the program path.
+打开目标不能为空，也不能包含空字符	The target to open must not be empty or contain null characters
+请把 Windows 打开目标改为 Linux 路径	Change the Windows target to a Linux path
+找不到打开目标：{}	Target to open not found: {}
+打开目标的进程队列已满，请稍后重试	The process queue for opening targets is full; try again later
+无法打开目标：{}	Cannot open the target: {}
+打开目标失败，进程状态：{}	Opening the target failed, process status: {}
+无法读取打开目标的进程状态：{}	Cannot read the process status of the opened target: {}
+打开目标请求队列已满，请稍后重试	The request queue for opening targets is full; try again later
+打开目标线程已退出	The thread for opening targets has exited
+主机手势不支持宏指令 {}。硬件功能指令请指定给鼠标按键。	Host gestures do not support macro instruction {}. Assign hardware function instructions to mouse buttons.
+按键主机动作只支持打开目标、文字、缩放、窗口动作和左右滚轮	Button host actions support only open target, text, zoom, window actions and horizontal wheel
+按键主机动作的 Action 应为 0 至 3	The Action of a button host action must be 0 to 3
+无法读取手势宏 {}：{}	Cannot read gesture macro {}: {}
+手势 AMC 宏超过 1 MiB	The gesture AMC macro exceeds 1 MiB
+打开目标动作需要 Action=0 至 3	The open target action needs Action=0 to 3
+文字输入动作需要 Action=0 至 3	The text input action needs Action=0 to 3
+缩放动作需要 Action=0 至 3	The zoom action needs Action=0 to 3
+窗口动作需要 Action=0 至 3	The window action needs Action=0 to 3
+主机手势暂不支持 Simulator={}，Object={}	Host gestures do not support Simulator={}, Object={} yet
+按键动作需要 Action=0 至 3，滚轮需要 Action=3 至 6	Button actions need Action=0 to 3; the wheel needs Action=3 to 6
+主机宏指令地址越界	Host macro instruction address out of range
+主机宏指令无效	Invalid host macro instruction
+主机键码无效	Invalid host key code
+主机媒体键无效	Invalid host media key
+主机系统键无效	Invalid host system key
+主机变量指令无效	Invalid host variable instruction
+缺少打开目标	Missing target to open
+缺少输入文字	Missing text to type
+主机宏指令未实现：{}	Host macro instruction not implemented: {}
+输入文字不能超过 64 KiB，也不能包含空字符	Typed text must not exceed 64 KiB or contain null characters
+输入文字包含手势文件不支持的控制字符	The typed text contains control characters the gesture file does not support
+文字输入需要 libei 1.6 或更新版本：{}	Text input needs libei 1.6 or later: {}
+无法连接文字输入服务：{}	Cannot connect to the text input service: {}
+文字输入需要支持 EIS 文字设备的 KWin Wayland：{}	Text input needs KWin Wayland with EIS text devices: {}
+无法创建文字输入连接	Cannot create the text input connection
+无法初始化文字输入连接：{}	Cannot initialize the text input connection: {}
+桌面未提供可用的 EIS 文字设备。文字输入需要 libei 1.6 和支持此接口的 KWin。	The desktop provides no usable EIS text device. Text input needs libei 1.6 and a KWin that supports this interface.
+桌面已断开文字输入连接	The desktop disconnected the text input connection
+文字输入设备当前不可用	The text input device is unavailable
+文字输入需要 KWin EIS 或 Wayland 虚拟键盘接口。当前不支持 X11 文字输入。	Text input needs KWin EIS or the Wayland virtual keyboard interface. X11 text input is not supported.
+{}；{}	{}; {}
+文字输入服务初始化超时	The text input service timed out initializing
+无法提交文字输入：{}	Cannot submit text input: {}
+文字保存检查需要独立 KWin 会话	The text save check needs a separate KWin session
+测试文字设备不可用	The test text device is unavailable
+Wayland 文字输入连接已断开	The Wayland text input connection was lost
+Wayland 文字输入设备已移除	The Wayland text input device was removed
+Wayland 文字输入接口检查超时	The Wayland text input interface check timed out
+虚拟键盘文字超过 65536 个字符	Virtual keyboard text exceeds 65536 characters
+无法连接 Wayland 文字输入：{}	Cannot connect Wayland text input: {}
+桌面未提供 Wayland 虚拟键盘接口	The desktop provides no Wayland virtual keyboard interface
+Wayland 文字输入需要一个座席。当前未找到座席，或存在多个座席。	Wayland text input needs one seat. No seat or several seats were found.
+桌面拒绝了虚拟文字键盘：{}	The desktop rejected the virtual text keyboard: {}
+文字不在当前虚拟键盘映射中	The text is not in the current virtual keyboard map
+无法连接窗口服务：{}	Cannot connect to the window service: {}
+窗口动作需要 KWin 脚本接口：{}	Window actions need the KWin scripting interface: {}
+窗口动作计数已满	The window action counter is full
+窗口动作缺少总线名称	The window action is missing a bus name
+无法创建窗口动作脚本：{}	Cannot create the window action script: {}
+脚本路径不是 UTF-8	The script path is not UTF-8
+无法加载窗口动作脚本：{}	Cannot load the window action script: {}
+KWin 拒绝加载窗口动作脚本	KWin refused to load the window action script
+无法执行窗口动作：{}	Cannot perform the window action: {}
+窗口动作未返回结果	The window action returned no result
+窗口动作失败：{}	Window action failed: {}
+窗口动作接口初始化超时	The window action interface timed out initializing
+无法提交窗口动作：{}	Cannot submit the window action: {}
+指针检查必须使用独立 KWin 会话	The pointer check must use a separate KWin session
+无法创建测试指针	Cannot create the test pointer
+无法初始化测试指针	Cannot initialize the test pointer
+独立 KWin 没有提供指针设备	The separate KWin provided no pointer device
+窗口动作需要支持 EWMH 的 X11 窗口管理器	Window actions need an X11 window manager supporting EWMH
+X11 窗口管理器标识无效	Invalid X11 window manager identification
+全部最小化目前需要 KDE Wayland 桌面	Minimize All currently needs a KDE Wayland desktop
+名称不能为空，不能以点开头，也不能包含路径分隔符或控制字符	The name must not be empty, start with a dot, or contain path separators or control characters
+源路径包含零字节	The source path contains a null byte
+目标路径包含零字节	The target path contains a null byte
+宏库分类必须是实际目录	A library category must be a real folder
+宏库文件必须使用 .amc 扩展名	Library files must use the .amc extension
+宏库文件必须是实际文件	A library file must be a real file
+宏文件已被其他程序修改。请重新载入后再操作。	Another program modified the macro file. Reload it first.
+宏库回收目录无效	Invalid library trash folder
+已读取宏库	Macro library read
+已载入宏文件	Macro file loaded
+已建立分类	Category created
+目标分类已存在	The target category already exists
+分类已重命名	Category renamed
+分类已移入宏库回收目录	Category moved to the library trash folder
+已建立宏文件	Macro file created
+宏文件已保存	Macro file saved
+宏文件已重命名	Macro file renamed
+宏文件已移入宏库回收目录	Macro file moved to the library trash folder
+原名称已被使用，无法恢复	The original name is in use; cannot restore
+已恢复删除项	Deleted item restored
+未找到 A90 的鼠标输入接口	The A90 mouse input interface was not found
+无法读取 {}：{}。请检查 input 设备权限。	Cannot read {}: {}. Check the input device permissions.
+请松开所有鼠标按键后再启用手势	Release all mouse buttons before enabling gestures
+无法接管鼠标输入：{}	Cannot grab mouse input: {}
+鼠标按键状态改变。请松开按键后重试。	The mouse button state changed. Release the buttons and try again.
+鼠标输入读取失败：{}	Reading mouse input failed: {}
+鼠标输入接口已断开	The mouse input interface was disconnected
+鼠标输入事件的长度无效	Invalid mouse input event length
+无法打开 /dev/uinput：{}。请检查 uinput 设备权限。	Cannot open /dev/uinput: {}. Check the uinput device permissions.
+虚拟输入写入失败：{}	Virtual input write failed: {}
+虚拟输入设备尚未出现	The virtual input device has not appeared yet
+需要十进制整数	A decimal integer is required
+整数范围应为 {} 至 {}	The integer must be {} to {}
+变量名应为 VarA 至 VarZ	Variable names must be VarA to VarZ
+不支持此键盘 usage	This keyboard usage is not supported
+不支持此变量运算	This variable operation is not supported
+不支持此 DPI 动作	This DPI action is not supported
+不支持此配置动作	This profile action is not supported
+不支持此灯光动作	This lighting action is not supported
+不支持此射击动作	This shooting action is not supported
+不支持此指令或参数	This instruction or argument is not supported
+不支持此鼠标按键	This mouse button is not supported
+组合点击只支持左键和右键	Combined clicks support only the left and right buttons
+宏文本超过一 MiB	The macro text exceeds 1 MiB
+宏文本超过 16384 行	The macro text exceeds 16384 lines
+展开的宏超过存储上限	The expanded macro exceeds the storage limit
+第 {} 行：跳转目标超出源代码范围	Line {}: jump target outside the source
+第 {} 行：短跳转超出范围	Line {}: short jump out of range
+完整宏超过存储上限	The complete macro exceeds the storage limit
+按下程序：{}	Press program: {}
+释放程序：{}	Release program: {}
+滚轮宏超过存储上限	The wheel macro exceeds the storage limit
+主机动作与导出的按键表不一致。请先应用或重新读取设置。	The host actions do not match the exported key table. Apply or read the settings again first.
+不是 A90 配置文件	Not an A90 profile file
+配置文件缺少主机动作数据	The profile file lacks host action data
+配置文件的主机动作长度无效	Invalid host action length in the profile file
+配置文件的主机动作签名与按键表不一致	The host action signature of the profile file does not match the key table
+配置文件版本或长度无效	Invalid profile file version or length
+配置文件的头部或校验值无效	Invalid profile file header or checksum
+运行时 DPI 档位数量或选择值无效	Invalid runtime DPI level count or selection
+运行时 DPI 的轴比例或传感器编码无效	Invalid runtime DPI axis scale or sensor code
+运行时回报率编码应为 1、2、4 或 8	The runtime reporting rate code must be 1, 2, 4 or 8
+运行时 DPI 档位数量无效	Invalid runtime DPI level count
+灵敏度模板中的运行参数无效	Invalid runtime parameters in the sensitivity template
+DPI 必须为 100 至 6200，步长为 100	DPI must be 100 to 6200 in steps of 100
+灵敏度模板必须包含 128 个字	The sensitivity template must contain 128 words
+抬起高度编码 {} 不在 A90 的范围内	Lift-off height code {} is outside the A90 range
+DPI 档位数量应为 1 至 5，当前档位必须启用	The DPI level count must be 1 to 5 and the current level must be enabled
+回报率应为 125、250、500 或 1000 Hz	The reporting rate must be 125, 250, 500 or 1000 Hz
+出厂灵敏度表必须包含 54 个字	The factory sensitivity table must contain 54 words
+射击次数应为 1 至 {}	The shot count must be 1 to {}
+射击间隔应为 1 至 999 毫秒	The shot interval must be 1 to 999 ms
+补偿位移应为 -126 至 126	The compensation offset must be -126 to 126
+循环起点超出射击次数	The loop start exceeds the shot count
+中	Middle
+空操作	No operation
+结束	End
+精确模式进入	Enter precision mode
+精确模式退出	Leave precision mode
+停止宏	Stop Macro
+开关重复跳转	Toggle repeat jump
+光标回到原点	Cursor to origin
+第七键功能切换	Seventh button function toggle
+宏长度应为 1 至 16384 个字	The macro length must be 1 to 16384 words
+不支持的宏指令 {}	Unsupported macro instruction {}
+宏指令 {} 缺少操作数	Macro instruction {} lacks an operand
+宏必须只在最后一条指令处结束	A macro must end only at its last instruction
+第 {} 字的跳转目标不在指令边界	The jump target of word {} is not on an instruction boundary
+宏存储范围超出 14 位引用	The macro storage range exceeds 14-bit references
+宏存储空间不足	Not enough macro storage
+相对跳转 {}	Relative jump {}
+相对位移 {} {}	Relative move {} {}
+键盘松开	Key up
+键盘按下	Key down
+修饰键松开	Modifier up
+修饰键按下	Modifier down
+鼠标松开	Mouse up
+鼠标按下	Mouse down
+延迟计数 {} × 1024	Delay count {} × 1024
+延迟 {} ms	Delay {} ms
+多媒体{} {}	Multimedia {} {}
+松开	up
+系统键{} {}	System key {} {}
+若 {} {} {} 相对跳转 {}	If {} {} {} relative jump {}
+{} = 内部状态 {}	{} = internal state {}
+未解析 {}	Unparsed {}
+宏 {}	Macro {}
+原始 {}	Raw {}
+厂商状态通知长度应为 64 字节，实际为 {}	Vendor status notifications must be 64 bytes, got {}
+无法读取 {} 的厂商通知：{}	Cannot read the vendor notifications of {}: {}
+鼠标厂商通知接口已关闭	The mouse vendor notification interface was closed
+读取鼠标厂商通知失败：{}	Reading mouse vendor notifications failed: {}
+鼠标厂商通知过多，无法确认全部按键变化	Too many mouse vendor notifications to confirm all button changes
+按键主机动作服务已被占用：{}	The button host action service is in use: {}
+滚轮分界位置必须在 10% 到 90% 之间	The wheel divider must be between 10% and 90%
+滚轮应用规则最多为 128 条	At most 128 wheel application rules
+滚轮应用标识不能为空，不能包含控制字符，且最多为 512 字节	Wheel application IDs must not be empty or contain control characters, and are at most 512 bytes
+应用滚轮分界必须在 10% 到 90% 之间	The application wheel divider must be between 10% and 90%
+滚轮应用标识重复：{}	Duplicate wheel application ID: {}
+滚轮设置文件过大	The wheel settings file is too large
+滚轮设置文件版本无效	Invalid wheel settings file version
+滚轮设置文件包含未知字段	The wheel settings file contains unknown fields
+滚轮设置 {} 无效	Invalid wheel setting {}
+缺少滚轮分界位置	Missing wheel divider position
+滚轮设置文件包含未知应用字段	The wheel settings file contains unknown application fields
+缺少滚轮应用标识	Missing wheel application ID
+缺少应用滚轮分界	Missing application wheel divider
+无法读取滚轮设置：{}	Cannot read the wheel settings: {}
+图标服务缺少总线名称	The icon service is missing a bus name
+图标脚本路径不是 UTF-8	The icon script path is not UTF-8
+KWin 拒绝加载滚轮方向图标	KWin refused to load the wheel direction icon
+滚轮文件与当前运行设置不同。请重新读取并应用。	The wheel file differs from the running settings. Read and apply again.
+滚轮分界未保存，区域滚动已停止：{}	Wheel divider not saved; zone scrolling stopped: {}
+滚轮分界保存队列不可用，请重新启用区域滚动	The wheel divider save queue is unavailable; enable zone scrolling again
+窗口区域数据无效	Invalid window zone data
+滚轮图标设置不可用	Wheel icon settings unavailable
+方向图标设置不可用	Direction icon settings unavailable
+滚轮方向图标未启动，请关闭图标后重试	The wheel direction icon did not start; turn the icon off and try again
+滚轮分隔图标未启动，请关闭图标后重试	The wheel divider icon did not start; turn the icon off and try again
+无法确定滚轮设置文件路径	Cannot determine the wheel settings file path
+滚轮分界保存服务不可用	The wheel divider save service is unavailable
+4-Way Wheel 当前需要 KDE Wayland	4-Way Wheel currently needs KDE Wayland
+4-Way Wheel 需要 KWin：{}	4-Way Wheel needs KWin: {}
+滚轮服务缺少总线名称	The wheel service is missing a bus name
+滚轮脚本路径不是 UTF-8	The wheel script path is not UTF-8
+KWin 拒绝加载滚轮区域脚本	KWin refused to load the wheel zone script
+滚轮区域监视器未返回数据	The wheel zone monitor returned no data
+滚轮分界缓存不可用	Wheel divider cache unavailable
+滚轮区域缓存不可用	Wheel zone cache unavailable
+缺少滚轮区域数据	Missing wheel zone data
+滚轮区域监视器已停止。输入接管已释放，请重新启用。	The wheel zone monitor stopped. The input grab was released; enable it again.
+无法读取滚轮区域：{}	Cannot read the wheel zones: {}
+写入 {} 未完成：{}	Writing {} did not finish: {}
+无法确定主机动作文件路径	Cannot determine the host action file path
+已连接并读取闪存 · 本次备份 {}	Connected and flash read · backup {}
+主机动作文件已改变。请重新连接并读取设置后重试。	The host action file changed. Reconnect and read the settings, then try again.
+按键设置及主机动作已保存，设备读回一致。	Key settings and host actions saved; the device read back the same.
+按键设置已保存，但主机动作未启动：{}	Key settings saved, but host actions did not start: {}
+按键保存失败，主机动作未启动。请检查错误后重新应用。	Saving the keys failed and host actions did not start. Check the error and apply again.
+已导出 {} 字节到 {}	Exported {} bytes to {}
+灵敏度已保存并立即应用。运行参数已读回一致。	Sensitivity saved and applied immediately. Runtime parameters read back the same.
+回报率已保存并立即应用。运行参数已读回一致。	Reporting rate saved and applied immediately. Runtime parameters read back the same.
+抬起高度已保存。运行值已读回一致。	Lift-off height saved. The runtime value read back the same.
+设备宏和主机动作已中断。{}	Device macros and host actions interrupted. {}
+设备宏和主机动作已中断	Device macros and host actions interrupted
+已读取桌面设置	Desktop settings read
+请先在按键页启用已保存的主机动作	Enable the saved host actions on the Keys page first
+全局手势已停止，区域滚动继续运行	Global gestures stopped; zone scrolling keeps running

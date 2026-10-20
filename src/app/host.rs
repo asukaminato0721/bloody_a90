@@ -3,6 +3,7 @@
 use super::App;
 use crate::{skin, worker::Job};
 use bloody_a90::host::{Desktop, Settings};
+use bloody_a90::{i18n::tr, tf};
 use eframe::egui::{self, RichText};
 
 /// Which desktop value a page edits.
@@ -56,7 +57,7 @@ impl App {
         match self.host_draft.as_ref().map(|draft| draft.desktop) {
             Some(Desktop::Kde) => "KDE Plasma",
             Some(Desktop::Gnome) => "GNOME",
-            _ => "当前桌面",
+            _ => tr("当前桌面"),
         }
     }
 
@@ -67,9 +68,9 @@ impl App {
         }
         let Some((mut value, range, step, _)) = self.host_value(field) else {
             let text = if self.host_draft.is_none() {
-                "正在读取桌面设置…"
+                tr("正在读取桌面设置…")
             } else {
-                "当前桌面不提供此设置，或没有找到 A90。"
+                tr("当前桌面不提供此设置，或没有找到 A90。")
             };
             ui.label(RichText::new(text).color(skin::GRAY));
             return;
@@ -77,7 +78,7 @@ impl App {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 18.0;
             ui.add_space(28.0);
-            ui.label(RichText::new("慢").font(skin::regular(17.0)));
+            ui.label(RichText::new(tr("慢")).font(skin::regular(17.0)));
             let width = ui.available_width() - 80.0;
             ui.vertical(|ui| {
                 ui.spacing_mut().item_spacing.y = 0.0;
@@ -87,7 +88,7 @@ impl App {
                 let marks: Vec<(f32, &str)> = (0..=10).map(|i| (i as f32 / 10.0, "")).collect();
                 skin::ticks(ui, width, &marks);
             });
-            ui.label(RichText::new("快").font(skin::regular(17.0)));
+            ui.label(RichText::new(tr("快")).font(skin::regular(17.0)));
         });
     }
 
@@ -100,9 +101,9 @@ impl App {
             ui,
             self.footer_area,
             &[
-                ("恢复默认", self.host_draft.is_some() || hardware),
-                ("取消", changed || save_keys),
-                ("应用", (changed || save_keys) && !self.pending),
+                (tr("恢复默认"), self.host_draft.is_some() || hardware),
+                (tr("取消"), changed || save_keys),
+                (tr("应用"), (changed || save_keys) && !self.pending),
             ],
         );
         if clicked[0] {
@@ -148,18 +149,20 @@ impl App {
     /// double-click speed.
     pub(super) fn response(&mut self, ui: &mut egui::Ui) {
         ui.add_space(66.0);
-        let help = "按键响应：较长的响应时间可以过滤按键触点的抖动。此设置写入鼠标，\
-                    并同时保存“按键”页中尚未应用的修改。";
+        let help = tr(
+            "按键响应：较长的响应时间可以过滤按键触点的抖动。此设置写入鼠标，\
+                    并同时保存“按键”页中尚未应用的修改。",
+        );
         let mut dirty = false;
         skin::card(
             ui,
             Some(skin::Icon::Speed),
-            "按键响应 (ms)",
+            tr("按键响应 (ms)"),
             help,
             |ui| {
                 ui.add_space(10.0);
                 let Some(config) = &mut self.keys else {
-                    ui.label(RichText::new("请先连接鼠标或读取备份。").color(skin::GRAY));
+                    ui.label(RichText::new(tr("请先连接鼠标或读取备份。")).color(skin::GRAY));
                     return;
                 };
                 let previous = config.debounce_ms();
@@ -189,7 +192,7 @@ impl App {
                 });
                 if previous.is_none() {
                     ui.label(
-                        RichText::new("当前编码不在已确认的范围内。选择时间后可替换此设置。")
+                        RichText::new(tr("当前编码不在已确认的范围内。选择时间后可替换此设置。"))
                             .color(skin::GRAY),
                     );
                 }
@@ -199,14 +202,14 @@ impl App {
             self.keys_dirty = true;
         }
         ui.add_space(56.0);
-        let help = format!(
+        let help = tf!(
             "双击速度：写入 {} 的鼠标设置，不写入鼠标。",
             self.host_target()
         );
         skin::card(
             ui,
             Some(skin::Icon::DoubleClick),
-            "双击速度",
+            tr("双击速度"),
             &help,
             |ui| {
                 ui.add_space(4.0);
@@ -222,16 +225,16 @@ impl App {
             self.start(Job::HostRead);
         }
         ui.add_space(66.0);
-        let help = format!(
+        let help = tf!(
             "滚轮调节：写入 {} 的鼠标设置，不写入鼠标。",
             self.host_target()
         );
         let value = self.host_value(Field::Lines);
-        skin::card(ui, None, "滚轮调节", &help, |ui| {
+        skin::card(ui, None, tr("滚轮调节"), &help, |ui| {
             ui.add_space(-4.0);
             ui.horizontal(|ui| {
                 ui.add_space(68.0);
-                ui.label(RichText::new("垂直滚动").font(skin::regular(16.0)));
+                ui.label(RichText::new(tr("垂直滚动")).font(skin::regular(16.0)));
             });
             ui.horizontal(|ui| {
                 ui.add_space(48.0);
@@ -245,11 +248,11 @@ impl App {
                             ui.add_space(8.0);
                             ui.vertical(|ui| {
                                 ui.add_space(14.0);
-                                skin::option(ui, value.is_some(), "一次滚动行数");
+                                skin::option(ui, value.is_some(), tr("一次滚动行数"));
                                 ui.add_space(6.0);
                                 ui.add_enabled_ui(false, |ui| {
-                                    skin::option(ui, false, "一次滚动屏幕")
-                                        .on_disabled_hover_text("桌面没有提供整页滚动设置。")
+                                    skin::option(ui, false, tr("一次滚动屏幕"))
+                                        .on_disabled_hover_text(tr("桌面没有提供整页滚动设置。"))
                                 });
                             });
                             ui.add_space(30.0);
@@ -283,14 +286,14 @@ impl App {
     /// SensitivityPointer: the pointer speed of this mouse on the desktop.
     pub(super) fn pointer(&mut self, ui: &mut egui::Ui) {
         ui.add_space(66.0);
-        let help = format!(
+        let help = tf!(
             "指针移动速度：写入 {} 中这只鼠标的加速度设置，不写入鼠标。",
             self.host_target()
         );
         skin::card(
             ui,
             Some(skin::Icon::Pointer),
-            "指针移动速度",
+            tr("指针移动速度"),
             &help,
             |ui| {
                 ui.add_space(10.0);

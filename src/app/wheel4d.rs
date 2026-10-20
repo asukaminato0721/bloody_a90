@@ -7,6 +7,10 @@ use bloody_a90::{
     gesture_runtime::Status,
     wheel4d::{Application, Settings},
 };
+use bloody_a90::{
+    i18n::{tr, tr_text},
+    tf,
+};
 use eframe::egui;
 
 #[derive(Default)]
@@ -39,7 +43,7 @@ impl App {
                 if failed {
                     self.report(Err(update.status.message));
                 } else {
-                    self.report(Ok("已读取或应用滚轮设置".into()));
+                    self.report(Ok(tr("已读取或应用滚轮设置").into()));
                 }
             }
             Err(error) => self.report(Err(error)),
@@ -50,12 +54,12 @@ impl App {
         self.wheel4d.running = self.wheel4d.runtime_enabled && status.running;
         self.wheel4d.message = if self.wheel4d.runtime_enabled {
             if status.running {
-                "4-Way Wheel 正在运行".into()
+                tr("4-Way Wheel 正在运行").into()
             } else {
                 status.message.clone()
             }
         } else {
-            "4-Way Wheel 已关闭".into()
+            tr("4-Way Wheel 已关闭").into()
         };
     }
 
@@ -65,48 +69,49 @@ impl App {
         }
         let mut job = None;
         skin::sheet().show(ui, |ui| {
-            ui.strong("4-Way Wheel · 区域滚动");
+            ui.strong(tr("4-Way Wheel · 区域滚动"));
             if !self.wheel4d.loaded {
-                ui.label("正在读取滚轮设置…");
+                ui.label(tr("正在读取滚轮设置…"));
                 return;
             }
             let editor = &mut self.wheel4d;
             ui.add_enabled_ui(!self.pending, |ui| {
                 ui.horizontal(|ui| {
-                    ui.label("按鼠标核心启用区域滚动：");
+                    ui.label(tr("按鼠标核心启用区域滚动："));
                     for index in 0..4 {
-                        ui.checkbox(
-                            &mut editor.draft.cores[index],
-                            format!("核心 {}", index + 1),
-                        );
+                        ui.checkbox(&mut editor.draft.cores[index], tf!("核心 {}", index + 1));
                     }
                 });
                 if let Some(device) = &self.device {
-                    ui.label(format!("鼠标当前核心：{}", device.identity.core));
+                    ui.label(tf!("鼠标当前核心：{}", device.identity.core));
                 }
                 ui.add(
                     egui::Slider::new(&mut editor.draft.divider, 100..=900)
                         .custom_formatter(|v, _| format!("{:.1}%", v / 10.0))
-                        .text("左侧区域宽度"),
+                        .text(tr("左侧区域宽度")),
                 );
                 ui.checkbox(
                     &mut editor.draft.reverse_regions,
-                    "左侧横向滚动，右侧纵向滚动",
+                    tr("左侧横向滚动，右侧纵向滚动"),
                 );
-                ui.checkbox(&mut editor.draft.direction_icon, "显示横向滚动方向图标");
-                ui.checkbox(&mut editor.draft.divider_icon, "显示可拖动分隔图标");
-                ui.label("拖动后，程序保存该应用的分界。点击“重新读取”可载入更新后的设置。");
-                ui.label("默认左侧纵向滚动，右侧横向滚动。区域按指针所在窗口计算。");
-                egui::CollapsingHeader::new("每应用分界")
+                ui.checkbox(&mut editor.draft.direction_icon, tr("显示横向滚动方向图标"));
+                ui.checkbox(&mut editor.draft.divider_icon, tr("显示可拖动分隔图标"));
+                ui.label(tr(
+                    "拖动后，程序保存该应用的分界。点击“重新读取”可载入更新后的设置。",
+                ));
+                ui.label(tr(
+                    "默认左侧纵向滚动，右侧横向滚动。区域按指针所在窗口计算。",
+                ));
+                egui::CollapsingHeader::new(tr("每应用分界"))
                     .default_open(self.smoke_frames.is_some())
                     .show(ui, |ui| {
-                        ui.label("使用 KDE 应用标识。未匹配的应用使用上方默认分界。");
+                        ui.label(tr("使用 KDE 应用标识。未匹配的应用使用上方默认分界。"));
                         let mut remove = None;
                         egui::Grid::new("wheel-application-dividers")
                             .striped(true)
                             .show(ui, |ui| {
-                                ui.label("应用标识");
-                                ui.label("左侧区域宽度");
+                                ui.label(tr("应用标识"));
+                                ui.label(tr("左侧区域宽度"));
                                 ui.end_row();
                                 for (index, rule) in
                                     editor.draft.applications.iter_mut().enumerate()
@@ -114,13 +119,13 @@ impl App {
                                     ui.add(
                                         egui::TextEdit::singleline(&mut rule.app)
                                             .desired_width(300.0)
-                                            .hint_text("例如 org.kde.kwrite"),
+                                            .hint_text(tr("例如 org.kde.kwrite")),
                                     );
                                     ui.add(
                                         egui::Slider::new(&mut rule.divider, 100..=900)
                                             .custom_formatter(|v, _| format!("{:.1}%", v / 10.0)),
                                     );
-                                    if ui.button("删除").clicked() {
+                                    if ui.button(tr("删除")).clicked() {
                                         remove = Some(index);
                                     }
                                     ui.end_row();
@@ -131,7 +136,7 @@ impl App {
                         }
                         if skin::button(
                             ui,
-                            "添加应用分界",
+                            tr("添加应用分界"),
                             160.0,
                             editor.draft.applications.len() < 128,
                         )
@@ -143,28 +148,33 @@ impl App {
                             });
                         }
                     });
-                ui.label("适用于 KDE Wayland。桌面和面板保留纵向滚动。关闭本工具会停止区域滚动。");
-                ui.label("同时按下右键和中键可停止输入接管。再次点击“应用区域滚动”可恢复。");
+                ui.label(tr(
+                    "适用于 KDE Wayland。桌面和面板保留纵向滚动。关闭本工具会停止区域滚动。",
+                ));
+                ui.label(tr(
+                    "同时按下右键和中键可停止输入接管。再次点击“应用区域滚动”可恢复。",
+                ));
                 ui.horizontal(|ui| {
-                    if skin::button(ui, "应用区域滚动", 170.0, true).clicked() {
+                    if skin::button(ui, tr("应用区域滚动"), 170.0, true).clicked() {
                         job = Some(Job::WheelWrite(
                             editor.draft.clone(),
                             editor.expected.clone(),
                         ));
                     }
-                    if skin::button(ui, "取消修改", 120.0, editor.draft != editor.applied).clicked()
+                    if skin::button(ui, tr("取消修改"), 120.0, editor.draft != editor.applied)
+                        .clicked()
                     {
                         editor.draft = editor.applied.clone();
                     }
-                    if skin::button(ui, "恢复默认", 120.0, true).clicked() {
+                    if skin::button(ui, tr("恢复默认"), 120.0, true).clicked() {
                         editor.draft = Settings::default();
                     }
-                    if skin::button(ui, "重新读取", 120.0, true).clicked() {
+                    if skin::button(ui, tr("重新读取"), 120.0, true).clicked() {
                         job = Some(Job::WheelRead);
                     }
                 });
             });
-            ui.label(&editor.message);
+            ui.label(tr_text(&editor.message));
         });
         if let Some(job) = job {
             self.start(job);

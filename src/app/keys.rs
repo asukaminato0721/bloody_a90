@@ -6,6 +6,10 @@ use bloody_a90::{
     highlanguage,
     storage::{self, NO_OPERATION},
 };
+use bloody_a90::{
+    i18n::{tr, tr_text},
+    tf,
+};
 use eframe::egui::{self, RichText, vec2};
 
 /// Action types of the KeySet window.
@@ -117,7 +121,7 @@ const FUNCTIONS: [(&str, u16, u16); 17] = [
 fn describe(action: &Action) -> String {
     match action {
         Action::Direct(word) => storage::describe(*word),
-        Action::Macro(words) => format!("宏（{} 字）", words.len()),
+        Action::Macro(words) => tf!("宏（{} 字）", words.len()),
     }
 }
 
@@ -125,17 +129,17 @@ fn describe(action: &Action) -> String {
 /// were found with the button query on the mouse.
 fn record_name(index: usize) -> String {
     match index {
-        0 => "左键".into(),
-        1 => "右键".into(),
-        2 => "中键".into(),
-        3 => "后侧键".into(),
-        4 => "前侧键".into(),
-        8 => "“1”键".into(),
-        9 => "“C”键".into(),
-        10 => "“3”键".into(),
-        24 => "滚轮向下".into(),
-        25 => "滚轮向上".into(),
-        _ => format!("记录 {}", index + 1),
+        0 => tr("左键").into(),
+        1 => tr("右键").into(),
+        2 => tr("中键").into(),
+        3 => tr("后侧键").into(),
+        4 => tr("前侧键").into(),
+        8 => tr("“1”键").into(),
+        9 => tr("“C”键").into(),
+        10 => tr("“3”键").into(),
+        24 => tr("滚轮向下").into(),
+        25 => tr("滚轮向上").into(),
+        _ => tf!("记录 {}", index + 1),
     }
 }
 
@@ -256,7 +260,7 @@ impl App {
             Choice::Mouse => MOUSE.iter().map(|(name, _)| name.to_string()).collect(),
             Choice::Keyboard => highlanguage::keys()
                 .map(|(_, name)| name.to_owned())
-                .chain(std::iter::once("无主键（仅修饰键）".into()))
+                .chain(std::iter::once(tr("无主键（仅修饰键）").into()))
                 .collect(),
             Choice::Media => MEDIA.iter().map(|(name, _)| name.to_string()).collect(),
             Choice::System => SYSTEM.iter().map(|(name, _)| name.to_string()).collect(),
@@ -287,7 +291,7 @@ impl App {
                 let usage = if value == highlanguage::keys().count() {
                     0
                 } else {
-                    highlanguage::keys().nth(value).ok_or("无效按键")?.0
+                    highlanguage::keys().nth(value).ok_or(tr("无效按键"))?.0
                 };
                 button_actions::keyboard(usage, self.key_modifiers)?
             }
@@ -304,7 +308,7 @@ impl App {
                 Shortcut::Clicks(count) => button_actions::clicks(count)?,
             },
             Choice::Function => {
-                let (_, press, release) = self.key_functions().nth(value).ok_or("无效功能")?;
+                let (_, press, release) = self.key_functions().nth(value).ok_or(tr("无效功能"))?;
                 Binding {
                     press: Action::from_program(vec![*press, storage::END]),
                     release: Action::from_program(vec![*release, storage::END]),
@@ -315,7 +319,7 @@ impl App {
                 let program = self
                     .compiled
                     .as_ref()
-                    .map_err(|e| format!("奥斯卡宏编译失败：{e}"))?;
+                    .map_err(|e| tf!("奥斯卡宏编译失败：{e}"))?;
                 Binding {
                     press: Action::from_program(program.press.clone()),
                     release: Action::from_program(program.release.clone()),
@@ -358,7 +362,7 @@ impl App {
                 .get(self.profile)
                 .and_then(|slots| slots[record].as_ref())
         {
-            return format!("主机：{}", action.label());
+            return tf!("主机：{}", action.label());
         }
         let saved = (
             self.record,
@@ -369,7 +373,7 @@ impl App {
         self.record = record;
         self.select_hardware();
         let caption = match self.choice {
-            Choice::Mouse => format!("鼠标{}", MOUSE[self.choice_value].0),
+            Choice::Mouse => tf!("鼠标{}", MOUSE[self.choice_value].0),
             Choice::Keyboard => {
                 let mut parts: Vec<&str> = ["Ctrl", "Shift", "Alt", "Super"]
                     .into_iter()
@@ -381,9 +385,9 @@ impl App {
                 if self.choice_value < highlanguage::keys().count() {
                     parts.push(options[self.choice_value].as_str());
                 }
-                format!("键盘：{}", parts.join("+"))
+                tf!("键盘：{}", parts.join("+"))
             }
-            Choice::Disabled => "禁用".into(),
+            Choice::Disabled => tr("禁用").into(),
             Choice::Macro => {
                 let action = if record < BUTTONS {
                     profile.buttons[record].press.clone()
@@ -391,7 +395,7 @@ impl App {
                     profile.wheel[record - BUTTONS].clone()
                 };
                 match action {
-                    Action::Macro(words) => format!("宏（{} 字）", words.len()),
+                    Action::Macro(words) => tf!("宏（{} 字）", words.len()),
                     action => describe(&action),
                 }
             }
@@ -399,9 +403,9 @@ impl App {
                 let options = self.options();
                 let name = options.get(self.choice_value).cloned().unwrap_or_default();
                 match choice {
-                    Choice::Function => {
-                        name.replace("DPI 增加", "CPI+").replace("DPI 减少", "CPI-")
-                    }
+                    Choice::Function => name
+                        .replace(tr("DPI 增加"), "CPI+")
+                        .replace(tr("DPI 减少"), "CPI-"),
                     _ => name,
                 }
             }
@@ -424,7 +428,7 @@ impl App {
             for index in 0..count.max(3) {
                 if skin::profile_tab(
                     ui,
-                    &format!("模式{}", index + 1),
+                    &tf!("模式{}", index + 1),
                     self.profile == index,
                     index < count,
                 )
@@ -460,7 +464,7 @@ impl App {
         ui.painter().text(
             header.left_center() + vec2(8.0, 0.0),
             egui::Align2::LEFT_CENTER,
-            "按键设置",
+            tr("按键设置"),
             skin::regular(16.0),
             skin::TEXT,
         );
@@ -469,7 +473,7 @@ impl App {
             ui.painter().text(
                 header.left_bottom() + vec2(8.0, 24.0),
                 egui::Align2::LEFT_CENTER,
-                "请连接鼠标，或在 其他设置 → 已有备份 中读取文件。",
+                tr("请连接鼠标，或在 其他设置 → 已有备份 中读取文件。"),
                 skin::regular(15.0),
                 skin::GRAY,
             );
@@ -480,7 +484,7 @@ impl App {
                 ui.painter().text(
                     egui::pos2(sheet.left() + 40.0, top + 13.0),
                     egui::Align2::CENTER_CENTER,
-                    label,
+                    tr_text(label),
                     skin::bold(19.0),
                     if held { skin::CAPTION_RED } else { skin::TEXT },
                 );
@@ -494,6 +498,14 @@ impl App {
                     .clicked()
                 {
                     open = Some((*record, rect));
+                }
+                // The label and the combo box both point at the diagram.
+                let row = egui::Rect::from_min_max(
+                    egui::pos2(sheet.left() + 20.0, top - 3.0),
+                    rect.right_bottom() + vec2(0.0, 3.0),
+                );
+                if ui.rect_contains_pointer(row) {
+                    self.key_hover = Some(*record);
                 }
             }
         }
@@ -513,12 +525,21 @@ impl App {
                 .line_segment([edge, egui::pos2(dot.x, edge.y)], line);
             ui.painter()
                 .circle_stroke(egui::pos2(dot.x, edge.y), 5.0, line);
-            let lit = self.record == record || self.held.contains(&(record as u8 + 1));
-            if skin::key_box(ui, rect, caption, lit).clicked() && self.keys.is_some() {
+            let lit = self.key_hover == Some(record)
+                || self.key_popup == Some(record)
+                || self.held.contains(&(record as u8 + 1));
+            let response = skin::key_box(ui, rect, caption, lit);
+            if response.hovered() {
+                self.key_hover = Some(record);
+            }
+            if response.clicked() && self.keys.is_some() {
+                // Open the menu below that button's row. The left button
+                // has no row and opens below the first one.
+                let row = ROWS.iter().position(|(_, r)| *r == record).unwrap_or(0);
                 open = Some((
                     record,
                     egui::Rect::from_min_size(
-                        sheet.left_top() + vec2(64.0, 56.0),
+                        sheet.left_top() + vec2(64.0, 56.0 + row as f32 * 32.0),
                         vec2(255.0, 25.0),
                     ),
                 ));
@@ -557,21 +578,24 @@ impl App {
                     });
             }
         }
-        ui.collapsing("其他记录（A90 没有对应的物理按键）", |ui| {
-            ui.horizontal_wrapped(|ui| {
-                for index in (0..BUTTONS).filter(|i| !PHYSICAL.contains(i)) {
-                    if ui
-                        .selectable_label(self.record == index, record_name(index))
-                        .clicked()
-                    {
-                        self.record = index;
-                        self.host_key_selected();
-                        self.key_popup = Some(index);
-                        self.key_popup_at = ui.min_rect().left_bottom();
+        ui.collapsing(
+            tr("其他记录（A90 没有对应的物理按键）"),
+            |ui| {
+                ui.horizontal_wrapped(|ui| {
+                    for index in (0..BUTTONS).filter(|i| !PHYSICAL.contains(i)) {
+                        if ui
+                            .selectable_label(self.record == index, record_name(index))
+                            .clicked()
+                        {
+                            self.record = index;
+                            self.host_key_selected();
+                            self.key_popup = Some(index);
+                            self.key_popup_at = ui.min_rect().left_bottom();
+                        }
                     }
-                }
-            });
-        });
+                });
+            },
+        );
         self.host_button_controls(ui);
         let connected = self.connected() && !self.pending;
         let factory = self
@@ -582,9 +606,9 @@ impl App {
             ui,
             self.footer_area,
             &[
-                ("恢复默认", factory.is_some()),
-                ("取消", self.keys_dirty),
-                ("应用", connected && self.keys_dirty),
+                (tr("恢复默认"), factory.is_some()),
+                (tr("取消"), self.keys_dirty),
+                (tr("应用"), connected && self.keys_dirty),
             ],
         );
         if clicked[0] {
@@ -631,7 +655,7 @@ impl App {
             .and_then(|profile| profile.buttons.get(self.record))
         {
             ui.label(
-                RichText::new(format!(
+                RichText::new(tf!(
                     "当前：{} / {}",
                     describe(&binding.press),
                     describe(&binding.release)
@@ -654,18 +678,24 @@ impl App {
         if !options.is_empty() {
             self.choice_value = self.choice_value.min(options.len() - 1);
             egui::ComboBox::from_id_salt("key-choice")
-                .selected_text(&options[self.choice_value])
+                .selected_text(tr_text(&options[self.choice_value]))
                 .width(260.0)
                 .show_ui(ui, |ui| {
                     for (index, option) in options.iter().enumerate() {
-                        ui.selectable_value(&mut self.choice_value, index, option);
+                        ui.selectable_value(&mut self.choice_value, index, tr_text(option));
                     }
                 });
         }
         if self.choice == Choice::Keyboard {
             for (start, labels) in [
-                (0, ["左 Ctrl", "左 Shift", "左 Alt", "左 Super"]),
-                (4, ["右 Ctrl", "右 Shift", "右 Alt", "右 Super"]),
+                (
+                    0,
+                    [tr("左 Ctrl"), tr("左 Shift"), tr("左 Alt"), tr("左 Super")],
+                ),
+                (
+                    4,
+                    [tr("右 Ctrl"), tr("右 Shift"), tr("右 Alt"), tr("右 Super")],
+                ),
             ] {
                 ui.horizontal_wrapped(|ui| {
                     for (index, label) in labels.into_iter().enumerate() {
@@ -680,32 +710,36 @@ impl App {
             }
         }
         if matches!(self.choice, Choice::Media | Choice::System) {
-            ui.label("动作由桌面处理。实际效果取决于桌面快捷键和默认应用设置。");
+            ui.label(tr(
+                "动作由桌面处理。实际效果取决于桌面快捷键和默认应用设置。",
+            ));
         }
         if self.choice == Choice::Macro {
             ui.label(
                 RichText::new(if self.record >= BUTTONS {
                     match self.wheel_action() {
                         Ok(Action::Macro(words)) => {
-                            format!("使用奥斯卡II中的单次滚轮程序：{} 字", words.len())
+                            tf!("使用奥斯卡II中的单次滚轮程序：{} 字", words.len())
                         }
-                        Ok(_) => "使用奥斯卡II中的直接滚轮动作".into(),
-                        Err(error) => format!("滚轮程序无法编译：{error}"),
+                        Ok(_) => tr("使用奥斯卡II中的直接滚轮动作").into(),
+                        Err(error) => tf!("滚轮程序无法编译：{error}"),
                     }
                 } else {
                     match &self.compiled {
-                        Ok(program) => format!(
+                        Ok(program) => tf!(
                             "使用奥斯卡II中的程序：按下 {} 字，弹起 {} 字",
                             program.press.len(),
                             program.release.len()
                         ),
-                        Err(error) => format!("奥斯卡II中的程序无法编译：{error}"),
+                        Err(error) => tf!("奥斯卡II中的程序无法编译：{error}"),
                     }
                 })
                 .color(skin::GRAY),
             );
             if self.record >= BUTTONS {
-                ui.label("每格滚动执行一次按下程序，再执行释放程序。滚轮不使用按住或开关重复。");
+                ui.label(tr(
+                    "每格滚动执行一次按下程序，再执行释放程序。滚轮不使用按住或开关重复。",
+                ));
             }
         }
         if self.choice == Choice::Host {
@@ -713,7 +747,7 @@ impl App {
         }
         if self.choice == Choice::Shoot {
             ui.label(
-                RichText::new("射击模式索引由固件解释，效果取决于射击设置。")
+                RichText::new(tr("射击模式索引由固件解释，效果取决于射击设置。"))
                     .font(skin::regular(13.0))
                     .color(skin::GRAY),
             );
@@ -721,7 +755,7 @@ impl App {
         ui.add_space(6.0);
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 10.0;
-            if skin::button(ui, "设定此按键", 130.0, self.keys.is_some()).clicked() {
+            if skin::button(ui, tr("设定此按键"), 130.0, self.keys.is_some()).clicked() {
                 let result = (if self.record < BUTTONS {
                     self.binding()
                 } else {
@@ -745,7 +779,7 @@ impl App {
                             .is_some_and(|action| action.number("Simulator") == Ok(2))
                         {
                             if self.record >= BUTTONS {
-                                self.report(Err("手势不能指定给滚轮".into()));
+                                self.report(Err(tr("手势不能指定给滚轮").into()));
                                 return;
                             }
                             self.host_buttons.rules.gestures =
@@ -776,12 +810,12 @@ impl App {
                 }
             }
             let caption = if self.watching {
-                "停止查询"
+                tr("停止查询")
             } else {
-                "按键查询"
+                tr("按键查询")
             };
             if skin::button(ui, caption, 130.0, self.connected())
-                .on_hover_text("按住鼠标上的按键，自动选中对应记录")
+                .on_hover_text(tr("按住鼠标上的按键，自动选中对应记录"))
                 .clicked()
             {
                 self.watching = !self.watching;
@@ -789,7 +823,7 @@ impl App {
             }
         });
         if self.record >= BUTTONS
-            && skin::button(ui, "恢复此方向滚动", 160.0, self.keys.is_some()).clicked()
+            && skin::button(ui, tr("恢复此方向滚动"), 160.0, self.keys.is_some()).clicked()
             && let Some(profile) = self
                 .keys
                 .as_mut()
@@ -806,16 +840,16 @@ impl App {
         if self.watching {
             ui.label(
                 RichText::new(if self.held.is_empty() {
-                    "请按下鼠标按键".to_owned()
+                    tr("请按下鼠标按键").to_owned()
                 } else {
-                    format!("按住：{:?}", self.held)
+                    tf!("按住：{:?}", self.held)
                 })
                 .color(skin::CAPTION_RED),
             );
         }
         ui.add_space(6.0);
         ui.label(
-            RichText::new("修改只影响当前模式。点击“应用”后写入鼠标并读回核对。")
+            RichText::new(tr("修改只影响当前模式。点击“应用”后写入鼠标并读回核对。"))
                 .font(skin::regular(13.0))
                 .color(skin::GRAY),
         );

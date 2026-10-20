@@ -1,5 +1,6 @@
 use super::{App, path_field};
 use crate::{skin, worker::Job};
+use bloody_a90::i18n::{tr, tr_text};
 use bloody_a90::{configuration::Configuration, gestures::Action, host_buttons::Settings};
 use eframe::egui::{self, RichText};
 
@@ -23,7 +24,7 @@ impl Default for Editor {
             applied: Settings::default(),
             expected_file: None,
             running: false,
-            status: "按键主机动作未启用".into(),
+            status: tr("按键主机动作未启用").into(),
             last_poll: std::time::Instant::now(),
             kind: 0,
             target: String::new(),
@@ -86,16 +87,16 @@ impl Editor {
         let action = match self.kind {
             0 => Action::open_target_with_arguments(&self.target, &self.arguments)?,
             1 => Action::input_text(&self.text)?,
-            2 => Action::new(22, 0, 0, "放大"),
-            3 => Action::new(22, 1, 0, "缩小"),
-            4 => Action::new(24, 1, 0, "最小化指针下的窗口"),
-            5 => Action::new(24, 2, 0, "最大化指针下的窗口"),
-            6 => Action::new(2, 0, 0, "16 合一手势"),
-            7 => Action::new(2, 1, 0, "鼠标手势"),
-            8 => Action::new(24, 0, 0, "全部最小化"),
-            9 => Action::new(9, 9, 5, "滚轮向左"),
-            10 => Action::new(9, 9, 6, "滚轮向右"),
-            _ => return Err("无效的主机动作".into()),
+            2 => Action::new(22, 0, 0, tr("放大")),
+            3 => Action::new(22, 1, 0, tr("缩小")),
+            4 => Action::new(24, 1, 0, tr("最小化指针下的窗口")),
+            5 => Action::new(24, 2, 0, tr("最大化指针下的窗口")),
+            6 => Action::new(2, 0, 0, tr("16 合一手势")),
+            7 => Action::new(2, 1, 0, tr("鼠标手势")),
+            8 => Action::new(24, 0, 0, tr("全部最小化")),
+            9 => Action::new(9, 9, 5, tr("滚轮向左")),
+            10 => Action::new(9, 9, 6, tr("滚轮向右")),
+            _ => return Err(tr("无效的主机动作").into()),
         };
         let action = if matches!(self.kind, 9 | 10) {
             action
@@ -113,65 +114,69 @@ impl Editor {
             self.kind = 0;
         }
         let names = [
-            "打开文件或程序",
-            "输入文字",
-            "应用放大",
-            "应用缩小",
-            "最小化指针下的窗口",
-            "最大化指针下的窗口",
-            "16 合一手势",
-            "鼠标手势",
-            "全部最小化",
-            "滚轮向左",
-            "滚轮向右",
+            tr("打开文件或程序"),
+            tr("输入文字"),
+            tr("应用放大"),
+            tr("应用缩小"),
+            tr("最小化指针下的窗口"),
+            tr("最大化指针下的窗口"),
+            tr("16 合一手势"),
+            tr("鼠标手势"),
+            tr("全部最小化"),
+            tr("滚轮向左"),
+            tr("滚轮向右"),
         ];
         egui::ComboBox::from_id_salt("host-button-kind")
-            .selected_text(names[self.kind])
+            .selected_text(tr_text(names[self.kind]))
             .show_ui(ui, |ui| {
                 for (index, name) in names
                     .into_iter()
                     .enumerate()
                     .filter(|(index, _)| allow_gestures || !matches!(index, 6 | 7))
                 {
-                    ui.selectable_value(&mut self.kind, index, name);
+                    ui.selectable_value(&mut self.kind, index, tr_text(name));
                 }
             });
         match self.kind {
             0 => {
-                path_field(ui, &mut self.target, "文件、程序路径或 URL", 350.0);
+                path_field(ui, &mut self.target, tr("文件、程序路径或 URL"), 350.0);
                 ui.add(
                     egui::TextEdit::multiline(&mut self.arguments)
-                        .hint_text("每行一个程序参数，可留空")
+                        .hint_text(tr("每行一个程序参数，可留空"))
                         .desired_rows(3)
                         .desired_width(350.0),
                 );
-                ui.label("截图、桌面画笔和语音可调用已安装的 Linux 应用。");
+                ui.label(tr("截图、桌面画笔和语音可调用已安装的 Linux 应用。"));
             }
             1 => {
                 ui.add(
                     egui::TextEdit::multiline(&mut self.text)
-                        .hint_text("按下时输入的文字")
+                        .hint_text(tr("按下时输入的文字"))
                         .desired_rows(3)
                         .desired_width(350.0),
                 );
             }
             2 | 3 => {
-                ui.label("应用需支持 Ctrl+滚轮缩放。");
+                ui.label(tr("应用需支持 Ctrl+滚轮缩放。"));
             }
             6 | 7 => {
-                ui.label("按住此键移动鼠标。设定此按键时，载入手势页的当前动作。修改方向后，在手势页重新应用。");
+                ui.label(tr("按住此键移动鼠标。设定此按键时，载入手势页的当前动作。修改方向后，在手势页重新应用。"));
             }
             8 => {
-                ui.label("最小化当前桌面和活动中的所有可最小化窗口。需要 KDE Wayland。");
+                ui.label(tr(
+                    "最小化当前桌面和活动中的所有可最小化窗口。需要 KDE Wayland。",
+                ));
             }
             9 | 10 => {
-                ui.label("每次按下或每格滚动执行一格水平滚动。");
+                ui.label(tr("每次按下或每格滚动执行一格水平滚动。"));
             }
             _ => {}
         }
         ui.label(
-            RichText::new("主机动作需要本程序保持运行。手势按住绘图，其他动作按下执行。")
-                .color(skin::GRAY),
+            RichText::new(tr(
+                "主机动作需要本程序保持运行。手势按住绘图，其他动作按下执行。",
+            ))
+            .color(skin::GRAY),
         );
     }
 }
@@ -196,13 +201,13 @@ impl App {
 
     pub(super) fn host_button_controls(&mut self, ui: &mut egui::Ui) {
         ui.horizontal_wrapped(|ui| {
-            ui.label(&self.host_buttons.status);
+            ui.label(tr_text(&self.host_buttons.status));
             if skin::button(
                 ui,
                 if self.host_buttons.running {
-                    "停止主机动作"
+                    tr("停止主机动作")
                 } else {
-                    "启用已保存的主机动作"
+                    tr("启用已保存的主机动作")
                 },
                 190.0,
                 !self.pending && self.connected() && !self.host_buttons.applied.is_empty(),

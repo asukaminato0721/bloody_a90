@@ -8,6 +8,10 @@ use bloody_a90::{
     macros::{self, Repeat},
     storage,
 };
+use bloody_a90::{
+    i18n::{tr, tr_text},
+    tf,
+};
 use eframe::egui::{self, RichText, vec2};
 use std::path::Path;
 
@@ -16,7 +20,7 @@ impl App {
     /// profile running on the mouse.
     fn test_macro(&mut self) {
         let result = (|| {
-            let device = self.device.as_ref().ok_or("鼠标未连接")?;
+            let device = self.device.as_ref().ok_or(tr("鼠标未连接"))?;
             let program = self.compiled.as_ref().map_err(Clone::clone)?;
             let mut config = device.backup.configuration()?;
             let profile = usize::from(device.profile.0).min(config.profiles.len() - 1);
@@ -52,11 +56,11 @@ impl App {
         self.release = release;
         self.repeat = file.repeat;
         self.recompile();
-        Ok(format!(
+        Ok(tf!(
             "已导入 AMC：{}{}",
             file.description,
             if file.high_language {
-                "（HighLanguage 已转换为 M 文本）"
+                tr("（HighLanguage 已转换为 M 文本）")
             } else {
                 ""
             }
@@ -108,19 +112,19 @@ impl App {
                 ui.set_width(left + 16.0 + middle);
                 ui.horizontal(|ui| {
                     ui.set_width(left + 16.0 + middle);
-                    heading(ui, numbers[0], "指令区");
+                    heading(ui, numbers[0], tr("指令区"));
                     ui.add_space(left - 90.0);
-                    heading(ui, numbers[1], "仿真区");
+                    heading(ui, numbers[1], tr("仿真区"));
                     ui.add_space(24.0);
                     ui.label(
-                        RichText::new("重复方式")
+                        RichText::new(tr("重复方式"))
                             .font(skin::regular(16.0))
                             .color(skin::GRAY),
                     );
                     for (mode, title, hint) in [
-                        (Repeat::Once, "单次", "不重复执行"),
-                        (Repeat::Held, "按住", "按下：执行\n弹起：终止执行"),
-                        (Repeat::Toggle, "开关", "按下：执行\n再按：终止执行"),
+                        (Repeat::Once, tr("单次"), tr("不重复执行")),
+                        (Repeat::Held, tr("按住"), tr("按下：执行\n弹起：终止执行")),
+                        (Repeat::Toggle, tr("开关"), tr("按下：执行\n再按：终止执行")),
                     ] {
                         if skin::tool(ui, title, self.repeat == mode)
                             .on_hover_text(hint)
@@ -169,18 +173,18 @@ impl App {
             });
             ui.vertical(|ui| {
                 ui.set_width(right);
-                heading(ui, numbers[2], "编程区");
+                heading(ui, numbers[2], tr("编程区"));
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
                     ui.label(
-                        RichText::new("文件")
+                        RichText::new(tr("文件"))
                             .font(skin::regular(18.0))
                             .color(skin::GRAY),
                     );
                     path_field(
                         ui,
                         &mut self.export_path,
-                        "AMC 或二进制文件路径",
+                        tr("AMC 或二进制文件路径"),
                         right - 60.0,
                     );
                 });
@@ -193,9 +197,9 @@ impl App {
             ui,
             self.footer_area,
             &[
-                ("功能注解", true),
-                ("中断宏", connected),
-                ("测试", connected),
+                (tr("功能注解"), true),
+                (tr("中断宏"), connected),
+                (tr("测试"), connected),
             ],
         );
         if clicked[0] {
@@ -209,15 +213,15 @@ impl App {
         }
         if self.oscar_view.notes {
             let mut open = true;
-            egui::Window::new("功能注解")
+            egui::Window::new(tr("功能注解"))
                 .open(&mut open)
                 .collapsible(false)
                 .resizable(false)
                 .show(ui.ctx(), |ui| {
                     ui.monospace("KeyDown 4\nDelay 100\nKeyUp 4\nMoveR 20 -5\nMoveTo 400 300\nvar VarA = 0\nVarA = VarA + 1\nif VarA != 3 goto 5\ngowhile 1 3\nifkey 4 1 9");
-                    ui.label("跳转使用源代码行号。gowhile X N 把第 X 行至此行重复 N 次；\nifkey K S L 在按键 K 按住（S=1）或松开（S=0）时跳到第 L 行。");
-                    ui.label("HighLanguage 格式的 AMC 文件导入时会转换为 M 文本。\n详细语法见 docs/research/TEXT.md。");
-                    ui.label("测试：写入当前配置的后侧键（第四键）。\n宏无法停止时，同时按下 Caps Lock、Scroll Lock、Num Lock 中断。");
+                    ui.label(tr("跳转使用源代码行号。gowhile X N 把第 X 行至此行重复 N 次；\nifkey K S L 在按键 K 按住（S=1）或松开（S=0）时跳到第 L 行。"));
+                    ui.label(tr("HighLanguage 格式的 AMC 文件导入时会转换为 M 文本。\n详细语法见 docs/research/TEXT.md。"));
+                    ui.label(tr("测试：写入当前配置的后侧键（第四键）。\n宏无法停止时，同时按下 Caps Lock、Scroll Lock、Num Lock 中断。"));
                 });
             self.oscar_view.notes = open;
         }
@@ -232,11 +236,11 @@ impl App {
                     self.insert_key(usage);
                 }
                 ui.add_space(24.0);
-                skin::check(ui, &mut self.oscar_view.physical, "实体键盘输入")
-                    .on_hover_text("开启后，在本窗口按下的键盘按键会插入编程区。");
+                skin::check(ui, &mut self.oscar_view.physical, tr("实体键盘输入"))
+                    .on_hover_text(tr("开启后，在本窗口按下的键盘按键会插入编程区。"));
                 ui.horizontal(|ui| {
                     ui.add(egui::DragValue::new(&mut self.oscar_view.key_delay).range(0..=999_999));
-                    ui.label("：预设延迟时间(毫秒)");
+                    ui.label(tr("：预设延迟时间(毫秒)"));
                 });
                 if self.oscar_view.physical {
                     let pressed: Vec<u16> = ui.input(|input| {
@@ -260,23 +264,23 @@ impl App {
                 }
             }
             1 => {
-                ui.label(RichText::new("鼠标按键").color(skin::GRAY));
+                ui.label(RichText::new(tr("鼠标按键")).color(skin::GRAY));
                 egui::Grid::new("oscar-mouse")
                     .spacing(vec2(8.0, 8.0))
                     .show(ui, |ui| {
                         for (caption, name) in [
-                            ("左键", "Left"),
-                            ("右键", "Right"),
-                            ("中键", "Middle"),
-                            ("四键", "Button4"),
-                            ("五键", "Button5"),
+                            (tr("左键"), "Left"),
+                            (tr("右键"), "Right"),
+                            (tr("中键"), "Middle"),
+                            (tr("四键"), "Button4"),
+                            (tr("五键"), "Button5"),
                         ] {
                             ui.label(caption);
                             for (action, text) in [
-                                ("按下", format!("{name}Down")),
-                                ("弹起", format!("{name}Up")),
+                                (tr("按下"), format!("{name}Down")),
+                                (tr("弹起"), format!("{name}Up")),
                                 (
-                                    "单击",
+                                    tr("单击"),
                                     format!(
                                         "{name}Down\nDelay {}\n{name}Up",
                                         self.oscar_view.key_delay
@@ -292,32 +296,32 @@ impl App {
                     });
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("滚轮").color(skin::GRAY));
-                    if skin::tool(ui, "前滚", false).clicked() {
+                    ui.label(RichText::new(tr("滚轮")).color(skin::GRAY));
+                    if skin::tool(ui, tr("前滚"), false).clicked() {
                         insert = Some("WheelUp".into());
                     }
-                    if skin::tool(ui, "后滚", false).clicked() {
+                    if skin::tool(ui, tr("后滚"), false).clicked() {
                         insert = Some("WheelDown".into());
                     }
                 });
             }
             2 => {
-                ui.label(RichText::new("鼠标相对移动坐标(X,Y)").color(skin::GRAY));
+                ui.label(RichText::new(tr("鼠标相对移动坐标(X,Y)")).color(skin::GRAY));
                 ui.horizontal(|ui| {
                     for value in &mut self.motion {
                         ui.add(egui::DragValue::new(value).range(-32768..=32767));
                     }
-                    if skin::tool(ui, "插入", false).clicked() {
+                    if skin::tool(ui, tr("插入"), false).clicked() {
                         insert = Some(format!("MoveR {} {}", self.motion[0], self.motion[1]));
                     }
                 });
                 ui.add_space(8.0);
-                ui.label(RichText::new("鼠标绝对坐标(X,Y)").color(skin::GRAY));
+                ui.label(RichText::new(tr("鼠标绝对坐标(X,Y)")).color(skin::GRAY));
                 ui.horizontal(|ui| {
                     for value in &mut self.oscar_view.position {
                         ui.add(egui::DragValue::new(value).range(0..=65535));
                     }
-                    if skin::tool(ui, "插入", false).clicked() {
+                    if skin::tool(ui, tr("插入"), false).clicked() {
                         insert = Some(format!(
                             "MoveTo {} {}",
                             self.oscar_view.position[0], self.oscar_view.position[1]
@@ -327,52 +331,52 @@ impl App {
             }
             3 => {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("延时").color(skin::GRAY));
+                    ui.label(RichText::new(tr("延时")).color(skin::GRAY));
                     ui.add(
                         egui::DragValue::new(&mut self.delay)
                             .range(0..=999_999)
                             .suffix(" ms"),
                     );
-                    if skin::tool(ui, "插入", false).clicked() {
+                    if skin::tool(ui, tr("插入"), false).clicked() {
                         insert = Some(format!("Delay {}", self.delay));
                     }
                 });
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("跳跃前往第").color(skin::GRAY));
+                    ui.label(RichText::new(tr("跳跃前往第")).color(skin::GRAY));
                     ui.add(egui::DragValue::new(&mut self.goto).range(1..=16384));
-                    ui.label(RichText::new("行").color(skin::GRAY));
-                    if skin::tool(ui, "插入", false).clicked() {
+                    ui.label(RichText::new(tr("行")).color(skin::GRAY));
+                    if skin::tool(ui, tr("插入"), false).clicked() {
                         insert = Some(format!("Goto {}", self.goto));
                     }
                 });
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("从第").color(skin::GRAY));
+                    ui.label(RichText::new(tr("从第")).color(skin::GRAY));
                     ui.add(egui::DragValue::new(&mut self.goto).range(1..=16384));
-                    ui.label(RichText::new("行起循环").color(skin::GRAY));
+                    ui.label(RichText::new(tr("行起循环")).color(skin::GRAY));
                     ui.add(egui::DragValue::new(&mut self.oscar_view.count).range(1..=65535));
-                    ui.label(RichText::new("次").color(skin::GRAY));
-                    if skin::tool(ui, "插入", false).clicked() {
+                    ui.label(RichText::new(tr("次")).color(skin::GRAY));
+                    if skin::tool(ui, tr("插入"), false).clicked() {
                         insert = Some(format!("gowhile {} {}", self.goto, self.oscar_view.count));
                     }
                 });
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("按键").color(skin::GRAY));
+                    ui.label(RichText::new(tr("按键")).color(skin::GRAY));
                     ui.add(egui::DragValue::new(&mut self.oscar_view.key).range(1..=255));
-                    ui.label(RichText::new("按住时前往第").color(skin::GRAY));
+                    ui.label(RichText::new(tr("按住时前往第")).color(skin::GRAY));
                     ui.add(egui::DragValue::new(&mut self.goto).range(1..=16384));
-                    ui.label(RichText::new("行").color(skin::GRAY));
-                    if skin::tool(ui, "插入", false).clicked() {
+                    ui.label(RichText::new(tr("行")).color(skin::GRAY));
+                    if skin::tool(ui, tr("插入"), false).clicked() {
                         insert = Some(format!("ifkey {} 1 {}", self.oscar_view.key, self.goto));
                     }
                 });
             }
             _ => {
-                ui.label(RichText::new("变量 VarA ~ VarZ").color(skin::GRAY));
+                ui.label(RichText::new(tr("变量 VarA ~ VarZ")).color(skin::GRAY));
                 for (caption, text) in [
-                    ("定义变量 VarA = 0", "var VarA = 0"),
-                    ("VarA 加 1", "VarA = VarA + 1"),
-                    ("VarA 减 1", "VarA = VarA - 1"),
-                    ("VarA 不等于 3 时前往第 1 行", "if VarA != 3 goto 1"),
+                    (tr("定义变量 VarA = 0"), "var VarA = 0"),
+                    (tr("VarA 加 1"), "VarA = VarA + 1"),
+                    (tr("VarA 减 1"), "VarA = VarA - 1"),
+                    (tr("VarA 不等于 3 时前往第 1 行"), "if VarA != 3 goto 1"),
                 ] {
                     if skin::tool(ui, caption, false).clicked() {
                         insert = Some(text.into());
@@ -394,11 +398,11 @@ impl App {
         let path = self.export_path.trim().to_owned();
         let has_path = !self.pending && !path.is_empty();
         let tools: [(&str, &str, bool); 5] = [
-            ("💾", "导出 AMC 到文件路径", has_path),
-            ("📂", "从文件路径导入 AMC", has_path),
-            ("↶", "撤销", !self.oscar_view.undo.is_empty()),
-            ("↷", "重做", !self.oscar_view.redo.is_empty()),
-            ("🗑", "清空编程区", !self.press.is_empty()),
+            ("💾", tr("导出 AMC 到文件路径"), has_path),
+            ("📂", tr("从文件路径导入 AMC"), has_path),
+            ("↶", tr("撤销"), !self.oscar_view.undo.is_empty()),
+            ("↷", tr("重做"), !self.oscar_view.redo.is_empty()),
+            ("🗑", tr("清空编程区"), !self.press.is_empty()),
         ];
         let mut clicked = None;
         for (index, (glyph, hint, enabled)) in tools.iter().enumerate() {
@@ -472,9 +476,9 @@ impl App {
         }
         ui.label(
             RichText::new(if self.repeat == Repeat::Once {
-                "弹起程序"
+                tr("弹起程序")
             } else {
-                "弹起程序由重复方式决定"
+                tr("弹起程序由重复方式决定")
             })
             .color(skin::GRAY),
         );
@@ -490,7 +494,7 @@ impl App {
         match &self.compiled {
             Ok(program) => {
                 ui.label(
-                    RichText::new(format!(
+                    RichText::new(tf!(
                         "编译通过 · 按下 {} 字 · 弹起 {} 字 · 在“按键”页选择“宏”即可指定给按键",
                         program.press.len(),
                         program.release.len()
@@ -500,14 +504,14 @@ impl App {
                 );
             }
             Err(error) => {
-                ui.colored_label(skin::ERROR, error);
+                ui.colored_label(skin::ERROR, tr_text(error));
             }
         }
         ui.horizontal(|ui| {
             ui.label(
-                RichText::new(
+                RichText::new(tr(
                     "⚠ 测试宏无法停止时，同时按下 Caps Lock、Scroll Lock、Num Lock 中断。",
-                )
+                ))
                 .font(skin::regular(13.0))
                 .color(skin::LIGHT_GRAY),
             );
@@ -520,37 +524,38 @@ impl App {
             return;
         };
         let mut export = None;
-        ui.collapsing("编码与导出", |ui| {
+        ui.collapsing(tr("编码与导出"), |ui| {
             ui.horizontal(|ui| {
                 ui.spacing_mut().item_spacing.x = 10.0;
-                if skin::button(ui, "复制按下字节", 150.0, true).clicked() {
+                if skin::button(ui, tr("复制按下字节"), 150.0, true).clicked() {
                     ui.ctx().copy_text(byte_hex(&program.press));
                 }
-                if skin::button(ui, "复制弹起字节", 150.0, true).clicked() {
+                if skin::button(ui, tr("复制弹起字节"), 150.0, true).clicked() {
                     ui.ctx().copy_text(byte_hex(&program.release));
                 }
                 let enabled = !self.pending && !self.export_path.trim().is_empty();
-                if skin::button(ui, "导出按下程序", 150.0, enabled)
-                    .on_disabled_hover_text("先填写文件路径")
+                if skin::button(ui, tr("导出按下程序"), 150.0, enabled)
+                    .on_disabled_hover_text(tr("先填写文件路径"))
                     .clicked()
                 {
                     export = Some(macros::bytes(&program.press));
                 }
-                if skin::button(ui, "导出弹起程序", 150.0, enabled)
-                    .on_disabled_hover_text("先填写文件路径")
+                if skin::button(ui, tr("导出弹起程序"), 150.0, enabled)
+                    .on_disabled_hover_text(tr("先填写文件路径"))
                     .clicked()
                 {
                     export = Some(macros::bytes(&program.release));
                 }
             });
-            for (title, words) in [("按下", &program.press), ("弹起", &program.release)] {
+            for (title, words) in [(tr("按下"), &program.press), (tr("弹起"), &program.release)]
+            {
                 ui.label(title);
                 for instruction in storage::list(words).instructions {
                     ui.monospace(format!(
                         "{:04}  {:<15}{}",
                         instruction.offset,
                         macros::hex(&instruction.words),
-                        instruction.text
+                        tr_text(&instruction.text)
                     ));
                 }
             }
@@ -623,7 +628,7 @@ fn category(
     painter.text(
         rect.left_center() + vec2(12.0, 0.0),
         egui::Align2::LEFT_CENTER,
-        caption,
+        tr_text(caption),
         skin::regular(16.0),
         skin::TEXT,
     );
@@ -763,7 +768,7 @@ fn key_cap(ui: &mut egui::Ui, rect: egui::Rect, caption: &str, id: u16) -> bool 
     painter.text(
         rect.center(),
         egui::Align2::CENTER_CENTER,
-        caption,
+        tr_text(caption),
         skin::regular(12.0),
         skin::TEXT,
     );

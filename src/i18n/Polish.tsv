@@ -1,0 +1,101 @@
+# Polish: captions of the official program. Other text falls back to English.
+删除	Usuń
+应用	APPLY
+左键	Lewy
+右键	Prawy
+中键	Środkowy
+保存	Zapisz
+放大	Powiększ
+缩小	Zmniejsz
+全部最小化	Wszystko minimum
+慢	Slow
+快	Fast
+恢复默认	RESET
+取消	CANCEL
+按键响应 (ms)	Reakcja na kliknięcie
+双击速度	Double-click speed
+滚轮调节	Roller Adjustment
+垂直滚动	Vertical Scrolling
+一次滚动行数	Number of rows scrolled at once
+一次滚动屏幕	Scrolling the screen at once
+指针移动速度	Pointer movement speed
+鼠标手势	Mouse Gestures
+禁用	Wyłączone
+播放/暂停	Odtwarzaj/pauza
+停止	Stop/zatrzymanie
+静音	Wycisz
+左键双击	Dwukrotnie_kliknij_lewy_przycisk
+按键设置	Key settings
+按键查询	Zapytania o klawisze
+请按下鼠标按键	Wciśnij klawisz myszy
+文件	Plik
+删除宏	Usuń
+分辨率	Resolution
+按键响应	Key Response
+回报率	Reporting Rate
+微精校准	Kalibracja
+滚轮	Scroll Wheel
+指针	Pointer
+左键编程	Left Click Macro
+狙击键	Sniper Key
+奥斯卡II	Oscar II
+奥斯卡III	Oscar III
+灯光亮度	Lighting Brightness
+关于软件	About Software
+关于硬件	About Hardware
+按键	Button
+灵敏度	Czułość
+编程设置	Macro Settings
+灯光设置	Lighting Settings
+其他设置	Other Settings
+全键编程模板 : 提供MMORPG等游戏所需的多按键自定义编程功能，若FPS/TPS射击类游戏玩家可选用更专业的左键编程模板进行设置。	Full key programming template (+/-/M): Provides custom multi-key programming functions for MMORPG and other games.  For FPS/TPS shooting games, players can choose a specialized left key programming template
+灵敏度设置 : 提供鼠标的分辨率CPI，按键响应，报告率，微精校准LOD，滚轮及指针等灵敏度的功能设置。	Sensitivity settings: Offers sensitivity adjustments for mouse resolution (CPI), button response, report rate, fine calibration (LOD), scroll wheel, pointer, and other functions.
+编程设置 : 提供多种编程平台的“组合键”“左键编程”“奥斯卡II”“狙击键”等编程组合设置，并在按键设置中绑定编程按键使用。	Programming Settings: Provides programming combinations such as "combination keys," "left key programming," "Oscar II," and "sniper keys" for various programming platforms, and binds programming keys in the key settings.
+灯光设置：提供鼠标灯光亮度，灯效控制及RGB编辑等设置。（因产品功能不同，灯光设置会有所差异)	Lighting settings: Offers settings for mouse lighting brightness, lightning effect control, and RGB editing. (Light settings may vary by product.)
+其他设置 : 提供鼠标软件与硬件等设备设置。	Other Settings: Offers device settings for mouse software and hardware.
+全键编程模板	Full Key Programming
+左键编程模板	Left Click Programming
+指令区	Strefa@RETURN@   Poleceń
+仿真区	Strefa symulacji
+不重复执行	Bez powtórzeń
+编程区	Strefa makro
+功能注解	Notes
+测试	Test
+实体键盘输入	Fizyczne wprowadzanie z klawiatury
+：预设延迟时间(毫秒)	: Ustawiony czas opóźnienia (ms)
+四键	4.przycisk
+五键	5.przycisk
+按下	Wciśnij
+弹起	Zwolnij
+单击	Kliknij
+前滚	Do przodu
+后滚	Wstecz
+鼠标相对移动坐标(X,Y)	Wzgl. koordynanty (XY) myszy
+延时	Opóźnienie
+跳跃前往第	Skocz do linii
+撤销	Cofnij
+重做	Powtórz
+导出	Eksport
+导入	Import
+硬件信息	Hardware information
+开机自动启动	Automatically start up
+显示语言	Display language
+传感器 [微精校准LOD]	Kalibracja czujnika
+预设高度	Ustawienie wstępne
+目前 CPI :	Current CPI :
+X轴 设定 :	Axirs X Setting :
+Y轴 设定 :	Axirs Y Setting :
+启用X/Y	Enabled X/Y
+报告率（Hz)	Częstotliwość raportowania myszy (Hz)
+狙击设置	Sniper Settings
+狙击类别	Sniper Type
+编程文件	Macro Type
+A-多连	A-Burst
+B-循环	B-Strafe
+C-机枪	C-Machine
+D-临阵	D-In_Game
+M-宏枪	M-Macro
+设定弹数	Liczby
+准心回位	Powrót
+说明>>	Wyjaśnij>>
+文字	Tekst

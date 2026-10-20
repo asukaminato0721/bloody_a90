@@ -8,6 +8,10 @@ use bloody_a90::{
     gestures::{Action, Document, Kind, Trace16, TraceMouse},
     linux_input::BUTTONS,
 };
+use bloody_a90::{
+    i18n::{tr, tr_text},
+    tf,
+};
 use eframe::egui::{self, RichText};
 
 pub(super) struct Editor {
@@ -44,7 +48,7 @@ impl Default for Editor {
             triggers: [None; 2],
             running: false,
             last_poll: std::time::Instant::now(),
-            status: "全局手势未启用".into(),
+            status: tr("全局手势未启用").into(),
             kind: 0,
             selected: 0,
             paths: ["16in1.gestures".into(), "Mouse.gestures".into()],
@@ -82,14 +86,14 @@ impl Editor {
     }
 
     pub(super) fn imported(&mut self, bytes: &[u8]) -> Result<String, String> {
-        let path = self.loading_path.take().ok_or("缺少手势文件路径")?;
+        let path = self.loading_path.take().ok_or(tr("缺少手势文件路径"))?;
         let document = Document::parse(bytes)?;
         self.kind = usize::from(document.kind == Kind::Mouse);
         self.originals[self.kind] = Some((path.clone(), bytes.to_vec()));
         self.paths[self.kind] = path;
         self.documents[self.kind] = document;
         self.selected = 0;
-        Ok("已载入手势文件。修改后点击“保存”。".into())
+        Ok(tr("已载入手势文件。修改后点击“保存”。").into())
     }
 }
 
@@ -115,7 +119,7 @@ impl App {
             let doc = Document::parse(&bytes)?;
             let kind = usize::from(doc.kind == Kind::Mouse);
             self.gestures.originals[kind] = Some((path.clone(), bytes));
-            Ok(format!("已保存手势文件：{path}"))
+            Ok(tf!("已保存手势文件：{path}"))
         });
         self.report(result);
     }
@@ -137,25 +141,25 @@ impl App {
         let mut report = None;
         ui.label(
             RichText::new(
-                "普通触发键需在按键页设为对应鼠标按键。顶键或按配置指定的手势，请在按键页选择“主机动作 → 手势”。",
+                tr("普通触发键需在按键页设为对应鼠标按键。顶键或按配置指定的手势，请在按键页选择“主机动作 → 手势”。"),
             )
             .color(skin::GRAY),
         );
         ui.add_enabled_ui(!self.pending, |ui| {
             let editor = &mut self.gestures;
             skin::sheet().show(ui, |ui| {
-                ui.strong("全局手势");
+                ui.strong(tr("全局手势"));
                 for kind in 0..2 {
                     ui.horizontal(|ui| {
                         let mut enabled = editor.triggers[kind].is_some();
-                        if ui.checkbox(&mut enabled, editor.documents[kind].kind.name()).changed() {
+                        if ui.checkbox(&mut enabled, tr_text(editor.documents[kind].kind.name())).changed() {
                             editor.triggers[kind] = if enabled { Some(BUTTONS[3 + kind]) } else { None };
                         }
                         if let Some(code) = &mut editor.triggers[kind] {
                             egui::ComboBox::from_id_salt(("gesture_trigger", kind))
-                                .selected_text(["左键", "右键", "中键", "后退键", "前进键"][BUTTONS.iter().position(|button| button == code).unwrap_or(3)])
+                                .selected_text([tr("左键"), tr("右键"), tr("中键"), tr("后退键"), tr("前进键")][BUTTONS.iter().position(|button| button == code).unwrap_or(3)])
                                 .show_ui(ui, |ui| {
-                                    for (button, label) in BUTTONS.into_iter().zip(["左键", "右键", "中键", "后退键", "前进键"]) {
+                                    for (button, label) in BUTTONS.into_iter().zip([tr("左键"), tr("右键"), tr("中键"), tr("后退键"), tr("前进键")]) {
                                         ui.selectable_value(code, button, label);
                                     }
                                 });
@@ -163,28 +167,28 @@ impl App {
                     });
                 }
                 ui.horizontal(|ui| {
-                    if skin::button(ui, "应用全局设置", 160.0, editor.triggers.iter().any(Option::is_some) || self.host_buttons.applied.assigned_gesture_kinds().into_iter().any(|kind| kind)).clicked() {
+                    if skin::button(ui, tr("应用全局设置"), 160.0, editor.triggers.iter().any(Option::is_some) || self.host_buttons.applied.assigned_gesture_kinds().into_iter().any(|kind| kind)).clicked() {
                         job = Some(Job::Gestures(Some(Box::new(Settings { documents: editor.documents.clone(), triggers: editor.triggers, wheel: None }))));
                     }
-                    if skin::button(ui, "停止全局手势", 160.0, editor.running).clicked() { job = Some(Job::Gestures(None)); }
-                    if skin::button(ui, "中断宏", 100.0, editor.running).clicked() { job = Some(Job::Interrupt); }
+                    if skin::button(ui, tr("停止全局手势"), 160.0, editor.running).clicked() { job = Some(Job::Gestures(None)); }
+                    if skin::button(ui, tr("中断宏"), 100.0, editor.running).clicked() { job = Some(Job::Interrupt); }
                 });
-                ui.label(&editor.status);
-                ui.label("按键页指定的手势与普通触发键共用此处的动作。停止全局手势会停止两种触发方式。");
+                ui.label(tr_text(&editor.status));
+                ui.label(tr("按键页指定的手势与普通触发键共用此处的动作。停止全局手势会停止两种触发方式。"));
                 if let Some(saved) = &self.host_buttons.applied.gestures
-                    && skin::button(ui, "载入已保存的按键手势", 230.0, true).clicked()
+                    && skin::button(ui, tr("载入已保存的按键手势"), 230.0, true).clicked()
                 {
                     editor.documents = saved.documents.clone();
                 }
-                ui.label("同时按下右键和中键可停止全局手势。普通触发键未移动时保留原点击。");
-                ui.label("编辑后需重新应用。手势距离使用鼠标原始位移。关闭本工具会解除输入接管。");
-                ui.label("按住重复宏：即时手势中按住触发键时循环，释放识别时执行一遍。开关宏再次匹配同一手势时停止。");
+                ui.label(tr("同时按下右键和中键可停止全局手势。普通触发键未移动时保留原点击。"));
+                ui.label(tr("编辑后需重新应用。手势距离使用鼠标原始位移。关闭本工具会解除输入接管。"));
+                ui.label(tr("按住重复宏：即时手势中按住触发键时循环，释放识别时执行一遍。开关宏再次匹配同一手势时停止。"));
             });
             skin::sheet().show(ui, |ui| {
                 ui.horizontal(|ui| {
                     for (index, kind) in [Kind::Sixteen, Kind::Mouse].into_iter().enumerate() {
                         if ui
-                            .selectable_value(&mut editor.kind, index, kind.name())
+                            .selectable_value(&mut editor.kind, index, tr_text(kind.name()))
                             .clicked()
                         {
                             editor.selected = 0;
@@ -193,13 +197,13 @@ impl App {
                 });
                 let kind = editor.kind;
                 ui.horizontal(|ui| {
-                    path_field(ui, &mut editor.paths[kind], "手势文件路径", 440.0);
+                    path_field(ui, &mut editor.paths[kind], tr("手势文件路径"), 440.0);
                     let path = editor.paths[kind].trim().to_owned();
-                    if skin::button(ui, "载入", 90.0, !path.is_empty()).clicked() {
+                    if skin::button(ui, tr("载入"), 90.0, !path.is_empty()).clicked() {
                         editor.loading_path = Some(path.clone());
                         job = Some(Job::Read(path.clone(), Purpose::Gestures));
                     }
-                    if skin::button(ui, "保存", 90.0, !path.is_empty()).clicked() {
+                    if skin::button(ui, tr("保存"), 90.0, !path.is_empty()).clicked() {
                         let expected = editor.originals[kind]
                             .as_ref()
                             .filter(|(original_path, _)| original_path == &path)
@@ -211,23 +215,23 @@ impl App {
                         ));
                     }
                 });
-                ui.label("更换路径可另存为新文件。载入会替换该套手势的编辑内容。");
+                ui.label(tr("更换路径可另存为新文件。载入会替换该套手势的编辑内容。"));
                 let document = &mut editor.documents[kind];
                 match document.kind {
                     Kind::Sixteen => {
-                        if ui.checkbox(&mut document.realtime, "按距离即时响应").changed()
+                        if ui.checkbox(&mut document.realtime, tr("按距离即时响应")).changed()
                             && document.realtime && editor.selected >= 8 { editor.selected = 0; }
                         ui.horizontal(|ui| {
-                            ui.label("即时响应距离：");
+                            ui.label(tr("即时响应距离："));
                             ui.add_enabled(
                                 document.realtime,
                                 egui::DragValue::new(&mut document.distance).range(1..=u32::MAX),
                             );
                         });
-                        if document.realtime { ui.label("即时响应使用前八个单方向。折线动作保持原值。"); }
+                        if document.realtime { ui.label(tr("即时响应使用前八个单方向。折线动作保持原值。")); }
                     }
                     Kind::Mouse => {
-                        ui.checkbox(&mut document.tip, "显示浮动手势提示板");
+                        ui.checkbox(&mut document.tip, tr("显示浮动手势提示板"));
                     }
                 }
                 ui.horizontal_top(|ui| {
@@ -235,14 +239,14 @@ impl App {
                         ui.set_width(190.0);
                         for (index, shape) in document.kind.shapes().iter().enumerate() {
                             ui.add_enabled_ui(document.kind != Kind::Sixteen || !document.realtime || index < 8, |ui| {
-                                ui.selectable_value(&mut editor.selected, index, shape.name);
+                                ui.selectable_value(&mut editor.selected, index, tr_text(shape.name));
                             });
                         }
                     });
                     ui.vertical(|ui| {
                         ui.set_min_width(420.0);
                         let current = &document.actions[editor.selected];
-                        ui.strong(format!("当前动作：{}", current.label()));
+                        ui.strong(tf!("当前动作：{}", current.label()));
                         ui.monospace(format!(
                             "Simulator={}  Object={}  Action={}",
                             current.get("Simulator"),
@@ -254,7 +258,7 @@ impl App {
                         }
                         if current.number("Simulator") == Ok(20) { ui.label(current.get("MacroName")); }
                         if !current.get("LinuxArguments").is_empty() {
-                            ui.label("程序参数：");
+                            ui.label(tr("程序参数："));
                             ui.monospace(current.get("LinuxArguments").chars().take(1024).collect::<String>());
                         }
                         if current.number("Simulator") == Ok(21) {
@@ -263,42 +267,42 @@ impl App {
                         egui::ComboBox::from_id_salt("gesture_action")
                             .selected_text(
                                 [
-                                    "未设置",
-                                    "键盘",
-                                    "媒体键",
-                                    "鼠标按键",
-                                    "滚轮向上",
-                                    "滚轮向下",
-                                    "AMC 宏",
-                                    "滚轮向左",
-                                    "滚轮向右",
-                                    "打开文件或程序",
-                                    "输入文字",
-                                    "最小化指针下的窗口",
-                                    "最大化指针下的窗口",
-                                    "应用放大（Ctrl+滚轮）",
-                                    "应用缩小（Ctrl+滚轮）",
-                                    "全部最小化（KDE Wayland）",
+                                    tr("未设置"),
+                                    tr("键盘"),
+                                    tr("媒体键"),
+                                    tr("鼠标按键"),
+                                    tr("滚轮向上"),
+                                    tr("滚轮向下"),
+                                    tr("AMC 宏"),
+                                    tr("滚轮向左"),
+                                    tr("滚轮向右"),
+                                    tr("打开文件或程序"),
+                                    tr("输入文字"),
+                                    tr("最小化指针下的窗口"),
+                                    tr("最大化指针下的窗口"),
+                                    tr("应用放大（Ctrl+滚轮）"),
+                                    tr("应用缩小（Ctrl+滚轮）"),
+                                    tr("全部最小化（KDE Wayland）"),
                                 ][editor.choice],
                             )
                             .show_ui(ui, |ui| {
                                 for (index, label) in [
-                                    "未设置",
-                                    "键盘",
-                                    "媒体键",
-                                    "鼠标按键",
-                                    "滚轮向上",
-                                    "滚轮向下",
-                                    "AMC 宏",
-                                    "滚轮向左",
-                                    "滚轮向右",
-                                    "打开文件或程序",
-                                    "输入文字",
-                                    "最小化指针下的窗口",
-                                    "最大化指针下的窗口",
-                                    "应用放大（Ctrl+滚轮）",
-                                    "应用缩小（Ctrl+滚轮）",
-                                    "全部最小化（KDE Wayland）",
+                                    tr("未设置"),
+                                    tr("键盘"),
+                                    tr("媒体键"),
+                                    tr("鼠标按键"),
+                                    tr("滚轮向上"),
+                                    tr("滚轮向下"),
+                                    tr("AMC 宏"),
+                                    tr("滚轮向左"),
+                                    tr("滚轮向右"),
+                                    tr("打开文件或程序"),
+                                    tr("输入文字"),
+                                    tr("最小化指针下的窗口"),
+                                    tr("最大化指针下的窗口"),
+                                    tr("应用放大（Ctrl+滚轮）"),
+                                    tr("应用缩小（Ctrl+滚轮）"),
+                                    tr("全部最小化（KDE Wayland）"),
                                 ]
                                 .iter()
                                 .enumerate()
@@ -310,19 +314,19 @@ impl App {
                             1 => {
                                 ui.horizontal(|ui| {
                                     egui::ComboBox::from_id_salt("gesture_keyboard_key")
-                                        .selected_text(bloody_a90::highlanguage::key_name(editor.usage as u16).unwrap_or("其他按键"))
+                                        .selected_text(bloody_a90::highlanguage::key_name(editor.usage as u16).unwrap_or(tr("其他按键")))
                                         .show_ui(ui, |ui| {
-                                            ui.selectable_value(&mut editor.usage, 0, "仅修饰键");
+                                            ui.selectable_value(&mut editor.usage, 0, tr("仅修饰键"));
                                             for (usage, label) in bloody_a90::highlanguage::keys() {
                                                 ui.selectable_value(&mut editor.usage, usage as u8, label);
                                             }
                                         });
-                                    ui.label("USB HID 键码：");
+                                    ui.label(tr("USB HID 键码："));
                                     ui.add(egui::DragValue::new(&mut editor.usage).range(0..=255));
                                 });
                                 for (start, labels) in [
-                                    (0, ["左 Ctrl", "左 Shift", "左 Alt", "左 Super"]),
-                                    (4, ["右 Ctrl", "右 Shift", "右 Alt", "右 Super"]),
+                                    (0, [tr("左 Ctrl"), tr("左 Shift"), tr("左 Alt"), tr("左 Super")]),
+                                    (4, [tr("右 Ctrl"), tr("右 Shift"), tr("右 Alt"), tr("右 Super")]),
                                 ] {
                                     ui.horizontal(|ui| {
                                         for (bit, label) in labels.into_iter().enumerate() {
@@ -335,76 +339,76 @@ impl App {
                                         }
                                     });
                                 }
-                                ui.label("例如：A=4，V=25，X=27，Enter=40，Esc=41。");
+                                ui.label(tr("例如：A=4，V=25，X=27，Enter=40，Esc=41。"));
                             }
                             2 => {
                                 ui.horizontal(|ui| {
-                                    ui.label("Consumer HID 键码：");
+                                    ui.label(tr("Consumer HID 键码："));
                                     ui.add(
                                         egui::DragValue::new(&mut editor.consumer).range(0..=1023),
                                     );
                                 });
-                                ui.label("播放/暂停=205，静音=226，音量加=233，音量减=234。");
+                                ui.label(tr("播放/暂停=205，静音=226，音量加=233，音量减=234。"));
                             }
                             3 => {
                                 ui.horizontal(|ui| {
-                                    ui.label("鼠标按键：");
+                                    ui.label(tr("鼠标按键："));
                                     ui.add(egui::DragValue::new(&mut editor.mouse).range(1..=5));
                                 });
                             }
                             6 => {
-                                path_field(ui, &mut editor.macro_path, "AMC 文件路径", 400.0);
+                                path_field(ui, &mut editor.macro_path, tr("AMC 文件路径"), 400.0);
                             }
                             9 => {
-                                path_field(ui, &mut editor.launch_target, "文件、程序路径或 URL", 400.0);
-                                ui.label("可执行文件直接启动。其他文件和 URL 使用默认应用。目标按完整路径处理。");
+                                path_field(ui, &mut editor.launch_target, tr("文件、程序路径或 URL"), 400.0);
+                                ui.label(tr("可执行文件直接启动。其他文件和 URL 使用默认应用。目标按完整路径处理。"));
                                 ui.add(egui::TextEdit::multiline(&mut editor.launch_arguments)
-                                    .hint_text("程序参数，可留空。每行一个参数。")
+                                    .hint_text(tr("程序参数，可留空。每行一个参数。"))
                                     .desired_width(400.0).desired_rows(3));
-                                ui.label("截图、桌面画笔和语音功能可调用已安装的 Linux 工具。");
-                                ui.label("参数中的空格和引号按原文传递。带参数时，目标必须是可执行程序。");
+                                ui.label(tr("截图、桌面画笔和语音功能可调用已安装的 Linux 工具。"));
+                                ui.label(tr("参数中的空格和引号按原文传递。带参数时，目标必须是可执行程序。"));
                             }
                             10 => {
                                 ui.add(egui::TextEdit::multiline(&mut editor.input_text)
-                                    .hint_text("要输入的文字").desired_width(400.0).desired_rows(3));
-                                ui.label("支持 KWin EIS，或提供虚拟键盘接口的 Wayland 桌面。换行发送 Enter。");
+                                    .hint_text(tr("要输入的文字")).desired_width(400.0).desired_rows(3));
+                                ui.label(tr("支持 KWin EIS，或提供虚拟键盘接口的 Wayland 桌面。换行发送 Enter。"));
                             }
                             13 | 14 => {
-                                ui.label("应用需支持 Ctrl+滚轮缩放。使用其他绑定的应用可设置键盘动作或 AMC 宏。");
+                                ui.label(tr("应用需支持 Ctrl+滚轮缩放。使用其他绑定的应用可设置键盘动作或 AMC 宏。"));
                             }
                             _ => {}
                         }
-                        if skin::button(ui, "替换当前方向的动作", 220.0, true).clicked() {
+                        if skin::button(ui, tr("替换当前方向的动作"), 220.0, true).clicked() {
                             let action = match editor.choice {
                                 0 => Ok(Action::default()),
                                 1 => Ok(Action::keyboard(
                                     editor.usage,
                                     editor.modifiers,
-                                    &format!("键盘 {} + {}", editor.modifiers, editor.usage),
+                                    &tf!("键盘 {} + {}", editor.modifiers, editor.usage),
                                 )),
                                 2 => Ok(Action::new(
                                     7,
                                     editor.consumer as u32,
                                     3,
-                                    &format!("媒体键 {}", editor.consumer),
+                                    &tf!("媒体键 {}", editor.consumer),
                                 )),
                                 3 => Ok(Action::new(
                                     9,
                                     editor.mouse as u32,
                                     3,
-                                    &format!("鼠标按键 {}", editor.mouse),
+                                    &tf!("鼠标按键 {}", editor.mouse),
                                 )),
-                                4 => Ok(Action::new(9, 9, 3, "滚轮向上")),
-                                5 => Ok(Action::new(9, 9, 4, "滚轮向下")),
-                                7 => Ok(Action::new(9, 9, 5, "滚轮向左")),
-                                8 => Ok(Action::new(9, 9, 6, "滚轮向右")),
+                                4 => Ok(Action::new(9, 9, 3, tr("滚轮向上"))),
+                                5 => Ok(Action::new(9, 9, 4, tr("滚轮向下"))),
+                                7 => Ok(Action::new(9, 9, 5, tr("滚轮向左"))),
+                                8 => Ok(Action::new(9, 9, 6, tr("滚轮向右"))),
                                 9 => Action::open_target_with_arguments(&editor.launch_target, &editor.launch_arguments),
                                 10 => Action::input_text(&editor.input_text),
-                                11 => Ok(Action::new(24, 1, 3, "最小化指针下的窗口")),
-                                12 => Ok(Action::new(24, 2, 3, "最大化指针下的窗口")),
-                                13 => Ok(Action::new(22, 0, 3, "放大")),
-                                14 => Ok(Action::new(22, 1, 3, "缩小")),
-                                15 => Ok(Action::new(24, 0, 3, "全部最小化")),
+                                11 => Ok(Action::new(24, 1, 3, tr("最小化指针下的窗口"))),
+                                12 => Ok(Action::new(24, 2, 3, tr("最大化指针下的窗口"))),
+                                13 => Ok(Action::new(22, 0, 3, tr("放大"))),
+                                14 => Ok(Action::new(22, 1, 3, tr("缩小"))),
+                                15 => Ok(Action::new(24, 0, 3, tr("全部最小化"))),
                                 _ => Action::macro_file(&editor.macro_path),
                             };
                             match action {
@@ -414,15 +418,15 @@ impl App {
                                 Err(error) => report = Some(Err(error)),
                             }
                         }
-                        ui.label("仅点击“替换”才改变动作。载入的其他动作保持原值。");
+                        ui.label(tr("仅点击“替换”才改变动作。载入的其他动作保持原值。"));
                     });
                 });
             });
             {
                 skin::sheet().show(ui, |ui| {
                     let kind = editor.documents[editor.kind].kind;
-                    ui.strong(format!("{}：释放时识别预览", kind.name()));
-                    ui.label("按住左键绘图。松开后显示匹配动作。此区域不执行动作。");
+                    ui.strong(tf!("{}：释放时识别预览", kind.name()));
+                    ui.label(tr("按住左键绘图。松开后显示匹配动作。此区域不执行动作。"));
                     let (response, painter) = ui.allocate_painter(
                         egui::vec2(ui.available_width(), 220.0),
                         egui::Sense::drag(),
@@ -464,16 +468,16 @@ impl App {
                             editor.trace_mouse.index()
                         };
                         editor.result = if let Some(index) = index {
-                            format!(
+                            tf!(
                                 "{}：{}",
                                 kind.shapes()[index].name,
                                 editor.documents[editor.kind].actions[index].label()
                             )
                         } else {
-                            "没有匹配的手势".into()
+                            tr("没有匹配的手势").into()
                         };
                     }
-                    ui.label(format!(
+                    ui.label(tf!(
                         "方向序列：{}  {}",
                         if editor.kind == 0 {
                             editor.trace.path()

@@ -20,6 +20,10 @@ use bloody_a90::{
     configuration::Configuration,
     macros::{self, Program, Repeat},
 };
+use bloody_a90::{
+    i18n::{self, Language, tr, tr_text},
+    tf,
+};
 use eframe::egui::{self, Align2, RichText, pos2, vec2};
 use std::{
     fs,
@@ -96,29 +100,31 @@ fn sub_tabs(main: Main) -> &'static [(&'static str, Option<Page>)] {
 
 fn description(page: Page) -> &'static str {
     match page {
-        Page::Gestures => "手势：配置全局触发键、编辑动作和文件，并在绘图区域预览识别结果。",
-        Page::Keys => {
-            "按键设置：选择记录并指定动作，点击“应用”写入鼠标。按键查询可找出物理按键对应的记录。"
-        }
-        Page::Resolution => "分辨率：设置各档 X / Y 轴 CPI。点击“应用”保存并立即生效。",
+        Page::Gestures => tr("手势：配置全局触发键、编辑动作和文件，并在绘图区域预览识别结果。"),
+        Page::Keys => tr(
+            "按键设置：选择记录并指定动作，点击“应用”写入鼠标。按键查询可找出物理按键对应的记录。",
+        ),
+        Page::Resolution => tr("分辨率：设置各档 X / Y 轴 CPI。点击“应用”保存并立即生效。"),
         Page::Oscar => {
-            "奥斯卡宏编辑器：编辑 M 型文本，导入或导出 AMC 文件。在“按键”页把宏指定给按键。"
+            tr("奥斯卡宏编辑器：编辑 M 型文本，导入或导出 AMC 文件。在“按键”页把宏指定给按键。")
         }
-        Page::Library => "奥斯卡III：按分类管理 AMC 宏，编辑后可保存、另存为或指定给按键。",
+        Page::Library => tr("奥斯卡III：按分类管理 AMC 宏，编辑后可保存、另存为或指定给按键。"),
         Page::Shooting | Page::Sniper => {
-            "射击编程：编辑连击或循环程序，保存到鼠标，并指定切换按键。"
+            tr("射击编程：编辑连击或循环程序，保存到鼠标，并指定切换按键。")
         }
-        Page::Response => "按键响应：硬件响应时间写入鼠标。双击速度写入 KDE 或 GNOME。",
-        Page::Wheel => "滚轮：一次滚动的行数，写入桌面设置。",
-        Page::Pointer => "指针：指针移动速度，写入桌面中这只鼠标的加速度设置。",
-        Page::Rate => "回报率：保存所选回报率，并立即应用。",
-        Page::Lift => "微精校准：设置抬起高度，或在使用表面上移动鼠标进行校准。应用后立即生效。",
-        Page::Brightness => "灯光亮度：调整鼠标灯光亮度，立即生效。",
-        Page::About => "关于软件：独立 Rust 工具的适配进度。",
-        Page::Hardware => "关于硬件：设备型号、固件和存储区地址。",
-        Page::Backup => "读取已有的 A90 固件 07 备份，查看灵敏度、按键表和宏程序。",
-        Page::Profile => "配置文件：导出当前灵敏度和按键设置，或导入后在各页应用。",
-        Page::Associations => "应用关联：按前台应用切换鼠标配置。关闭本工具后停止自动切换。",
+        Page::Response => tr("按键响应：硬件响应时间写入鼠标。双击速度写入 KDE 或 GNOME。"),
+        Page::Wheel => tr("滚轮：一次滚动的行数，写入桌面设置。"),
+        Page::Pointer => tr("指针：指针移动速度，写入桌面中这只鼠标的加速度设置。"),
+        Page::Rate => tr("回报率：保存所选回报率，并立即应用。"),
+        Page::Lift => {
+            tr("微精校准：设置抬起高度，或在使用表面上移动鼠标进行校准。应用后立即生效。")
+        }
+        Page::Brightness => tr("灯光亮度：调整鼠标灯光亮度，立即生效。"),
+        Page::About => tr("关于软件：独立 Rust 工具的适配进度。"),
+        Page::Hardware => tr("关于硬件：设备型号、固件和存储区地址。"),
+        Page::Backup => tr("读取已有的 A90 固件 07 备份，查看灵敏度、按键表和宏程序。"),
+        Page::Profile => tr("配置文件：导出当前灵敏度和按键设置，或导入后在各页应用。"),
+        Page::Associations => tr("应用关联：按前台应用切换鼠标配置。关闭本工具后停止自动切换。"),
     }
 }
 
@@ -164,6 +170,8 @@ pub struct App {
     oscar_view: oscar::View,
     /// Record whose KeySet menu is open, and where it opens.
     key_popup: Option<usize>,
+    /// Last KeySet row under the pointer; its diagram caption stays red.
+    key_hover: Option<usize>,
     key_popup_at: egui::Pos2,
     watching: bool,
     held: Vec<u8>,
@@ -179,7 +187,11 @@ pub struct App {
     last_association_poll: std::time::Instant,
     status: String,
     failed: bool,
+    /// A job the user started is in flight. Buttons and the ⏳ follow it.
     pending: bool,
+    /// A background status poll is in flight. It leaves the status line and
+    /// the buttons alone so they don't flicker with every poll.
+    polling: bool,
     sender: Sender<Job>,
     receiver: Receiver<Reply>,
     worker: Option<std::thread::JoinHandle<()>>,
@@ -356,6 +368,7 @@ impl App {
             choice_value: 0,
             key_modifiers: 0,
             key_popup: None,
+            key_hover: None,
             oscar_view: oscar::View::default(),
             key_popup_at: egui::Pos2::ZERO,
             watching: false,
@@ -369,9 +382,10 @@ impl App {
             foreground: None,
             association_error: None,
             last_association_poll: std::time::Instant::now(),
-            status: "就绪".into(),
+            status: tr("就绪").into(),
             failed: false,
             pending: false,
+            polling: false,
             sender,
             receiver,
             worker: Some(worker),
@@ -425,6 +439,11 @@ impl App {
                         "held" => Repeat::Held,
                         "toggle" => Repeat::Toggle,
                         _ => Repeat::Once,
+                    }
+                }
+                "language" => {
+                    if let Some(language) = Language::from_code(&value) {
+                        i18n::set_language(language);
                     }
                 }
                 "export_path" => self.export_path = value,
@@ -515,6 +534,7 @@ impl App {
                     .join(","),
             ),
             ("associations", self.associations.encode()),
+            ("language", i18n::language().code().to_owned()),
         ];
         let text: String = entries
             .iter()
@@ -527,16 +547,18 @@ impl App {
     }
 
     fn start(&mut self, job: Job) {
-        let quiet = matches!(job, Job::Held | Job::Foreground);
+        let poll = matches!(
+            job,
+            Job::Held | Job::Foreground | Job::GestureStatus | Job::HostButtonsStatus
+        );
         match self.sender.send(job) {
+            Ok(()) if poll => self.polling = true,
             Ok(()) => {
                 self.pending = true;
-                if !quiet {
-                    self.failed = false;
-                    self.status = "正在处理…".into();
-                }
+                self.failed = false;
+                self.status = tr("正在处理…").into();
             }
-            Err(_) => self.report(Err("工作线程已关闭".into())),
+            Err(_) => self.report(Err(tr("工作线程已关闭").into())),
         }
     }
 
@@ -600,7 +622,7 @@ impl App {
             }
             Err(error) => {
                 self.keys = None;
-                self.report(Err(format!("无法转换按键表：{error}")));
+                self.report(Err(tf!("无法转换按键表：{error}")));
             }
         }
         self.keys_dirty = false;
@@ -665,11 +687,11 @@ impl App {
         ui.add_space(top);
         // A90 is wired, so the official program hides 无线设置.
         for (main, caption) in [
-            (Main::Keys, "按键"),
-            (Main::Sensitivity, "灵敏度"),
-            (Main::Programming, "编程设置"),
-            (Main::Lighting, "灯光设置"),
-            (Main::Other, "其他设置"),
+            (Main::Keys, tr("按键")),
+            (Main::Sensitivity, tr("灵敏度")),
+            (Main::Programming, tr("编程设置")),
+            (Main::Lighting, tr("灯光设置")),
+            (Main::Other, tr("其他设置")),
         ] {
             if skin::main_tab(ui, caption, self.main == main, true).clicked() {
                 self.open(main);
@@ -701,20 +723,22 @@ impl App {
         let button =
             egui::Rect::from_min_size(rect.right_top() + vec2(-120.0, 24.0), vec2(120.0, 36.0));
         let caption = if self.connected() {
-            "重新读取"
+            tr("重新读取")
         } else {
-            "连接鼠标"
+            tr("连接鼠标")
         };
         let mut child = ui.new_child(egui::UiBuilder::new().max_rect(button));
         if skin::button(&mut child, caption, 120.0, !self.pending).clicked() {
             self.start(Job::Connect);
         }
         let device = match &self.device {
-            Some(device) => format!(
+            Some(device) => tf!(
                 "A90 · 固件 {:02x} · 核心 {} · {}",
-                device.identity.firmware, device.identity.core, device.path
+                device.identity.firmware,
+                device.identity.core,
+                device.path
             ),
-            None => "未连接鼠标 · 可离线编辑".into(),
+            None => tr("未连接鼠标 · 可离线编辑").into(),
         };
         let right = pos2(button.left() - 16.0, button.center().y);
         ui.painter().text(
@@ -725,10 +749,10 @@ impl App {
             skin::LIGHT_GRAY,
         );
         let color = if self.failed { skin::ERROR } else { skin::GRAY };
-        let status = if self.pending && !self.watching {
-            format!("⏳ {}", self.status)
+        let status = if self.pending {
+            format!("⏳ {}", tr_text(&self.status))
         } else {
-            self.status.clone()
+            tr_text(&self.status)
         };
         let galley = ui.painter().layout(
             status,
@@ -742,19 +766,19 @@ impl App {
 
     fn banner(&self) -> &'static str {
         match self.main {
-            Main::Keys => {
-                "全键编程模板 : 提供MMORPG等游戏所需的多按键自定义编程功能，若FPS/TPS射击类游戏玩家可选用更专业的左键编程模板进行设置。"
-            }
-            Main::Sensitivity => {
-                "灵敏度设置 : 提供鼠标的分辨率CPI，按键响应，报告率，微精校准LOD，滚轮及指针等灵敏度的功能设置。"
-            }
-            Main::Programming => {
-                "编程设置 : 提供多种编程平台的“组合键”“左键编程”“奥斯卡II”“狙击键”等编程组合设置，并在按键设置中绑定编程按键使用。"
-            }
-            Main::Lighting => {
-                "灯光设置：提供鼠标灯光亮度，灯效控制及RGB编辑等设置。（因产品功能不同，灯光设置会有所差异)"
-            }
-            Main::Other => "其他设置 : 提供鼠标软件与硬件等设备设置。",
+            Main::Keys => tr(
+                "全键编程模板 : 提供MMORPG等游戏所需的多按键自定义编程功能，若FPS/TPS射击类游戏玩家可选用更专业的左键编程模板进行设置。",
+            ),
+            Main::Sensitivity => tr(
+                "灵敏度设置 : 提供鼠标的分辨率CPI，按键响应，报告率，微精校准LOD，滚轮及指针等灵敏度的功能设置。",
+            ),
+            Main::Programming => tr(
+                "编程设置 : 提供多种编程平台的“组合键”“左键编程”“奥斯卡II”“狙击键”等编程组合设置，并在按键设置中绑定编程按键使用。",
+            ),
+            Main::Lighting => tr(
+                "灯光设置：提供鼠标灯光亮度，灯效控制及RGB编辑等设置。（因产品功能不同，灯光设置会有所差异)",
+            ),
+            Main::Other => tr("其他设置 : 提供鼠标软件与硬件等设备设置。"),
         }
     }
 
@@ -775,7 +799,7 @@ impl App {
         if self.main == Main::Keys {
             // The A90 shows the template selector here. Only the
             // all-buttons template is migrated.
-            let response = skin::template(&mut tab_ui, "全键编程模板");
+            let response = skin::template(&mut tab_ui, tr("全键编程模板"));
             let id = response.id.with("menu");
             if response.clicked() {
                 ui.ctx().data_mut(|data| {
@@ -793,9 +817,9 @@ impl App {
                     .fixed_pos(response.rect.left_bottom())
                     .show(ui.ctx(), |ui| {
                         ui.spacing_mut().item_spacing.y = 0.0;
-                        let all = skin::template_item(ui, "全键编程模板", true);
+                        let all = skin::template_item(ui, tr("全键编程模板"), true);
                         // The A90 programs its left button on the 左键编程 page.
-                        let left = skin::template_item(ui, "左键编程模板", false);
+                        let left = skin::template_item(ui, tr("左键编程模板"), false);
                         if all.clicked() || left.clicked() {
                             ui.ctx().data_mut(|data| data.insert_temp(id, false));
                         }
@@ -809,7 +833,7 @@ impl App {
         for (caption, page) in tabs {
             let selected = *page == Some(self.page);
             if skin::sub_tab(&mut tab_ui, caption, selected, page.is_some())
-                .on_disabled_hover_text("A90 为单色灯光，不使用 RGB 灯效控制。")
+                .on_disabled_hover_text(tr("A90 为单色灯光，不使用 RGB 灯效控制。"))
                 .clicked()
                 && let Some(page) = page
             {
@@ -828,11 +852,21 @@ impl App {
 
     fn receive(&mut self) {
         while let Ok(reply) = self.receiver.try_recv() {
-            self.pending = false;
+            if matches!(
+                reply,
+                Reply::Held(_)
+                    | Reply::Foreground(_)
+                    | Reply::GestureStatus(..)
+                    | Reply::HostButtons(_)
+            ) {
+                self.polling = false;
+            } else {
+                self.pending = false;
+            }
             match reply {
                 Reply::Backup(Ok(backup)) => {
                     self.backup_text = backup.summary();
-                    self.report(Ok("备份读取完成".into()));
+                    self.report(Ok(tr("备份读取完成").into()));
                     if !self.connected() {
                         self.load_source(backup);
                     }
@@ -865,7 +899,7 @@ impl App {
                     self.wheel_runtime_status(&status, wheel_enabled);
                     if !gestures_enabled && status.running {
                         status.running = false;
-                        status.message = "全局手势未启用".into();
+                        status.message = tr("全局手势未启用").into();
                     }
                     self.gesture_status(Ok(status), false);
                 }
@@ -901,7 +935,7 @@ impl App {
                     if let Some(device) = &mut self.device {
                         device.brightness = level;
                     }
-                    self.report(Ok(format!("亮度已设为 {level}")));
+                    self.report(Ok(tf!("亮度已设为 {level}")));
                 }
                 Reply::Brightness(Err(error)) => self.report(Err(error)),
                 Reply::Held(Ok(held)) => self.held = held,
@@ -919,11 +953,11 @@ impl App {
                 Reply::CalibratedLift(Ok(level)) => {
                     self.lift_enabled = true;
                     self.lift_level = level;
-                    self.report(Ok(format!("校准结果：{level} 级。点击“应用”保存。")));
+                    self.report(Ok(tf!("校准结果：{level} 级。点击“应用”保存。")));
                 }
                 Reply::CalibratedLift(Err(error)) => self.report(Err(error)),
                 Reply::Associations(result) => {
-                    self.report(result.map(|()| "应用关联设置已应用".into()));
+                    self.report(result.map(|()| tr("应用关联设置已应用").into()));
                 }
                 Reply::Foreground(Ok(foreground)) => {
                     self.foreground = foreground.app;
@@ -1010,7 +1044,10 @@ impl eframe::App for App {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.receive();
         if self.associations.enabled && self.connected() && self.association_error.is_none() {
-            if !self.pending && self.last_association_poll.elapsed().as_millis() >= 750 {
+            if !self.pending
+                && !self.polling
+                && self.last_association_poll.elapsed().as_millis() >= 750
+            {
                 self.last_association_poll = std::time::Instant::now();
                 self.start(Job::Foreground);
             }
@@ -1032,21 +1069,27 @@ impl eframe::App for App {
                     .into_iter()
                     .any(|kind| kind))
         {
-            if !self.pending && self.gestures.last_poll.elapsed().as_millis() >= 250 {
+            if !self.pending
+                && !self.polling
+                && self.gestures.last_poll.elapsed().as_millis() >= 250
+            {
                 self.gestures.last_poll = std::time::Instant::now();
                 self.start(Job::GestureStatus);
             }
             ctx.request_repaint_after(std::time::Duration::from_millis(100));
         }
         if self.connected() {
-            if !self.pending && self.host_buttons.last_poll.elapsed().as_millis() >= 500 {
+            if !self.pending
+                && !self.polling
+                && self.host_buttons.last_poll.elapsed().as_millis() >= 500
+            {
                 self.host_buttons.last_poll = std::time::Instant::now();
                 self.start(Job::HostButtonsStatus);
             }
             ctx.request_repaint_after(std::time::Duration::from_millis(200));
         }
         if self.watching && self.page == Page::Keys {
-            if !self.pending {
+            if !self.pending && !self.polling {
                 self.start(Job::Held);
             }
             ctx.request_repaint_after(std::time::Duration::from_millis(120));

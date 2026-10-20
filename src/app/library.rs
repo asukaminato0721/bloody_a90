@@ -5,6 +5,10 @@ use bloody_a90::{
     library::{self, Command, Deleted, Document, Key, Listing, Update},
     macros::Repeat,
 };
+use bloody_a90::{
+    i18n::{tr, tr_text},
+    tf,
+};
 use eframe::egui::{self, RichText};
 use std::path::PathBuf;
 
@@ -32,7 +36,7 @@ impl Default for Editor {
             listing: Listing::default(),
             category: String::new(),
             category_name: String::new(),
-            file_name: "新宏".into(),
+            file_name: tr("新宏").into(),
             selected: None,
             document: None,
             deleted: None,
@@ -163,10 +167,10 @@ impl App {
         skin::sheet().show(ui, |ui| {
             ui.set_width(ui.available_width());
             ui.horizontal(|ui| {
-                path_field(ui, &mut self.library.root_draft, "宏库目录", 440.0);
+                path_field(ui, &mut self.library.root_draft, tr("宏库目录"), 440.0);
                 if skin::button(
                     ui,
-                    "打开宏库",
+                    tr("打开宏库"),
                     120.0,
                     available && !self.library.root_draft.trim().is_empty(),
                 )
@@ -175,12 +179,12 @@ impl App {
                     change_root = Some(self.library.root_draft.trim().to_owned());
                     command = Some(Command::List);
                 }
-                if skin::button(ui, "刷新", 90.0, available).clicked() {
+                if skin::button(ui, tr("刷新"), 90.0, available).clicked() {
                     command = Some(Command::List);
                 }
             });
             ui.label(
-                RichText::new(format!(
+                RichText::new(tf!(
                     "当前宏库：{} · 分类对应目录，宏对应 AMC 文件。删除项保留在该宏库的 .trash 目录。",
                     self.library.root
                 ))
@@ -191,7 +195,7 @@ impl App {
                 ui.vertical(|ui| {
                     ui.set_min_width(220.0);
                     ui.spacing_mut().item_spacing.y = 6.0;
-                    skin::step(ui, "①", "收藏夹");
+                    skin::step(ui, "①", tr("收藏夹"));
                     for category in &self.library.listing.categories {
                         if skin::list_item(ui, category, self.library.category == *category, 220.0)
                             .clicked()
@@ -202,13 +206,13 @@ impl App {
                         }
                     }
                     if self.library.listing.categories.is_empty() {
-                        ui.label("暂无分类");
+                        ui.label(tr("暂无分类"));
                     }
                 });
                 ui.vertical(|ui| {
                     ui.set_min_width(330.0);
                     ui.spacing_mut().item_spacing.y = 6.0;
-                    skin::step(ui, "②", "文件");
+                    skin::step(ui, "②", tr("文件"));
                     for key in self
                         .library
                         .listing
@@ -235,35 +239,35 @@ impl App {
                         .iter()
                         .all(|k| k.category != self.library.category)
                     {
-                        ui.label("暂无宏文件");
+                        ui.label(tr("暂无宏文件"));
                     }
                 });
             });
             ui.horizontal(|ui| {
-                ui.label("分类名称");
+                ui.label(tr("分类名称"));
                 ui.add(
                     egui::TextEdit::singleline(&mut self.library.category_name)
                         .desired_width(210.0),
                 );
                 let named = available && !self.library.category_name.trim().is_empty();
-                if skin::button(ui, "新建分类", 110.0, named).clicked() {
+                if skin::button(ui, tr("新建分类"), 110.0, named).clicked() {
                     command = Some(Command::CreateCategory(
                         self.library.category_name.trim().into(),
                     ));
                 }
                 let selected = available && !self.library.category.is_empty();
-                if skin::button(ui, "分类重命名", 120.0, named && selected).clicked() {
+                if skin::button(ui, tr("分类重命名"), 120.0, named && selected).clicked() {
                     command = Some(Command::RenameCategory(
                         self.library.category.clone(),
                         self.library.category_name.trim().into(),
                     ));
                 }
-                if skin::button(ui, "删除分类", 110.0, selected).clicked() {
+                if skin::button(ui, tr("删除分类"), 110.0, selected).clicked() {
                     command = Some(Command::DeleteCategory(self.library.category.clone()));
                 }
             });
             ui.horizontal(|ui| {
-                ui.label("宏名称");
+                ui.label(tr("宏名称"));
                 ui.add(
                     egui::TextEdit::singleline(&mut self.library.file_name).desired_width(210.0),
                 );
@@ -276,9 +280,9 @@ impl App {
                 });
                 let named = named && key.is_ok();
                 if let Err(error) = &key {
-                    ui.colored_label(skin::ERROR, error);
+                    ui.colored_label(skin::ERROR, tr_text(error));
                 }
-                if skin::button(ui, "新建空宏", 110.0, named).clicked()
+                if skin::button(ui, tr("新建空宏"), 110.0, named).clicked()
                     && let Ok(key) = &key
                 {
                     command = Some(Command::Create(
@@ -292,7 +296,7 @@ impl App {
                         },
                     ));
                 }
-                if skin::button(ui, "另存为新宏", 120.0, named && self.compiled.is_ok()).clicked()
+                if skin::button(ui, tr("另存为新宏"), 120.0, named && self.compiled.is_ok()).clicked()
                     && let Ok(key) = &key
                 {
                     command = Some(Command::Create(
@@ -309,7 +313,7 @@ impl App {
                     .filter(|d| self.library.selected.as_ref() == Some(&d.key));
                 if skin::button(
                     ui,
-                    "载入编辑器",
+                    tr("载入编辑器"),
                     130.0,
                     available && self.library.selected.is_some(),
                 )
@@ -320,7 +324,7 @@ impl App {
                 }
                 if skin::button(
                     ui,
-                    "保存",
+                    tr("保存"),
                     100.0,
                     available && doc.is_some() && self.compiled.is_ok(),
                 )
@@ -333,7 +337,7 @@ impl App {
                         self.library_macro(doc.macro_file.description.clone()),
                     ));
                 }
-                if skin::button(ui, "宏重命名", 110.0, available && doc.is_some()).clicked()
+                if skin::button(ui, tr("宏重命名"), 110.0, available && doc.is_some()).clicked()
                     && let Some(doc) = doc
                 {
                     command = Some(Command::Rename(
@@ -342,14 +346,14 @@ impl App {
                         self.library.file_name.trim().into(),
                     ));
                 }
-                if skin::button(ui, "删除宏", 100.0, available && doc.is_some()).clicked()
+                if skin::button(ui, tr("删除宏"), 100.0, available && doc.is_some()).clicked()
                     && let Some(doc) = doc
                 {
                     command = Some(Command::Delete(doc.key.clone(), doc.original.clone()));
                 }
                 if skin::button(
                     ui,
-                    "恢复上次删除",
+                    tr("恢复上次删除"),
                     140.0,
                     available && self.library.deleted.is_some(),
                 )
@@ -360,7 +364,7 @@ impl App {
                 }
             });
             if let Some(doc) = &self.library.document {
-                ui.label(format!(
+                ui.label(tf!(
                     "当前编辑文件：{} / {}",
                     doc.key.category, doc.key.file
                 ));

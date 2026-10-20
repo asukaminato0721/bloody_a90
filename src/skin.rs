@@ -1,10 +1,12 @@
 //! Widgets drawn after the official Bloody 8 skin. Colors and sizes come from
 //! Data/Mouse/Forms/*/UI.txt and the four-state sprites beside them. The
 //! project draws them itself and does not redistribute the official images.
+use bloody_a90::i18n::tr_text;
 use eframe::egui::{
     self, Align2, Color32, FontFamily, FontId, Pos2, Rect, Response, Sense, Stroke, StrokeKind, Ui,
     pos2, vec2,
 };
+use std::sync::Arc;
 
 const fn rgb(r: u8, g: u8, b: u8) -> Color32 {
     Color32::from_rgb(r, g, b)
@@ -62,6 +64,7 @@ fn state(ui: &Ui, response: &Response) -> (bool, bool) {
 
 /// Dashboard main tab, 174 × 48. Hover and selection add a red left edge.
 pub fn main_tab(ui: &mut Ui, caption: &str, selected: bool, enabled: bool) -> Response {
+    let caption = &tr_text(caption);
     let sense = if enabled {
         Sense::click()
     } else {
@@ -80,18 +83,29 @@ pub fn main_tab(ui: &mut Ui, caption: &str, selected: bool, enabled: bool) -> Re
         (true, true) => CAPTION_RED,
         _ => TEXT,
     };
-    painter.text(
-        rect.left_center() + vec2(30.0, 0.0),
-        Align2::LEFT_CENTER,
-        caption,
-        bold(19.0),
-        color,
-    );
+    let galley = fitted(ui, caption, 19.0, rect.width() - 36.0, color);
+    let pos = rect.left_center() + vec2(30.0, -galley.size().y / 2.0);
+    painter.galley(pos, galley, color);
     response
+}
+
+/// A bold caption at `size`, shrunk to fit `width`. Translated captions can
+/// be longer than the official controls.
+fn fitted(ui: &Ui, caption: &str, size: f32, width: f32, color: Color32) -> Arc<egui::Galley> {
+    let galley = ui
+        .painter()
+        .layout_no_wrap(caption.to_owned(), bold(size), color);
+    if galley.size().x <= width {
+        return galley;
+    }
+    let size = (size * width / galley.size().x).max(11.0);
+    ui.painter()
+        .layout_no_wrap(caption.to_owned(), bold(size), color)
 }
 
 /// Dashboard sub tab, 198 × 48. Hover and selection fill it red.
 pub fn sub_tab(ui: &mut Ui, caption: &str, selected: bool, enabled: bool) -> Response {
+    let caption = &tr_text(caption);
     let sense = if enabled {
         Sense::click()
     } else {
@@ -119,6 +133,7 @@ pub fn sub_tab(ui: &mut Ui, caption: &str, selected: bool, enabled: bool) -> Res
 
 /// KeySet profile tab, 154 × 48. The selected tab takes the sheet color.
 pub fn profile_tab(ui: &mut Ui, caption: &str, selected: bool, enabled: bool) -> Response {
+    let caption = &tr_text(caption);
     let sense = if enabled {
         Sense::click()
     } else {
@@ -158,6 +173,7 @@ fn gradient(ui: &Ui, rect: Rect, top: Color32, bottom: Color32) {
 
 /// PublicSkin Button.png: a dark gradient that turns red on hover and press.
 pub fn button(ui: &mut Ui, caption: &str, width: f32, enabled: bool) -> Response {
+    let caption = &tr_text(caption);
     let sense = if enabled {
         Sense::click()
     } else {
@@ -171,18 +187,15 @@ pub fn button(ui: &mut Ui, caption: &str, width: f32, enabled: bool) -> Response
         gradient(ui, rect, rgb(72, 73, 75), rgb(40, 41, 45));
     }
     let color = if enabled { TEXT } else { rgb(100, 100, 102) };
-    ui.painter().text(
-        rect.center(),
-        Align2::CENTER_CENTER,
-        caption,
-        bold(18.0),
-        color,
-    );
+    let galley = fitted(ui, caption, 18.0, width - 12.0, color);
+    ui.painter()
+        .galley(rect.center() - galley.size() / 2.0, galley, color);
     response
 }
 
 /// Small toolbar button of the Oscar editor.
 pub fn tool(ui: &mut Ui, caption: &str, selected: bool) -> Response {
+    let caption = &tr_text(caption);
     let font = regular(14.0);
     let width = ui
         .painter()
@@ -205,6 +218,7 @@ pub fn tool(ui: &mut Ui, caption: &str, selected: bool) -> Response {
 
 /// PublicSkin Check.png: a dark box with a light frame and a white check.
 pub fn check(ui: &mut Ui, value: &mut bool, caption: &str) -> Response {
+    let caption = &tr_text(caption);
     let font = regular(15.0);
     let text = ui
         .painter()
@@ -332,7 +346,7 @@ pub fn ticks(ui: &mut Ui, width: f32, marks: &[(f32, &str)]) {
         painter.text(
             pos2(x, rect.top() + 21.0),
             Align2::CENTER_CENTER,
-            *text,
+            tr_text(text),
             regular(12.0),
             TICK,
         );
@@ -379,6 +393,7 @@ pub fn logo(ui: &Ui, rect: Rect) {
 
 /// cbbt_MacroTemplate: the red template selector in place of the sub tabs.
 pub fn template(ui: &mut Ui, caption: &str) -> Response {
+    let caption = &tr_text(caption);
     let (rect, response) = ui.allocate_exact_size(vec2(274.0, 48.0), Sense::click());
     let painter = ui.painter();
     painter.rect_filled(rect, 0, RED);
@@ -404,6 +419,7 @@ pub fn template(ui: &mut Ui, caption: &str) -> Response {
 
 /// lb_FunctionDescription: the orange bar below the sub tabs, 65 px high.
 pub fn banner(ui: &mut Ui, text: &str) {
+    let text = &tr_text(text);
     let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), 65.0), Sense::hover());
     gradient(ui, rect, BANNER_TOP, BANNER_BOTTOM);
     let galley = ui.painter().layout(
@@ -647,6 +663,7 @@ pub fn icon(ui: &mut Ui, icon: Icon) {
 /// The gray "i" badge at the top right of a group panel. Its tooltip holds
 /// the help text.
 pub fn info(ui: &Ui, center: Pos2, help: &str) {
+    let help = &tr_text(help);
     let rect = Rect::from_center_size(center, vec2(24.0, 24.0));
     let response = ui.interact(rect, ui.scope_id().with(("info", help)), Sense::hover());
     let painter = ui.painter();
@@ -685,6 +702,7 @@ fn card_frame<R>(
     help: &str,
     body: impl FnOnce(&mut Ui) -> R,
 ) -> R {
+    let (title, help) = (&tr_text(title), &tr_text(help));
     egui::Frame::new()
         .fill(PANEL)
         .inner_margin(egui::Margin {
@@ -716,6 +734,7 @@ fn card_frame<R>(
 
 /// Small square option of the LOD and wheel groups: red when chosen.
 pub fn option(ui: &mut Ui, selected: bool, caption: &str) -> Response {
+    let caption = &tr_text(caption);
     let font = regular(16.0);
     let text = ui
         .painter()
@@ -855,6 +874,7 @@ pub fn levels(ui: &mut Ui, current: Option<u8>, width: f32) -> Option<u8> {
 
 /// KeySet button combo box, 255 × 25, with the chevron on the right.
 pub fn combo(ui: &mut Ui, caption: &str, width: f32, open: bool) -> Response {
+    let caption = &tr_text(caption);
     let (rect, response) = ui.allocate_exact_size(vec2(width, 25.0), Sense::click());
     let hovered = response.hovered() && ui.is_enabled();
     let painter = ui.painter();
@@ -883,6 +903,7 @@ pub fn combo(ui: &mut Ui, caption: &str, width: f32, open: bool) -> Response {
 
 /// Caption box of the button diagram, 38 × 30. Red when selected.
 pub fn key_box(ui: &mut Ui, rect: Rect, caption: &str, selected: bool) -> Response {
+    let caption = &tr_text(caption);
     let response = ui.interact(
         rect,
         ui.scope_id().with(("key-box", caption)),
@@ -1101,6 +1122,7 @@ pub fn mouse_top(ui: &Ui, origin: Pos2) {
 /// Entry of the 收藏夹 and 文件 lists of OscarDragMacroEditor: a light bar
 /// with dark text, red when selected.
 pub fn list_item(ui: &mut Ui, caption: &str, selected: bool, width: f32) -> Response {
+    let caption = &tr_text(caption);
     let (rect, response) = ui.allocate_exact_size(vec2(width, 34.0), Sense::click());
     let painter = ui.painter();
     let (fill, color) = if selected {
@@ -1123,6 +1145,7 @@ pub fn list_item(ui: &mut Ui, caption: &str, selected: bool, width: f32) -> Resp
 
 /// Circled-number heading of the macro editors, such as "① 指令区".
 pub fn step(ui: &mut Ui, number: &str, title: &str) {
+    let title = &tr_text(title);
     ui.label(
         egui::RichText::new(format!("{number} {title}"))
             .font(regular(20.0))
@@ -1132,6 +1155,7 @@ pub fn step(ui: &mut Ui, number: &str, title: &str) {
 
 /// Caption and dark value box of an information row, as in AboutHardware.
 pub fn field(ui: &mut Ui, caption: &str, value: &str, width: f32) {
+    let caption = &tr_text(caption);
     ui.horizontal(|ui| {
         let (rect, _) = ui.allocate_exact_size(vec2(100.0, 28.0), Sense::hover());
         ui.painter().text(
@@ -1155,6 +1179,7 @@ pub fn field(ui: &mut Ui, caption: &str, value: &str, width: f32) {
 
 /// Entry of the template drop-down list below cbbt_MacroTemplate.
 pub fn template_item(ui: &mut Ui, caption: &str, selected: bool) -> Response {
+    let caption = &tr_text(caption);
     let (rect, response) = ui.allocate_exact_size(vec2(274.0, 40.0), Sense::click());
     let fill = if response.hovered() {
         RED
