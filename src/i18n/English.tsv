@@ -193,8 +193,6 @@ AMC 文件路径	AMC file path
 左键三击	Left Triple Click
 DPI 档位上移	DPI Level Up
 DPI 档位下移	DPI Level Down
-DPI 增加	DPI Increase
-DPI 减少	DPI Decrease
 精确模式（按住生效）	Precision Mode (while held)
 配置上移	Profile Up
 配置下移	Profile Down
@@ -214,6 +212,7 @@ DPI 减少	DPI Decrease
 “3”键	"3" button
 记录 {}	Record {}
 无主键（仅修饰键）	No main key (modifiers only)
+射击模式 {}	Shooting Mode {}
 无效按键	Invalid key
 无效功能	Invalid function
 奥斯卡宏编译失败：{}	Oscar macro compilation failed: {}
@@ -232,6 +231,7 @@ DPI 减少	DPI Decrease
 使用奥斯卡II中的程序：按下 {} 字，弹起 {} 字	Uses the program from Oscar II: press {} words, release {} words
 奥斯卡II中的程序无法编译：{}	The program from Oscar II cannot be compiled: {}
 每格滚动执行一次按下程序，再执行释放程序。滚轮不使用按住或开关重复。	Each wheel notch runs the press program, then the release program. The wheel does not use hold or toggle repeat.
+此固件没有左键射击入口：射击模式只切换滚轮灯颜色（模式 1 红、2 绿）。	This firmware has no left-button shooting entry: shooting modes only change the wheel light color (mode 1 red, 2 green).
 射击模式索引由固件解释，效果取决于射击设置。	The firmware interprets the shooting mode index; the effect depends on the shooting settings.
 设定此按键	Set This Button
 手势不能指定给滚轮	Gestures cannot be assigned to the wheel

@@ -222,7 +222,7 @@ fn summary_keeps_button_tables_when_sensitivity_is_invalid() {
     for line in [
         "DPI 参数：备份中的 DPI 档位数量或选择值无效",
         "  记录 04：宏 c020 / 停止宏",
-        "  记录 24：shoot index 7 / 空操作",
+        "  记录 24：射击模式 7 / 空操作",
         "  02：宏 c018",
         "  2623  1ffd           相对跳转 -3",
     ] {

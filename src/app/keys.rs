@@ -103,8 +103,9 @@ const FUNCTIONS: [(&str, u16, u16); 17] = [
     ("滚轮向下", 0x262c, NO_OPERATION),
     ("DPI 档位上移", 0x2626, NO_OPERATION),
     ("DPI 档位下移", 0x2624, NO_OPERATION),
-    ("DPI 增加", 0x2627, NO_OPERATION),
-    ("DPI 减少", 0x2625, NO_OPERATION),
+    // Official mi_PlusMouseSensitivity and mi_MinusMouseSensitivity.
+    ("CPI+", 0x2627, NO_OPERATION),
+    ("CPI-", 0x2625, NO_OPERATION),
     ("精确模式（按住生效）", 0x2628, 0x2629),
     ("配置上移", 0x2622, NO_OPERATION),
     ("配置下移", 0x2623, NO_OPERATION),
@@ -269,9 +270,7 @@ impl App {
                 .key_functions()
                 .map(|(name, ..)| name.to_string())
                 .collect(),
-            Choice::Shoot => (1..=8)
-                .map(|index| format!("shoot index {index}"))
-                .collect(),
+            Choice::Shoot => (1..=8).map(|index| tf!("射击模式 {index}")).collect(),
             Choice::Macro | Choice::Host | Choice::Disabled => Vec::new(),
         }
     }
@@ -399,16 +398,11 @@ impl App {
                     action => describe(&action),
                 }
             }
-            choice => {
-                let options = self.options();
-                let name = options.get(self.choice_value).cloned().unwrap_or_default();
-                match choice {
-                    Choice::Function => name
-                        .replace(tr("DPI 增加"), "CPI+")
-                        .replace(tr("DPI 减少"), "CPI-"),
-                    _ => name,
-                }
-            }
+            _ => self
+                .options()
+                .get(self.choice_value)
+                .cloned()
+                .unwrap_or_default(),
         };
         (
             self.record,
@@ -746,8 +740,18 @@ impl App {
             self.host_buttons.edit(ui, self.record < BUTTONS);
         }
         if self.choice == Choice::Shoot {
+            // Cores 1 and 2 lack the left-button hooks (docs/research/CORES.md);
+            // there the index only selects the wheel light colour.
+            let absent = self.device.as_ref().is_some_and(|device| {
+                device.backup.shooting_route() == bloody_a90::backup::ShootingRoute::Absent
+            });
+            let note = if absent {
+                tr("此固件没有左键射击入口：射击模式只切换滚轮灯颜色（模式 1 红、2 绿）。")
+            } else {
+                tr("射击模式索引由固件解释，效果取决于射击设置。")
+            };
             ui.label(
-                RichText::new(tr("射击模式索引由固件解释，效果取决于射击设置。"))
+                RichText::new(note)
                     .font(skin::regular(13.0))
                     .color(skin::GRAY),
             );

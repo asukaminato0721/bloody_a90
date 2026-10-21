@@ -12,8 +12,8 @@ const SIMPLE: [(u16, &str); 24] = [
     (END, "结束"),
     (0x2626, "DPI 档位上移"),
     (0x2624, "DPI 档位下移"),
-    (0x2627, "DPI 增加"),
-    (0x2625, "DPI 减少"),
+    (0x2627, "CPI+"),
+    (0x2625, "CPI-"),
     (0x2628, "精确模式进入"),
     (0x2629, "精确模式退出"),
     (0x2622, "配置上移"),
@@ -287,7 +287,7 @@ fn text(words: &[u16]) -> Option<String> {
                 "松开"
             }
         ),
-        0x2610..=0x2617 => format!("shoot index {}", word - 0x2610 + 1),
+        0x2610..=0x2617 => format!("射击模式 {}", word - 0x2610 + 1),
         0x8000..=0x90ff => {
             let destination = register(low);
             let argument = words[1];
