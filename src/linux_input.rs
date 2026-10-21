@@ -89,7 +89,16 @@ pub fn find() -> Result<PointerInfo, String> {
                 .ok()
                 .and_then(|s| u16::from_str_radix(s.trim(), 16).ok())
         };
-        if number("vendor") != Some(0x09da) || number("product") != Some(0xfafd) {
+        let Some(product) = number("product").filter(|id| crate::device::PRODUCTS.contains(id))
+        else {
+            continue;
+        };
+        if number("vendor") != Some(0x09da) {
+            continue;
+        }
+        // Firmware 0c adds a second relative pointer (report 4) to interface 2.
+        // Ordinary motion and buttons stay on interface 1.
+        if !fs::canonicalize(&sys).is_ok_and(|p| p.to_string_lossy().contains(":1.1/")) {
             continue;
         }
         let rel = fs::read_to_string(sys.join("capabilities/rel"))
@@ -111,7 +120,7 @@ pub fn find() -> Result<PointerInfo, String> {
             identity: Identity {
                 bus: number("bustype").unwrap_or(3),
                 vendor: 0x09da,
-                product: 0xfafd,
+                product,
                 version: number("version").unwrap_or(1),
             },
         });

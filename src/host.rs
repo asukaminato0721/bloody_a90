@@ -4,7 +4,6 @@
 use std::process::Command;
 
 const VENDOR: u32 = 0x09da;
-const PRODUCT: u32 = 0xfafd;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Desktop {
@@ -69,7 +68,8 @@ fn kwin_property(device: &str, name: &str) -> Result<String, String> {
 }
 
 /// A90 KWin pointers that support acceleration, with their libinput names.
-fn kwin_devices() -> Result<Vec<(String, String)>, String> {
+/// KWin name, libinput name and USB product ID of each A90 pointer.
+fn kwin_devices() -> Result<Vec<(String, String, String)>, String> {
     let list = run(
         "busctl",
         &[
@@ -92,7 +92,9 @@ fn kwin_devices() -> Result<Vec<(String, String)>, String> {
         // KWin also lists the A90 keyboard interface in ListPointers. Its
         // acceleration getter returns zero and its setter does nothing.
         if vendor == VENDOR.to_string()
-            && product == PRODUCT.to_string()
+            && crate::device::PRODUCTS
+                .iter()
+                .any(|id| product == id.to_string())
             && kwin_property(name, "supportsPointerAcceleration")? == "true"
         {
             let path = format!("/org/kde/KWin/InputDevice/{name}");
@@ -105,7 +107,7 @@ fn kwin_devices() -> Result<Vec<(String, String)>, String> {
                 .strip_prefix("s \"")
                 .and_then(|r| r.strip_suffix('"'))
                 .unwrap_or("");
-            devices.push((name.to_owned(), label.to_owned()));
+            devices.push((name.to_owned(), label.to_owned(), product));
         }
     }
     Ok(devices)
@@ -134,7 +136,7 @@ pub fn read() -> Settings {
         Desktop::Kde => Settings {
             desktop,
             pointer: kwin_devices().ok().and_then(|devices| {
-                let (name, _) = devices.first()?;
+                let (name, _, _) = devices.first()?;
                 kwin_property(name, "pointerAcceleration")
                     .ok()?
                     .parse()
@@ -170,7 +172,7 @@ pub fn write(settings: &Settings) -> Result<String, String> {
                 if devices.is_empty() {
                     return Err("KWin 中没有找到 A90".into());
                 }
-                for (name, label) in &devices {
+                for (name, label, product) in &devices {
                     let path = format!("/org/kde/KWin/InputDevice/{name}");
                     run(
                         "busctl",
@@ -185,7 +187,7 @@ pub fn write(settings: &Settings) -> Result<String, String> {
                             &speed,
                         ],
                     )?;
-                    let (vendor, product) = (VENDOR.to_string(), PRODUCT.to_string());
+                    let vendor = VENDOR.to_string();
                     run(
                         "kwriteconfig6",
                         &[
@@ -196,7 +198,7 @@ pub fn write(settings: &Settings) -> Result<String, String> {
                             "--group",
                             &vendor,
                             "--group",
-                            &product,
+                            product,
                             "--group",
                             label,
                             "--key",
@@ -407,7 +409,7 @@ mod tests {
         };
         let mut entries = vec![];
         let mut runtime = vec![];
-        for (device, label) in devices {
+        for (device, label, product) in devices {
             runtime.push((
                 device.clone(),
                 kwin_property(&device, "pointerAcceleration").unwrap(),
@@ -417,7 +419,7 @@ mod tests {
                 groups: vec![
                     "Libinput".into(),
                     VENDOR.to_string(),
-                    PRODUCT.to_string(),
+                    product,
                     label,
                 ],
                 key: "PointerAcceleration",

@@ -68,6 +68,10 @@ pub struct Configuration {
     pub flags: u16,
     /// Low byte: button response time plus one (EXE 00619b60, firmware 0ad3).
     pub header_word6: u16,
+    /// Raw lighting-effect vectors of header word 13, kept as read. The
+    /// official program writes five, empty ones on firmware 0c. Empty means
+    /// no list, as this builder wrote before. See docs/research/SHOOTING.md.
+    pub lighting: Vec<Vec<u16>>,
 }
 
 impl Configuration {
@@ -213,6 +217,17 @@ pub fn build(config: &Configuration) -> Result<Vec<u16>, String> {
     let wheel_at = append(&mut words, &pointers)?;
     let pointers = append_shared(&mut words, &gestures)?;
     let gestures_at = append(&mut words, &pointers)?;
+    // EXE 00619b60: each vector followed by a4a4, then (offset, 0) pairs.
+    let mut list = Vec::new();
+    for vector in &config.lighting {
+        list.extend([append(&mut words, vector)?, 0]);
+        append(&mut words, &[0xa4a4])?;
+    }
+    let lighting_at = if list.is_empty() {
+        0
+    } else {
+        append(&mut words, &list)?
+    };
 
     words[..13].copy_from_slice(&[
         0xa4a4,
@@ -229,6 +244,7 @@ pub fn build(config: &Configuration) -> Result<Vec<u16>, String> {
         auxiliary_at,
         0xffff,
     ]);
+    words[13] = lighting_at;
     (words[2], words[3]) = storage::checksums(&words);
     Ok(words)
 }
@@ -236,6 +252,29 @@ pub fn build(config: &Configuration) -> Result<Vec<u16>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn lighting_vectors_survive_a_rebuild() {
+        let mut config = configuration(7);
+        // Five empty vectors as the official program writes them on 0c.
+        config.lighting = vec![vec![0, 0]; 5];
+        let words = build(&config).unwrap();
+        // Each vector is two words and a4a4; the list follows the last one.
+        let list = words[13];
+        let expected: Vec<u16> = (0..5).flat_map(|i| [list - 15 + i * 3, 0]).collect();
+        assert_eq!(words[list as usize..], expected);
+        let mut image = vec![0; 32768];
+        image[0x1804 * 2..0x1806 * 2].copy_from_slice(&[0xfd, 4, 7, 0]);
+        for (index, word) in words.iter().enumerate() {
+            image[(0x2600 + index) * 2..][..2].copy_from_slice(&word.to_le_bytes());
+        }
+        let saved = crate::backup::Backup::parse(&image).unwrap().configuration().unwrap();
+        assert_eq!(saved.lighting, config.lighting);
+        assert_eq!(build(&saved).unwrap(), words);
+        image[(0x2600 + list as usize + 1) * 2] = 1;
+        let damaged = crate::backup::Backup::parse(&image).unwrap();
+        assert!(damaged.configuration().is_err());
+    }
 
     #[test]
     fn response_time_and_shooting_slots() {
@@ -343,6 +382,7 @@ mod tests {
             parameters: [50, 50, 50, 50, 50, 0x0101],
             flags: 0x10,
             header_word6: 1,
+            lighting: Vec::new(),
         }
     }
 

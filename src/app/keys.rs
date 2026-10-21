@@ -880,6 +880,7 @@ mod tests {
             parameters: [50; 6],
             flags: 0x10,
             header_word6: 1,
+            lighting: Vec::new(),
         });
         app.record = 3;
         app.host_key_selected();

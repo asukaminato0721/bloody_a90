@@ -3,6 +3,8 @@
 使用 Rust、egui 和 eframe 开发的独立 A90 配置工具。
 它读取并写入 A90（USB `09da:fafd`，型号 `04fd`，固件 07）的灵敏度、按键和宏，
 并控制灯光亮度。协议来自此前对官方 EXE 和固件的分析，写入流程已在实机上验证。
+官方程序更新后的固件 0c（USB `09da:5450`）经离线比较可以识别和读取，
+其写入尚未在实机上验证，差异见 [固件 0C](docs/research/FIRMWARE-0C.md)。
 当前完成目标是本机 KDE Wayland 上的全部 A90 适用功能。
 范围和剩余验证见 [功能检查](docs/research/COMPLETION.md)。
 

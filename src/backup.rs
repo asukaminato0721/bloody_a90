@@ -1,4 +1,4 @@
-//! Read an existing firmware-07 image. This module never accesses hidraw.
+//! Read an existing firmware-07 or 0c image. This module never accesses hidraw.
 use crate::{
     configuration::{self, Action, Binding, Configuration, Profile},
     sensitivity::{self, Record},
@@ -6,14 +6,65 @@ use crate::{
 };
 use std::{collections::BTreeMap, fs::File, io::Read, path::Path};
 
-const FACTORY_BUTTONS: usize = 0x183c;
 const SAVED_BUTTONS: usize = 0x2600;
+// Lighting-effect vectors in the list at header word 13 (EXE 00619b60).
+const LIGHTING: usize = 5;
 // Inspection limit for one macro listing. Branches are not followed.
 const MACRO_LIMIT: usize = 256;
+
+/// Addresses that differ between the analyzed firmware versions. Saved
+/// tables, the write range and the command set are the same in both. See
+/// docs/research/FIRMWARE-0C.md.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Layout {
+    pub firmware: u8,
+    /// Model and firmware words of the factory data header ("RIDATA").
+    identity: usize,
+    pub factory_sensitivity: usize,
+    pub factory_buttons: usize,
+    /// Left-button press and release hooks; see `Backup::shooting_route`.
+    press: usize,
+    release: usize,
+    /// First words of the auxiliary press and release readers.
+    readers: [usize; 2],
+    /// Jump targets of the readers: the press and release skip labels, the
+    /// two shared helpers and the common return.
+    targets: [u16; 5],
+}
+
+impl Layout {
+    pub const ALL: [Self; 2] = [
+        Self {
+            firmware: 0x07,
+            identity: 0x1804,
+            factory_sensitivity: 0x1806,
+            factory_buttons: 0x183c,
+            press: 0x708,
+            release: 0x72a,
+            readers: [0x762, 0x773],
+            targets: [0x770, 0x77e, 0x7f6, 0x7fe, 0x6b4],
+        },
+        Self {
+            firmware: 0x0c,
+            identity: 0x1842,
+            factory_sensitivity: 0x1844,
+            factory_buttons: 0x187a,
+            press: 0x717,
+            release: 0x739,
+            readers: [0x771, 0x782],
+            targets: [0x77f, 0x78d, 0x805, 0x80d, 0x6c3],
+        },
+    ];
+
+    pub fn of(firmware: u8) -> Option<Self> {
+        Self::ALL.into_iter().find(|layout| layout.firmware == firmware)
+    }
+}
 
 #[derive(Clone)]
 pub struct Backup {
     words: Vec<u16>,
+    layout: Layout,
 }
 
 /// Static evidence about the left-button dispatch in firmware 07.
@@ -90,10 +141,15 @@ impl Backup {
             .iter()
             .map(|b| u16::from_le_bytes([b[0], b[1]]))
             .collect();
-        if words[0x1804] != 0x04fd || words[0x1805] != 7 {
-            return Err("备份不匹配 A90 型号 04fd、固件 07".into());
-        }
-        Ok(Self { words })
+        // Each official core image stores its own model, 04fc to 04ff.
+        let layout = Layout::ALL
+            .into_iter()
+            .find(|l| {
+                words[l.identity] & 0xfffc == 0x04fc
+                    && words[l.identity + 1] == u16::from(l.firmware)
+            })
+            .ok_or("备份不匹配 A90 固件 07 或 0c")?;
+        Ok(Self { words, layout })
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -104,29 +160,66 @@ impl Backup {
     }
 
     /// Firmware 07: 0708/0709 and 072a/072b are either NOP pairs or left-bit
-    /// tests followed by jumps to 0762 and 0773. Check their surrounding
-    /// code and both auxiliary readers before interpreting these words.
+    /// tests followed by jumps to 0762 and 0773. Firmware 0c has the same
+    /// code at 0717, 0739, 0771 and 0782 (docs/research/CORES.md). Check the
+    /// surrounding code and both auxiliary readers before interpreting them.
     pub fn shooting_route(&self) -> ShootingRoute {
-        if self.words[0x704..0x708] != [0x6140, 0x2e83, 0x1dff, 0x291e]
-            || self.words[0x727..0x72a] != [0x2e83, 0x1dff, 0x2921]
-            || self.words[0x762..0x770]
-                != [
-                    0x2b1b, 0x2b1a, 0x2b1d, 0x2b1c, 0x2e30, 0x7086, 0x8770, 0xc7f6, 0x2d0b, 0xc7fe,
-                    0x2e30, 0xc23a, 0x0d00, 0x86b4,
-                ]
-            || self.words[0x773..0x77e]
-                != [
-                    0x2e30, 0x7086, 0x877e, 0xc7f6, 0x2d0b, 0xc7fe, 0x2e30, 0x1408, 0xc23a, 0x0d00,
-                    0x86b4,
-                ]
+        let l = self.layout;
+        let w = &self.words;
+        let jump = |target: u16| 0x8000 | target;
+        let call = |target: u16| 0xc000 | target;
+        let [press_skip, release_skip, helper, store, done] = l.targets;
+        let press_reader = [
+            0x2b1b,
+            0x2b1a,
+            0x2b1d,
+            0x2b1c,
+            0x2e30,
+            0x7086,
+            jump(press_skip),
+            call(helper),
+            0x2d0b,
+            call(store),
+            0x2e30,
+            0xc23a,
+            0x0d00,
+            jump(done),
+        ];
+        let release_reader = [
+            0x2e30,
+            0x7086,
+            jump(release_skip),
+            call(helper),
+            0x2d0b,
+            call(store),
+            0x2e30,
+            0x1408,
+            0xc23a,
+            0x0d00,
+            jump(done),
+        ];
+        if w[l.press - 4..l.press] != [0x6140, 0x2e83, 0x1dff, 0x291e]
+            || w[l.release - 3..l.release] != [0x2e83, 0x1dff, 0x2921]
+            || w[l.readers[0]..l.readers[0] + press_reader.len()] != press_reader
+            || w[l.readers[1]..l.readers[1] + release_reader.len()] != release_reader
         {
             return ShootingRoute::Unknown;
         }
-        match (&self.words[0x708..0x70a], &self.words[0x72a..0x72c]) {
+        let [press, release] = l.readers.map(|at| [0x7083, jump(at as u16)]);
+        match (&w[l.press..l.press + 2], &w[l.release..l.release + 2]) {
             ([0, 0], [0, 0]) => ShootingRoute::Absent,
-            ([0x7083, 0x8762], [0x7083, 0x8773]) => ShootingRoute::Present,
+            (a, b) if a == press && b == release => ShootingRoute::Present,
             _ => ShootingRoute::Unknown,
         }
+    }
+
+    pub fn layout(&self) -> Layout {
+        self.layout
+    }
+
+    /// Model word of the factory header: 04fc to 04ff for cores 1 to 4.
+    pub fn model(&self) -> u16 {
+        self.words[self.layout.identity]
     }
 
     /// The factory button configuration, ignoring any saved table. Firmware
@@ -240,7 +333,32 @@ impl Backup {
             parameters: auxiliary[16..].try_into().unwrap(),
             flags: self.words[base + 5],
             header_word6: self.words[base + 6],
+            lighting: self.lighting(base)?,
         })
+    }
+
+    /// Lighting-effect vectors listed at header word 13: (offset, 0) pairs,
+    /// each vector ending with a4a4 right before the next one or the list.
+    fn lighting(&self, base: usize) -> Result<Vec<Vec<u16>>, String> {
+        let list = self.words[base + 13] as usize;
+        if list == 0 {
+            return Ok(Vec::new());
+        }
+        let pairs = self.span(base + list, LIGHTING * 2)?;
+        let starts: Vec<_> = pairs.chunks(2).map(|pair| pair[0] as usize).collect();
+        let mut vectors = Vec::new();
+        for (index, start) in starts.iter().enumerate() {
+            let end = starts.get(index + 1).copied().unwrap_or(list);
+            if pairs[index * 2 + 1] != 0
+                || *start < 16
+                || end <= *start
+                || self.words[base + end - 1] != 0xa4a4
+            {
+                return Err("灯效表格式无效".into());
+            }
+            vectors.push(self.span(base + start, end - 1 - start)?.to_vec());
+        }
+        Ok(vectors)
     }
 
     /// Button, wheel and auxiliary tables. Sources: firmware 07fe, 080c, 0812,
@@ -249,7 +367,7 @@ impl Backup {
         // Firmware 117c and 1185 test only the low marker byte.
         let factory = self.words[SAVED_BUTTONS] & 255 != 0xa4;
         let base = if factory {
-            FACTORY_BUTTONS
+            self.layout.factory_buttons
         } else {
             SAVED_BUTTONS
         };
@@ -311,13 +429,18 @@ impl Backup {
         if self.words[0x2400] & 255 == 0xa4 {
             Ok(self.words[0x2400..0x2400 + sensitivity::BLOCK].to_vec())
         } else {
-            sensitivity::template_from_factory(&self.words[0x1806..0x1806 + sensitivity::FACTORY])
+            let base = self.layout.factory_sensitivity;
+            sensitivity::template_from_factory(&self.words[base..base + sensitivity::FACTORY])
         }
     }
 
     pub fn sensitivity(&self) -> Result<Sensitivity, String> {
         let saved = self.words[0x2400] & 255 == 0xa4;
-        let base = if saved { 0x2400 } else { 0x1806 };
+        let base = if saved {
+            0x2400
+        } else {
+            self.layout.factory_sensitivity
+        };
         let count = (self.words[base + 4] & 255) as usize + 1;
         let selected = (self.words[base + 5] & 255) as usize;
         if count > 8 || selected >= count {
@@ -350,7 +473,11 @@ impl Backup {
     /// Each section reports its own error, so one damaged table does not
     /// hide the others.
     pub fn summary(&self) -> String {
-        let mut output = "Bloody A90 · 型号 04fd · 固件 07\n".to_owned();
+        let mut output = format!(
+            "Bloody A90 · 型号 {:04x} · 固件 {:02x}\n",
+            self.model(),
+            self.layout.firmware
+        );
         output.push_str(self.shooting_route().description());
         output.push('\n');
         match self.sensitivity_summary() {
@@ -368,7 +495,7 @@ impl Backup {
         let data = self.sensitivity()?;
         let mut output = format!(
             "DPI 参数来源：{} · 字地址 {:04x}\n启用档位：{} · 当前档位：{}\n回报率原始编码：{:04x}\n校验：{}\n",
-            if data.base == 0x1806 {
+            if data.base == self.layout.factory_sensitivity {
                 "出厂表"
             } else {
                 "保存表"
@@ -384,7 +511,7 @@ impl Backup {
             }
         );
         for (index, record) in data.records.iter().enumerate() {
-            let cpi = if data.base == 0x1806 {
+            let cpi = if data.base == self.layout.factory_sensitivity {
                 sensitivity::factory_cpi(*record)
                     .map(|v| format!(" · {v} DPI"))
                     .unwrap_or_default()
@@ -540,6 +667,47 @@ mod tests {
         backup.words[0x709] = 0x8762;
         backup.words[0x773] ^= 1;
         assert_eq!(backup.shooting_route(), ShootingRoute::Unknown);
+    }
+    #[test]
+    fn firmware_0c_layout_and_route() {
+        let mut data = vec![0; 32768];
+        // Factory header and table of the official core-3 image.
+        for (at, value) in [(0x1842, 0x04feu16), (0x1843, 0x0c), (0x1848, 4), (0x1849, 0)] {
+            data[at * 2..at * 2 + 2].copy_from_slice(&value.to_le_bytes());
+        }
+        let mut backup = Backup::parse(&data).unwrap();
+        assert_eq!(backup.layout().firmware, 0x0c);
+        assert_eq!(backup.model(), 0x04fe);
+        let sensitivity = backup.sensitivity().unwrap();
+        assert_eq!((sensitivity.base, sensitivity.count), (0x1844, 5));
+        // Instruction windows of the official 0c core-3 image.
+        for (at, words) in [
+            (0x713, &[0x6140, 0x2e83, 0x1dff, 0x291e, 0x7083, 0x8771][..]),
+            (0x736, &[0x2e83, 0x1dff, 0x2921, 0x7083, 0x8782][..]),
+            (
+                0x771,
+                &[
+                    0x2b1b, 0x2b1a, 0x2b1d, 0x2b1c, 0x2e30, 0x7086, 0x877f, 0xc805, 0x2d0b, 0xc80d,
+                    0x2e30, 0xc23a, 0x0d00, 0x86c3,
+                ][..],
+            ),
+            (
+                0x782,
+                &[
+                    0x2e30, 0x7086, 0x878d, 0xc805, 0x2d0b, 0xc80d, 0x2e30, 0x1408, 0xc23a, 0x0d00,
+                    0x86c3,
+                ][..],
+            ),
+        ] {
+            backup.words[at..at + words.len()].copy_from_slice(words);
+        }
+        assert_eq!(backup.shooting_route(), ShootingRoute::Present);
+        backup.words[0x717..0x719].copy_from_slice(&[0, 0]);
+        backup.words[0x739..0x73b].copy_from_slice(&[0, 0]);
+        assert_eq!(backup.shooting_route(), ShootingRoute::Absent);
+        // A firmware byte of an unanalyzed version is rejected.
+        data[0x1843 * 2] = 0x0d;
+        assert!(Backup::parse(&data).is_err());
     }
     #[test]
     fn saved_checksum_and_invalid_preset() {

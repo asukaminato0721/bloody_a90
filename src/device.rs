@@ -1,8 +1,10 @@
-//! A90 vendor HID transport, firmware 07. See docs/research/PROTOCOL.md.
+//! A90 vendor HID transport, firmware 07 and 0c. See docs/research/PROTOCOL.md
+//! and docs/research/FIRMWARE-0C.md.
 //!
 //! Only requests verified on this mouse, or required by the audited save
 //! sequence, can be built here. Command 0d has passed motion and RAM tests.
 //! Commands 03 (sensor transfer), 1e (bootloader copy) and 2a are not sent.
+use crate::backup::Layout;
 use std::{
     fs::{self, File, OpenOptions},
     os::fd::AsRawFd,
@@ -12,6 +14,9 @@ use std::{
 };
 
 pub const REPORT: usize = 64;
+/// USB product IDs of the A90 (vendor 09da): firmware 07 enumerates as fafd,
+/// firmware 0c as 5450.
+pub const PRODUCTS: [u16; 2] = [0xfafd, 0x5450];
 const ID: u8 = 7;
 pub const SENSITIVITY: usize = 0x2400;
 pub const BUTTONS: usize = 0x2600;
@@ -125,9 +130,7 @@ pub fn interrupt_macros() -> Result<(), String> {
     {
         let sys = entry.path();
         let uevent = fs::read_to_string(sys.join("device/uevent")).unwrap_or_default();
-        if !uevent
-            .lines()
-            .any(|line| line == "HID_ID=0003:000009DA:0000FAFD")
+        if !is_a90(&uevent)
             || !uevent
                 .lines()
                 .any(|line| line.starts_with("HID_PHYS=") && line.ends_with("/input0"))
@@ -162,28 +165,36 @@ pub fn interrupt_macros() -> Result<(), String> {
     Err("未找到 A90 的键盘接口".into())
 }
 
-/// Find the vendor interface: USB 09da:fafd, usage page ff32, usage 04fd.
+/// A hidraw uevent of a known A90 product.
+fn is_a90(uevent: &str) -> bool {
+    uevent.lines().any(|line| {
+        PRODUCTS
+            .iter()
+            .any(|id| line == format!("HID_ID=0003:000009DA:0000{id:04X}"))
+    })
+}
+
+/// Find the vendor interface: USB 09da:fafd or 5450, usage page ff32, usage
+/// 04fc to 04ff.
 pub fn find() -> Result<PathBuf, String> {
     let entries = fs::read_dir("/sys/class/hidraw").map_err(|e| format!("无法列出 hidraw：{e}"))?;
     let mut names: Vec<_> = entries.flatten().map(|entry| entry.path()).collect();
     names.sort();
     for sys in names {
         let uevent = fs::read_to_string(sys.join("device/uevent")).unwrap_or_default();
-        if !uevent
-            .lines()
-            .any(|line| line == "HID_ID=0003:000009DA:0000FAFD")
-        {
+        if !is_a90(&uevent) {
             continue;
         }
         let descriptor = fs::read(sys.join("device/report_descriptor")).unwrap_or_default();
+        // The vendor usage equals the model word: 04fc to 04ff for cores 1 to 4.
         if contains(&descriptor, &[0x06, 0x32, 0xff])
-            && contains(&descriptor, &[0x0a, 0xfd, 0x04])
+            && (0xfc..=0xff).any(|low| contains(&descriptor, &[0x0a, low, 0x04]))
             && let Some(name) = sys.file_name()
         {
             return Ok(Path::new("/dev").join(name));
         }
     }
-    Err("未找到 A90 的厂商接口（USB 09da:fafd）".into())
+    Err("未找到 A90 的厂商接口（USB 09da:fafd 或 5450）".into())
 }
 
 fn header(command: u8, bytes: [u8; 6]) -> [u8; REPORT] {
@@ -267,9 +278,9 @@ impl Device {
             _single_thread: std::marker::PhantomData,
         };
         let identity = device.identity()?;
-        if identity.model & 0xfffc != 0x04fc || identity.firmware != 7 {
+        if identity.model & 0xfffc != 0x04fc || Layout::of(identity.firmware).is_none() {
             return Err(format!(
-                "设备型号 {:04x}、固件 {:02x} 不是已分析的 A90 固件 07",
+                "设备型号 {:04x}、固件 {:02x} 不是已分析的 A90 固件 07 或 0c",
                 identity.model, identity.firmware
             ));
         }
@@ -318,7 +329,9 @@ impl Device {
         Ok(Identity {
             model: u16::from_le_bytes([response[10], response[11]]),
             firmware: response[12],
-            core: response[9] & 15,
+            // All four official 0c core images answer 22 in byte 9 and differ
+            // only in the model word, 04fc to 04ff (docs/research/CORES.md).
+            core: (response[10] & 3) + 1,
         })
     }
 
@@ -822,7 +835,9 @@ mod tests {
                 let rel = u64::from_str_radix(read("capabilities/rel").trim(), 16).unwrap_or(0);
                 (entry.file_name().to_string_lossy().starts_with("event")
                     && read("id/vendor").trim() == "09da"
-                    && read("id/product").trim() == "fafd"
+                    && PRODUCTS
+                        .iter()
+                        .any(|id| read("id/product").trim() == format!("{id:04x}"))
                     && rel & 3 == 3)
                     .then(|| Path::new("/dev/input").join(entry.file_name()))
             })

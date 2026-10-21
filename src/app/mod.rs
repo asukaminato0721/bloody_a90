@@ -122,7 +122,7 @@ fn description(page: Page) -> &'static str {
         Page::Brightness => tr("灯光亮度：调整鼠标灯光亮度，立即生效。"),
         Page::About => tr("关于软件：独立 Rust 工具的适配进度。"),
         Page::Hardware => tr("关于硬件：设备型号、固件和存储区地址。"),
-        Page::Backup => tr("读取已有的 A90 固件 07 备份，查看灵敏度、按键表和宏程序。"),
+        Page::Backup => tr("读取已有的 A90 固件 07 或 0c 备份，查看灵敏度、按键表和宏程序。"),
         Page::Profile => tr("配置文件：导出当前灵敏度和按键设置，或导入后在各页应用。"),
         Page::Associations => tr("应用关联：按前台应用切换鼠标配置。关闭本工具后停止自动切换。"),
     }
@@ -1246,6 +1246,7 @@ mod tests {
             parameters: [50; 6],
             flags: 0x10,
             header_word6: 1,
+            lighting: Vec::new(),
         };
         let buttons = configuration::build(&config).unwrap();
         for (base, words) in [(0x2400, sensitivity), (0x2600, buttons)] {

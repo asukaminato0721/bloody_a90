@@ -478,6 +478,7 @@ mod tests {
             parameters: [50; 6],
             flags: 0x10,
             header_word6: 9,
+            lighting: Vec::new(),
         }
     }
 

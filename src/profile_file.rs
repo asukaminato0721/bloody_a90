@@ -159,6 +159,7 @@ mod tests {
             parameters: [50; 6],
             flags: 0x10,
             header_word6: 1,
+            lighting: Vec::new(),
         };
         put(0x2600, &configuration::build(&config).unwrap());
         Backup::parse(&image).unwrap()

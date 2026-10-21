@@ -292,7 +292,7 @@ DPI 减少	DPI Decrease
 灯光亮度：调整鼠标灯光亮度，立即生效。	Brightness: adjust the mouse light brightness; takes effect immediately.
 关于软件：独立 Rust 工具的适配进度。	About Software: migration progress of the standalone Rust tool.
 关于硬件：设备型号、固件和存储区地址。	About Hardware: device model, firmware and storage addresses.
-读取已有的 A90 固件 07 备份，查看灵敏度、按键表和宏程序。	Read an existing A90 firmware 07 backup to view sensitivity, key tables and macro programs.
+读取已有的 A90 固件 07 或 0c 备份，查看灵敏度、按键表和宏程序。	Read an existing A90 firmware 07 or 0c backup to view sensitivity, key tables and macro programs.
 配置文件：导出当前灵敏度和按键设置，或导入后在各页应用。	Profile File: export the current sensitivity and key settings, or import them and apply on each page.
 应用关联：按前台应用切换鼠标配置。关闭本工具后停止自动切换。	App Association: switch mouse profiles by the foreground application. Automatic switching stops when this tool closes.
 就绪	Ready
@@ -535,7 +535,7 @@ X 向右为正，Y 向下为正，位移使用鼠标计数值。	X is positive t
 尚未识别当前固件的左键射击入口。执行效果尚未验证。	The left-button shooting entry of the current firmware is not recognized. The effect is unverified.
 无法读取备份：{}	Cannot read the backup: {}
 备份必须恰好包含 32768 字节	A backup must be exactly 32768 bytes
-备份不匹配 A90 型号 04fd、固件 07	The backup does not match A90 model 04fd, firmware 07
+备份不匹配 A90 固件 07 或 0c	The backup does not match A90 firmware 07 or 0c
 地址超出备份范围	Address outside the backup
 表格超出备份范围	Table outside the backup
 宏 {} 没有完整的结束指令	Macro {} has no complete end instruction
@@ -543,8 +543,8 @@ X 向右为正，Y 向下为正，位移使用鼠标计数值。	X is positive t
 {} 不是可转换的动作	{} is not a convertible action
 按键表中的配置数量或选择值无效	Invalid profile count or selection in the key table
 备份中的 DPI 档位数量或选择值无效	Invalid DPI level count or selection in the backup
-Bloody A90 · 型号 04fd · 固件 07\n	Bloody A90 · model 04fd · firmware 07\n
-Bloody A90 · 型号 04fd · 固件 07	Bloody A90 · model 04fd · firmware 07
+Bloody A90 · 型号 {} · 固件 {}\n	Bloody A90 · model {} · firmware {}\n
+Bloody A90 · 型号 {} · 固件 {}	Bloody A90 · model {} · firmware {}
 DPI 参数：{}\n	DPI parameters: {}\n
 DPI 参数：{}	DPI parameters: {}
 \n按键表：{}\n	\nKey table: {}\n
@@ -596,11 +596,11 @@ DPI 参数来源：{} · 字地址 {}	DPI parameter source: {} · word address {
 无法打开 {}：{}	Cannot open {}: {}
 未找到 A90 的键盘接口	The A90 keyboard interface was not found
 无法列出 hidraw：{}	Cannot list hidraw: {}
-未找到 A90 的厂商接口（USB 09da:fafd）	The A90 vendor interface (USB 09da:fafd) was not found
+未找到 A90 的厂商接口（USB 09da:fafd 或 5450）	The A90 vendor interface (USB 09da:fafd or 5450) was not found
 {} 正由其他操作使用。请等待该操作结束后重试。	{} is in use by another operation. Wait for it to finish and try again.
 无法打开 {}：{}。请安装 contrib/70-bloody-a90.rules 并重新插入鼠标。	Cannot open {}: {}. Install contrib/70-bloody-a90.rules and replug the mouse.
 无法锁定 {}：{}	Cannot lock {}: {}
-设备型号 {}、固件 {} 不是已分析的 A90 固件 07	Device model {}, firmware {} is not the analyzed A90 firmware 07
+设备型号 {}、固件 {} 不是已分析的 A90 固件 07 或 0c	Device model {}, firmware {} is not the analyzed A90 firmware 07 or 0c
 HID 请求失败：{}	HID request failed: {}
 HID 请求只传输了 {} 字节	The HID request transferred only {} bytes
 命令 {} 的响应头不匹配	The response header of command {} does not match
