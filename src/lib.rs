@@ -24,6 +24,7 @@ pub mod linux_input;
 pub mod macros;
 mod overlay;
 pub mod profile_file;
+pub mod screen;
 pub mod sensitivity;
 pub mod shooting;
 pub mod status_window;

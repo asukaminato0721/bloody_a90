@@ -130,6 +130,22 @@ fn description(page: Page) -> &'static str {
     }
 }
 
+/// Window size of the official main form, and the smallest usable size.
+pub const WINDOW: egui::Vec2 = vec2(1640.0, 950.0);
+pub const MINIMUM: egui::Vec2 = vec2(1280.0, 760.0);
+
+/// The layout follows the fixed official form. On a smaller screen, such as
+/// 1536 × 960 at 200 %, the window would not fit, and a smaller window would
+/// crowd the layout, so everything is scaled instead. The margins leave room
+/// for a panel, the title bar and the border.
+pub fn zoom_for(screen: Option<[f32; 2]>) -> f32 {
+    screen.map_or(1.0, |[width, height]| {
+        ((width - 48.0) / WINDOW.x)
+            .min((height - 110.0) / WINDOW.y)
+            .clamp(0.5, 1.0)
+    })
+}
+
 const DEFAULT_DPI: [[u32; 2]; 5] = [[1000; 2], [1200; 2], [1600; 2], [2000; 2], [6200; 2]];
 
 pub struct App {

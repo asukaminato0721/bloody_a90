@@ -22,6 +22,7 @@ fn main() -> eframe::Result {
     }
     // The App outlives each window. Closing to the tray ends eframe's run;
     // the tray's 开启 starts a new one on the same App.
+    let zoom = app::zoom_for(bloody_a90::screen::logical_size());
     let shared: std::rc::Rc<std::cell::RefCell<Option<std::rc::Rc<std::cell::RefCell<app::App>>>>> =
         Default::default();
     loop {
@@ -30,11 +31,12 @@ fn main() -> eframe::Result {
             "Bloody A90",
             eframe::NativeOptions {
                 viewport: egui::ViewportBuilder::default()
-                    .with_inner_size([1640.0, 950.0])
-                    .with_min_inner_size([1280.0, 760.0]),
+                    .with_inner_size(app::WINDOW * zoom)
+                    .with_min_inner_size(app::MINIMUM * zoom),
                 ..Default::default()
             },
             Box::new(move |cc| {
+                cc.egui_ctx.set_zoom_factor(zoom);
                 let mut slot = slot.borrow_mut();
                 let app = match slot.as_ref() {
                     Some(app) => {

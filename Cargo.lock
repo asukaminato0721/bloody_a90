@@ -492,6 +492,7 @@ dependencies = [
  "roxmltree",
  "tiny-skia 0.12.0",
  "wayland-client",
+ "wayland-protocols",
  "wayland-protocols-misc",
  "wayland-protocols-plasma",
  "wayland-protocols-wlr",
