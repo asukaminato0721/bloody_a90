@@ -1,0 +1,5 @@
+# Optional, for contrib/research/a90-uhid-bridge.py only. Lets the active
+# desktop user create the virtual A90 vendor device and lets Wine open its
+# hidraw node. The bridge itself forwards read commands only.
+KERNEL=="uhid", TAG+="uaccess", OPTIONS+="static_node=uhid"
+SUBSYSTEM=="hidraw", KERNELS=="0003:09DA:FAFD.*", TAG+="uaccess"

@@ -1,0 +1,10 @@
+LIBRARY hid.dll
+EXPORTS
+    HidD_FreePreparsedData=_HidD_FreePreparsedData@4
+    HidD_GetAttributes=_HidD_GetAttributes@8
+    HidD_GetFeature=_HidD_GetFeature@12
+    HidD_GetHidGuid=_HidD_GetHidGuid@4
+    HidD_GetIndexedString=_HidD_GetIndexedString@16
+    HidD_GetPreparsedData=_HidD_GetPreparsedData@8
+    HidD_SetFeature=_HidD_SetFeature@12
+    HidP_GetCaps=_HidP_GetCaps@8

@@ -1,0 +1,13 @@
+# Bloody A90: USB 09da:fafd with firmware 07, 09da:5450 with firmware 0c.
+# Give the active desktop user access to the mouse's hidraw nodes. The tool
+# opens only the vendor interface, which it selects by usage page ff32 and
+# feature report 7.
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="09da", ATTRS{idProduct}=="fafd|5450", TAG+="uaccess"
+# Global gestures read the A90 pointer, then forward ordinary input through
+# a virtual pointer with the same ID. Virtual devices are excluded from discovery.
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{id/vendor}=="09da", ATTRS{id/product}=="fafd|5450", ENV{ID_INPUT_MOUSE}=="1", TAG+="uaccess"
+# Host gesture keyboard and its isolated integration test use this virtual ID.
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{id/vendor}=="1d6b", ATTRS{id/product}=="a090", TAG+="uaccess"
+# uinput creates the virtual pointer and keyboard. It can generate input for
+# this desktop session. Only the active local user receives access.
+SUBSYSTEM=="misc", KERNEL=="uinput", TAG+="uaccess", OPTIONS+="static_node=uinput"

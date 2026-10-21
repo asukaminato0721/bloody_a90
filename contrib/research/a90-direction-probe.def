@@ -1,0 +1,9 @@
+LIBRARY KERNEL32.dll
+EXPORTS
+GetCommandLineW@0
+LoadLibraryExW@12
+GetStdHandle@4
+GetLastError@0
+VirtualProtect@16
+WriteFile@20
+ExitProcess@4
