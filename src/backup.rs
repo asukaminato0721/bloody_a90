@@ -57,7 +57,9 @@ impl Layout {
     ];
 
     pub fn of(firmware: u8) -> Option<Self> {
-        Self::ALL.into_iter().find(|layout| layout.firmware == firmware)
+        Self::ALL
+            .into_iter()
+            .find(|layout| layout.firmware == firmware)
     }
 }
 
@@ -672,7 +674,12 @@ mod tests {
     fn firmware_0c_layout_and_route() {
         let mut data = vec![0; 32768];
         // Factory header and table of the official core-3 image.
-        for (at, value) in [(0x1842, 0x04feu16), (0x1843, 0x0c), (0x1848, 4), (0x1849, 0)] {
+        for (at, value) in [
+            (0x1842, 0x04feu16),
+            (0x1843, 0x0c),
+            (0x1848, 4),
+            (0x1849, 0),
+        ] {
             data[at * 2..at * 2 + 2].copy_from_slice(&value.to_le_bytes());
         }
         let mut backup = Backup::parse(&data).unwrap();

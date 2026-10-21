@@ -64,6 +64,7 @@ bloody_a90 --set-macro BUTTON SOURCE [once|held|toggle]
                                         Map a button to an M text macro in every mode
 bloody_a90 --interrupt                  Stop running macros (keyboard LED report 07)
 bloody_a90 --host                       Show desktop pointer, double-click and wheel settings
+bloody_a90 --light-effect N             Set the RGB effect 0-6 of every profile and reload
 bloody_a90 --save-buttons               Rebuild the active button table and save it
 bloody_a90 --restore BACKUP             Restore writable pages that differ from a backup";
 
@@ -356,6 +357,17 @@ fn cli(args: &[String]) -> Result<(), String> {
             println!("已发送中断信号");
         }
         ["--host"] => println!("{:?}", bloody_a90::host::read()),
+        ["--light-effect", effect] => {
+            let effect: u8 = effect.parse().map_err(|_| "灯效编号应为 0 至 6")?;
+            let device = Device::open()?;
+            let backup = Backup::parse(&device.read_backup(|_, _| {})?)?;
+            let mut config = backup.configuration()?;
+            config.set_light_effect(effect)?;
+            device.save(device::BUTTONS, &bloody_a90::configuration::build(&config)?)?;
+            let (current, _) = device.runtime_profile()?;
+            device.select_profile(current)?;
+            println!("灯效已保存并应用");
+        }
         ["--save-buttons"] => {
             let device = Device::open()?;
             let backup = Backup::parse(&device.read_backup(|_, _| {})?)?;

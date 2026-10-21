@@ -85,7 +85,7 @@ fn sub_tabs(main: Main) -> &'static [(&'static str, Option<Page>)] {
             ("奥斯卡II", Some(Page::Oscar)),
             ("奥斯卡III", Some(Page::Library)),
         ],
-        // The monochrome A90 shows only 灯光亮度, as in the official program.
+        // The A90 page holds brightness and the RGB effect list (LightEffectForm).
         Main::Lighting => &[("灯光亮度", Some(Page::Brightness))],
         Main::Other => &[
             ("关于软件", Some(Page::About)),

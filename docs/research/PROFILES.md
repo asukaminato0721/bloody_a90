@@ -55,7 +55,16 @@ metadata word pairs:
 01ff ffff
 ```
 
-The editor preserves these raw fields. It does not assign guessed parameter names.
+Each pair is the profile's lighting: word 0 holds the effect in its high byte
+and red in its low byte, word 1 holds green and blue. The factory colours are
+red, green, yellow, blue, cyan, magenta and white for profiles 1 to 7, which
+is the indicator colour cycle. The effect is the index of the official
+「RGB魔幻灯效」 list (0 全彩恒亮 to 6 微动换彩(快)); the official program writes the
+same index into every profile. A 2026-10-21 USB capture of the official
+program on firmware 0c and hardware checks of effects 0 and 3 confirmed this.
+See [FIRMWARE-0C.md](FIRMWARE-0C.md).
+
+The editor preserves these raw fields; only the light effect is edited.
 The EXE stores `ffff` in header word 12, while the factory backup contains `4034`.
 Do not assume that copying a factory header creates an EXE-compatible saved header.
 

@@ -460,9 +460,10 @@ Y轴 设定 :	Axirs Y Setting :
 当前运行：{}	Running: {}
 硬件切换键的回报率设置仍启用。重新插入后，鼠标会使用该设置。	The reporting rate setting of the hardware switch button is still enabled. After replugging, the mouse uses that setting.
 报告率（Hz)	Report Rate（Hz)
-灯光亮度调整：\n提供鼠标四种背光亮度的设置。A90 是单色灯光，RGB 与灯效编辑不适用于此型号。	Brightness adjustment:\nfour backlight brightness levels. The A90 has single-color lighting; RGB and effect editing do not apply to this model.
+灯光亮度调整：\n提供鼠标四种背光亮度的设置，建议在使用无线鼠标选用低亮度或关灯，已提高无线续航能力。	Light Brightness Adjustment:\nProvides four backlight brightness settings for the mouse. The wireless mouse can turn off the lights to improve wireless battery life.
 灯光亮度调整：	Brightness adjustment:
-提供鼠标四种背光亮度的设置。A90 是单色灯光，RGB 与灯效编辑不适用于此型号。	Four backlight brightness levels. The A90 has single-color lighting; RGB and effect editing do not apply to this model.
+提供鼠标四种背光亮度的设置，建议在使用无线鼠标选用低亮度或关灯，已提高无线续航能力。	Provides four backlight brightness settings for the mouse. The wireless mouse can turn off the lights to improve wireless battery life.
+RGB魔幻灯效：	Light effect:
 狙击设置	Sniper Settings
 狙击类别	Sniper Type
 编程文件	Macro Type
@@ -541,6 +542,7 @@ X 向右为正，Y 向下为正，位移使用鼠标计数值。	X is positive t
 宏 {} 没有完整的结束指令	Macro {} has no complete end instruction
 宏 {}：{}	Macro {}: {}
 {} 不是可转换的动作	{} is not a convertible action
+灯效表格式无效	Invalid lighting-effect table
 按键表中的配置数量或选择值无效	Invalid profile count or selection in the key table
 备份中的 DPI 档位数量或选择值无效	Invalid DPI level count or selection in the backup
 Bloody A90 · 型号 {} · 固件 {}\n	Bloody A90 · model {} · firmware {}\n
@@ -586,7 +588,15 @@ DPI 参数来源：{} · 字地址 {}	DPI parameter source: {} · word address {
 需要有效键盘按键或修饰键	Needs a valid keyboard key or modifier
 按键记录包含无效的直接动作	The key record contains an invalid direct action
 连击预设需要 2 或 3 次点击	Click presets need 2 or 3 clicks
+全彩恒亮	Full-color constant light
+全彩呼吸(慢闪)	Full-color breathing (slow flash)
+全彩呼吸(快闪)	Full-color breathing (flash)
+全彩循环(慢闪)	Full-color loop (slow flash)
+全彩循环(快闪)	Full-color loop (flash)
+微动换彩(慢)	Slowly changing color (slow)
+微动换彩(快)	Slowly changing color (fast)
 射击槽位应为 1 至 7	The shooting slot must be 1 to 7
+灯效编号应为 0 至 6	The light effect number must be 0 to 6
 硬件按键响应时间应为 0 至 16 ms	The hardware key response time must be 0 to 16 ms
 {} 不是直接动作	{} is not a direct action
 配置超过 1700 个字，无法存入 2600 至 3d00	The configuration exceeds 1700 words and does not fit into 2600 to 3d00
@@ -1031,6 +1041,7 @@ KWin 拒绝加载滚轮区域脚本	KWin refused to load the wheel zone script
 灵敏度已保存并立即应用。运行参数已读回一致。	Sensitivity saved and applied immediately. Runtime parameters read back the same.
 回报率已保存并立即应用。运行参数已读回一致。	Reporting rate saved and applied immediately. Runtime parameters read back the same.
 抬起高度已保存。运行值已读回一致。	Lift-off height saved. The runtime value read back the same.
+灯效已保存并应用	Light effect saved and applied
 设备宏和主机动作已中断。{}	Device macros and host actions interrupted. {}
 设备宏和主机动作已中断	Device macros and host actions interrupted
 已读取桌面设置	Desktop settings read

@@ -87,6 +87,7 @@ X轴 设定 :	Axirs X Setting :
 Y轴 设定 :	Axirs Y Setting :
 启用X/Y	Enabled X/Y
 报告率（Hz)	Velocidade de transmissão do rato (Hz)
+RGB魔幻灯效：	Efeito de luz:
 狙击设置	Sniper Settings
 狙击类别	Sniper Type
 编程文件	Macro Type
@@ -98,4 +99,11 @@ M-宏枪	M-Macro
 设定弹数	Números
 准心回位	Voltar
 说明>>	Explicar>>
+全彩恒亮	Luz constante colorida
+全彩呼吸(慢闪)	Respiração colorida (slow flash)
+全彩呼吸(快闪)	Respiração colorida (flash)
+全彩循环(慢闪)	Aspiral colorida (slow flash)
+全彩循环(快闪)	Aspiral colorida (flash)
+微动换彩(慢)	Mudança lenta da cor (slow)
+微动换彩(快)	Mudança lenta da cor (fast)
 文字	Texto

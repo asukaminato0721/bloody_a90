@@ -87,6 +87,7 @@ X轴 设定 :	Axirs X Setting :
 Y轴 设定 :	Axirs Y Setting :
 启用X/Y	Enabled X/Y
 报告率（Hz)	Rapportsnelheid (Hz)
+RGB魔幻灯效：	Lichteffect:
 狙击设置	Sniper Settings
 狙击类别	Sniper Type
 编程文件	Macro Type
@@ -98,4 +99,11 @@ M-宏枪	M-Macro
 设定弹数	Getallen
 准心回位	Terugkeren
 说明>>	Leg uit>>
+全彩恒亮	Volledige kleuren constant licht
+全彩呼吸(慢闪)	Volledige kleuren breathing (trage flash)
+全彩呼吸(快闪)	Volledige kleuren breathing (flash)
+全彩循环(慢闪)	Volledige kleuren herhalen (trage flash)
+全彩循环(快闪)	Volledige kleuren herhalen (flash)
+微动换彩(慢)	Traag veranderende kleur (traag)
+微动换彩(快)	Traag veranderende kleur (snel)
 文字	Tekst

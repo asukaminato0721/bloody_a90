@@ -1,6 +1,6 @@
 use super::{App, DEFAULT_DPI};
 use crate::{skin, worker::Job};
-use bloody_a90::sensitivity;
+use bloody_a90::{configuration::LIGHT_EFFECTS, sensitivity};
 use bloody_a90::{
     i18n::{tr, tr_text},
     tf,
@@ -438,14 +438,21 @@ impl App {
         }
     }
 
-    /// MouseLedBrightness: levels 0 to 3, applied immediately.
+    /// MouseLedBrightness: levels 0 to 3, applied immediately. Below it the
+    /// 「RGB魔幻灯效」 list of LightEffectForm, saved in the key table.
     pub(super) fn brightness(&mut self, ui: &mut egui::Ui) {
         ui.add_space(66.0);
         let current = self.device.as_ref().map(|device| device.brightness);
+        let saved = self
+            .device
+            .as_ref()
+            .and_then(|device| device.backup.configuration().ok());
+        let effect = saved.as_ref().and_then(|config| config.light_effect());
         let help = tr(
-            "灯光亮度调整：\n提供鼠标四种背光亮度的设置。A90 是单色灯光，RGB 与灯效编辑不适用于此型号。",
+            "灯光亮度调整：\n提供鼠标四种背光亮度的设置，建议在使用无线鼠标选用低亮度或关灯，已提高无线续航能力。",
         );
         let mut chosen = None;
+        let mut chosen_effect = None;
         skin::card(ui, Some(skin::Icon::Light), tr("灯光亮度"), help, |ui| {
             ui.add_space(6.0);
             ui.horizontal(|ui| {
@@ -455,7 +462,37 @@ impl App {
                     chosen = skin::levels(ui, current, width);
                 });
             });
-            ui.add_space(110.0);
+            ui.add_space(30.0);
+            ui.horizontal(|ui| {
+                ui.add_space(((ui.available_width() - 806.0) / 2.0).max(0.0));
+                ui.label(
+                    RichText::new(tr("RGB魔幻灯效："))
+                        .color(skin::TEXT)
+                        .size(16.0),
+                );
+                ui.add_enabled_ui(saved.is_some() && !self.pending, |ui| {
+                    let mut selected = effect;
+                    let text = effect
+                        .and_then(|e| LIGHT_EFFECTS.get(usize::from(e)))
+                        .map_or_else(String::new, |name| tr_text(name));
+                    egui::ComboBox::from_id_salt("light_effect")
+                        .selected_text(text)
+                        .width(180.0)
+                        .show_ui(ui, |ui| {
+                            for (index, name) in LIGHT_EFFECTS.iter().enumerate() {
+                                ui.selectable_value(
+                                    &mut selected,
+                                    Some(index as u8),
+                                    tr_text(name),
+                                );
+                            }
+                        });
+                    if selected != effect {
+                        chosen_effect = selected;
+                    }
+                });
+            });
+            ui.add_space(64.0);
             if current.is_none() {
                 ui.label(RichText::new(tr("请先连接鼠标。")).color(skin::GRAY));
             }
@@ -472,6 +509,12 @@ impl App {
             && Some(level) != current
         {
             self.start(Job::Brightness(level));
+        }
+        if let (Some(effect), Some(mut config)) = (chosen_effect, saved) {
+            match config.set_light_effect(effect) {
+                Ok(()) => self.start(Job::SaveLighting(Box::new(config))),
+                Err(error) => self.report(Err(error)),
+            }
         }
     }
 }

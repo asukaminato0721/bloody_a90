@@ -55,8 +55,22 @@ pub struct Profile {
     pub wheel: [Action; 2],
     /// None creates a complete no-operation gesture table.
     pub gestures: Option<Box<[Binding; GESTURES]>>,
+    /// Lighting of this profile: effect in the high byte of word 0, then
+    /// red, green and blue (EXE TtabBrightness, USB capture of 2026-10-21).
     pub metadata: [u16; 2],
 }
+
+/// Effects of the official 「RGB魔幻灯效」 list, in its order. The EXE writes
+/// the list index into every profile; the factory tables use 1.
+pub const LIGHT_EFFECTS: [&str; 7] = [
+    "全彩恒亮",
+    "全彩呼吸(慢闪)",
+    "全彩呼吸(快闪)",
+    "全彩循环(慢闪)",
+    "全彩循环(快闪)",
+    "微动换彩(慢)",
+    "微动换彩(快)",
+];
 
 /// Metadata, parameters and flags keep raw EXE values.
 #[derive(Clone, Debug)]
@@ -114,6 +128,26 @@ impl Configuration {
     pub fn debounce_ms(&self) -> Option<u8> {
         let value = self.header_word6 as u8;
         (1..=17).contains(&value).then(|| value - 1)
+    }
+
+    /// The effect shared by all profiles, or None when they differ.
+    pub fn light_effect(&self) -> Option<u8> {
+        let first = (self.profiles.first()?.metadata[0] >> 8) as u8;
+        self.profiles
+            .iter()
+            .all(|profile| (profile.metadata[0] >> 8) as u8 == first)
+            .then_some(first)
+    }
+
+    /// Set the effect of every profile and keep their colours.
+    pub fn set_light_effect(&mut self, effect: u8) -> Result<(), String> {
+        if usize::from(effect) >= LIGHT_EFFECTS.len() {
+            return Err("灯效编号应为 0 至 6".into());
+        }
+        for profile in &mut self.profiles {
+            profile.metadata[0] = (profile.metadata[0] & 0xff) | u16::from(effect) << 8;
+        }
+        Ok(())
     }
 
     /// The official slider accepts 0..16 ms. Keep the unused high byte.
@@ -254,6 +288,27 @@ mod tests {
     use super::*;
 
     #[test]
+    fn light_effect_changes_only_the_high_byte() {
+        let mut config = configuration(3);
+        // Factory colours of profiles 1 to 3: red, green, yellow.
+        for (profile, metadata) in
+            config
+                .profiles
+                .iter_mut()
+                .zip([[0x1ff, 0], [0x100, 0xff00], [0x1ff, 0xff00]])
+        {
+            profile.metadata = metadata;
+        }
+        assert_eq!(config.light_effect(), Some(1));
+        config.set_light_effect(5).unwrap();
+        let metadata: Vec<_> = config.profiles.iter().map(|p| p.metadata).collect();
+        assert_eq!(metadata, [[0x5ff, 0], [0x500, 0xff00], [0x5ff, 0xff00]]);
+        assert!(config.set_light_effect(7).is_err());
+        config.profiles[1].metadata[0] = 0x200;
+        assert_eq!(config.light_effect(), None);
+    }
+
+    #[test]
     fn lighting_vectors_survive_a_rebuild() {
         let mut config = configuration(7);
         // Five empty vectors as the official program writes them on 0c.
@@ -268,7 +323,10 @@ mod tests {
         for (index, word) in words.iter().enumerate() {
             image[(0x2600 + index) * 2..][..2].copy_from_slice(&word.to_le_bytes());
         }
-        let saved = crate::backup::Backup::parse(&image).unwrap().configuration().unwrap();
+        let saved = crate::backup::Backup::parse(&image)
+            .unwrap()
+            .configuration()
+            .unwrap();
         assert_eq!(saved.lighting, config.lighting);
         assert_eq!(build(&saved).unwrap(), words);
         image[(0x2600 + list as usize + 1) * 2] = 1;

@@ -44,6 +44,9 @@ pub enum Job {
     CalibrateLift,
     Shutdown,
     SaveButtons(Box<Configuration>),
+    /// Save a key table whose only change is the light effect, then reload
+    /// the running profile, which reads its metadata again.
+    SaveLighting(Box<Configuration>),
     SaveHostButtons(
         Box<Configuration>,
         Box<bloody_a90::host_buttons::Settings>,
@@ -541,6 +544,15 @@ impl Worker {
             Job::SaveButtons(config) => {
                 Reply::Device(Refresh::Buttons, self.save_buttons(&config, None))
             }
+            Job::SaveLighting(config) => Reply::Device(
+                Refresh::Buttons,
+                self.save_buttons(&config, None).and_then(|_| {
+                    let device = Device::open()?;
+                    let (current, _) = device.runtime_profile()?;
+                    device.select_profile(current)?;
+                    Ok((snapshot(&device)?, "灯效已保存并应用".into()))
+                }),
+            ),
             Job::SaveHostButtons(config, settings, expected) => Reply::Device(
                 Refresh::Buttons,
                 self.save_buttons(&config, Some((*settings, expected))),

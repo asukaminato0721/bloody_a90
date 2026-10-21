@@ -416,12 +416,7 @@ mod tests {
             ));
             entries.push(Entry {
                 file: "kcminputrc",
-                groups: vec![
-                    "Libinput".into(),
-                    VENDOR.to_string(),
-                    product,
-                    label,
-                ],
+                groups: vec!["Libinput".into(), VENDOR.to_string(), product, label],
                 key: "PointerAcceleration",
                 original: None,
                 proposed: format!("{:.2}", proposed.pointer.unwrap()),
