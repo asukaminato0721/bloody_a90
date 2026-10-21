@@ -80,6 +80,10 @@
 硬件信息	Hardware information
 开机自动启动	Automatically start up
 显示语言	Display language
+开启功能显示	Display Funzione
+永远显示	Visualizza sempre
+改变时显示	Mostra quando viene modificato
+不显示	Nascondi
 传感器 [微精校准LOD]	Calibrazione sensore
 预设高度	Preset
 目前 CPI :	Current CPI :
@@ -99,6 +103,10 @@ M-宏枪	M-Macro
 设定弹数	Numero
 准心回位	Ritorno
 说明>>	Spiegare>>
+请插入血手系列鼠标!	Mouse Bloody non presente,collegare il Mouse Bloody.
+开机自动执行	Avvio automatico
+进化轮设定	Ruota 4D
+离开	Exit
 全彩恒亮	Luce costante colore pieno
 全彩呼吸(慢闪)	Respirazione colore pieno (flash lento)
 全彩呼吸(快闪)	Respirazione colore pieno (flash)
@@ -107,3 +115,4 @@ M-宏枪	M-Macro
 微动换彩(慢)	Leggera variazione di colore (lento)
 微动换彩(快)	Leggera variazione di colore (veloce)
 文字	Testo
+复制	Copia

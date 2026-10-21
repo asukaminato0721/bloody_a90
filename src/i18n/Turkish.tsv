@@ -80,6 +80,10 @@
 硬件信息	Hardware information
 开机自动启动	Automatically start up
 显示语言	Display language
+开启功能显示	Fonksiyon Ekranı
+永远显示	Her zaman görüntüle
+改变时显示	Değiştirildiğinde görüntüle
+不显示	Gizle
 传感器 [微精校准LOD]	Sensör kalibrasyonu
 预设高度	Önayar
 目前 CPI :	Current CPI :
@@ -99,6 +103,10 @@ M-宏枪	M-Macro
 设定弹数	Sayılar
 准心回位	Geri Tepme
 说明>>	Açıklama>>
+请插入血手系列鼠标!	Bloody fare yok, Bloody farenizi takın
+开机自动执行	Sistem Başlatıldığında Otomatik Çalıştır
+进化轮设定	4D Tekerlek Ayarları
+离开	Çıkış
 全彩恒亮	Tam renkli sabit ışık
 全彩呼吸(慢闪)	Tam renkli soluk (yavaş yanıp sönme)
 全彩呼吸(快闪)	Tam renkli soluk (yanıp sönme)
@@ -107,3 +115,4 @@ M-宏枪	M-Macro
 微动换彩(慢)	Yavaşça değişen renk (yavaş)
 微动换彩(快)	Yavaşça değişen renk (hızlı)
 文字	Metin
+复制	Kopyala

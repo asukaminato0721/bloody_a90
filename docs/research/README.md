@@ -20,6 +20,8 @@
 - [KDE 桌面设置](KDE-SETTINGS.md)
 - [DPI 换算](SENSITIVITY.md)
 - [即时 DPI 和回报率](RUNTIME-SENSITIVITY.md)
+- [状态浮窗](STATUS-WINDOW.md)
+- [托盘图标](TRAY.md)
 - [核心与左键射击入口](CORES.md)
 - [固件 0C 与 07 的差异](FIRMWARE-0C.md)
 - [手势路径](GESTURES.md)

@@ -1,4 +1,4 @@
-use super::render::{HEIGHT, WIDTH};
+use super::{Place, Spec};
 use x11rb::{
     connection::Connection,
     protocol::{
@@ -12,7 +12,7 @@ use x11rb::{
     wrapper::ConnectionExt as _,
 };
 
-pub(super) struct Window {
+pub(crate) struct Window {
     connection: RustConnection,
     window: u32,
     gc: u32,
@@ -20,10 +20,11 @@ pub(super) struct Window {
     depth: u8,
     dimensions: [u16; 2],
     visible: bool,
+    spec: Spec,
 }
 
 impl Window {
-    pub(super) fn connect() -> Result<Self, String> {
+    pub(super) fn connect(spec: Spec) -> Result<Self, String> {
         let (connection, screen) = x11rb::connect(None).map_err(|e| e.to_string())?;
         let screen = &connection.setup().roots[screen];
         if screen.root_depth != 24 && screen.root_depth != 32 {
@@ -49,8 +50,8 @@ impl Window {
                 root,
                 0,
                 0,
-                WIDTH as u16,
-                HEIGHT as u16,
+                spec.width as u16,
+                spec.height as u16,
                 0,
                 WindowClass::INPUT_OUTPUT,
                 visual,
@@ -91,7 +92,7 @@ impl Window {
                     window,
                     AtomEnum::WM_NAME,
                     AtomEnum::STRING,
-                    b"Bloody A90 gesture tip",
+                    spec.id.as_bytes(),
                 )
                 .map_err(|e| e.to_string())?;
             connection
@@ -113,24 +114,36 @@ impl Window {
             depth,
             dimensions,
             visible: false,
+            spec,
         })
     }
 
     pub(super) fn present(&mut self, pixels: &[u8]) -> Result<bool, String> {
-        if pixels.len() != (WIDTH * HEIGHT * 4) as usize {
+        let Spec { width, height, .. } = self.spec;
+        if pixels.len() != self.spec.bytes() {
             return Err("提示板像素长度无效".into());
         }
         if !self.visible {
-            let pointer = self
-                .connection
-                .query_pointer(self.root)
-                .map_err(|e| e.to_string())?
-                .reply()
-                .map_err(|e| e.to_string())?;
-            let x = (i32::from(pointer.root_x) + 24)
-                .clamp(0, (i32::from(self.dimensions[0]) - WIDTH as i32).max(0));
-            let y = (i32::from(pointer.root_y) + 24)
-                .clamp(0, (i32::from(self.dimensions[1]) - HEIGHT as i32).max(0));
+            let limit = [
+                (i32::from(self.dimensions[0]) - width as i32).max(0),
+                (i32::from(self.dimensions[1]) - height as i32).max(0),
+            ];
+            let [x, y] = match self.spec.place {
+                Place::Pointer => {
+                    let pointer = self
+                        .connection
+                        .query_pointer(self.root)
+                        .map_err(|e| e.to_string())?
+                        .reply()
+                        .map_err(|e| e.to_string())?;
+                    [
+                        (i32::from(pointer.root_x) + 24).clamp(0, limit[0]),
+                        (i32::from(pointer.root_y) + 24).clamp(0, limit[1]),
+                    ]
+                }
+                // Leave room for a bottom panel. X11 has no exclusive zones.
+                Place::BottomRight => [(limit[0] - 24).max(0), (limit[1] - 64).max(0)],
+            };
             self.connection
                 .configure_window(
                     self.window,
@@ -146,14 +159,14 @@ impl Window {
             self.visible = true;
         }
         // Rows keep each PutImage request below the server request-size limit.
-        for (index, rows) in pixels.chunks((WIDTH * 4 * 32) as usize).enumerate() {
+        for (index, rows) in pixels.chunks((width * 4 * 32) as usize).enumerate() {
             self.connection
                 .put_image(
                     ImageFormat::Z_PIXMAP,
                     self.window,
                     self.gc,
-                    WIDTH as u16,
-                    (rows.len() / (WIDTH * 4) as usize) as u16,
+                    width as u16,
+                    (rows.len() / (width * 4) as usize) as u16,
                     0,
                     (index * 32) as i16,
                     0,
@@ -203,7 +216,8 @@ mod tests {
     #[test]
     #[ignore = "requires an isolated X11 server"]
     fn x11_tip_has_empty_input_region_and_keeps_focus() {
-        let mut window = Window::connect().unwrap();
+        let spec = crate::gesture_tip::SPEC;
+        let mut window = Window::connect(spec).unwrap();
         let focus = window
             .connection
             .get_input_focus()
@@ -211,14 +225,8 @@ mod tests {
             .reply()
             .unwrap()
             .focus;
-        let image = super::super::render::Renderer::new()
-            .unwrap()
-            .draw(&super::super::Frame {
-                points: vec![[0, 0], [0, -80], [80, -80]],
-                direction: "上 → 右".into(),
-                action: "复制".into(),
-            });
-        window.present(&super::super::render::bgra(&image)).unwrap();
+        let image = crate::gesture_tip::sample();
+        window.present(&super::super::bgra(&image)).unwrap();
         window
             .connection
             .get_input_focus()
@@ -262,8 +270,8 @@ mod tests {
                 window.window,
                 0,
                 0,
-                WIDTH as u16,
-                HEIGHT as u16,
+                spec.width as u16,
+                spec.height as u16,
                 u32::MAX,
             )
             .unwrap()

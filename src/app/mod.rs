@@ -8,6 +8,7 @@ mod oscar;
 mod other;
 mod sensitivity;
 mod shooting;
+mod tray;
 mod wheel4d;
 
 use crate::{
@@ -19,6 +20,7 @@ use bloody_a90::{
     backup::Backup,
     configuration::Configuration,
     macros::{self, Program, Repeat},
+    status_window::{self, Display},
 };
 use bloody_a90::{
     i18n::{self, Language, tr, tr_text},
@@ -185,6 +187,13 @@ pub struct App {
     foreground: Option<String>,
     association_error: Option<String>,
     last_association_poll: std::time::Instant,
+    /// 开启功能显示. None is 不显示.
+    status_display: Option<Display>,
+    status_window: Option<status_window::Handle>,
+    tray: Option<tray::TrayIcon>,
+    /// 离开 was chosen. The next close request ends the program.
+    quitting: bool,
+    wake: worker::Wake,
     status: String,
     failed: bool,
     /// A job the user started is in flight. Buttons and the ⏳ follow it.
@@ -319,6 +328,7 @@ impl App {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let mut app = Self::from_context(&cc.egui_ctx);
         app.load_state();
+        app.set_status_display(app.status_display);
         if app.associations.enabled {
             app.start(Job::Associations(app.associations.clone()));
         }
@@ -331,7 +341,8 @@ impl App {
         load_fonts(ctx);
         let (sender, jobs) = mpsc::channel();
         let (results, receiver) = mpsc::channel();
-        let worker = worker::spawn(jobs, results, ctx.clone());
+        let wake = worker::Wake::new(ctx);
+        let worker = worker::spawn(jobs, results, wake.clone());
         let press = "LeftDown\ndelay 25\nLeftUp\ndelay 85\nLeftDown\ndelay 25\nLeftUp".to_owned();
         Self {
             main: Main::Sensitivity,
@@ -391,6 +402,11 @@ impl App {
             worker: Some(worker),
             smoke_frames: None,
             footer_area: egui::Rect::NOTHING,
+            status_display: None,
+            status_window: None,
+            tray: None,
+            quitting: false,
+            wake,
         }
     }
 
@@ -400,7 +416,16 @@ impl App {
     }
 
     /// Connect at startup when the vendor interface exists.
+    /// A window reopened from the tray has a new egui context.
+    pub fn attach(&mut self, ctx: &egui::Context) {
+        style(ctx);
+        load_fonts(ctx);
+        self.wake.set(ctx);
+    }
+
+    /// Normal start: the tray icon, then the mouse. The smoke test has neither.
     pub fn connect_at_start(mut self) -> Self {
+        self.start_tray();
         if bloody_a90::device::find().is_ok() {
             self.start(Job::Connect);
         }
@@ -461,6 +486,13 @@ impl App {
                                 .copied()
                                 .filter(|_| *value != 0);
                         }
+                    }
+                }
+                "status_window" => {
+                    self.status_display = match value.as_str() {
+                        "always" => Some(Display::Always),
+                        "changed" => Some(Display::Changed),
+                        _ => None,
                     }
                 }
                 "associations" => {
@@ -534,6 +566,15 @@ impl App {
                     .join(","),
             ),
             ("associations", self.associations.encode()),
+            (
+                "status_window",
+                match self.status_display {
+                    Some(Display::Always) => "always",
+                    Some(Display::Changed) => "changed",
+                    None => "off",
+                }
+                .into(),
+            ),
             ("language", i18n::language().code().to_owned()),
         ];
         let text: String = entries
@@ -618,6 +659,9 @@ impl App {
                     bloody_a90::host_buttons::Settings::default()
                 };
                 self.host_buttons.rules.resize(config.profiles.len());
+                if let Some(window) = &self.status_window {
+                    window.set_colors(status_window::colors(&config));
+                }
                 self.keys = Some(config);
             }
             Err(error) => {
@@ -1040,9 +1084,55 @@ fn path_field(ui: &mut egui::Ui, text: &mut String, hint: &str, width: f32) {
     );
 }
 
+/// What eframe owns while a window is open. The App itself outlives the
+/// window, so closing to the tray keeps services and editor state.
+pub struct Window(pub std::rc::Rc<std::cell::RefCell<App>>);
+
+impl eframe::App for Window {
+    fn logic(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        eframe::App::logic(&mut *self.0.borrow_mut(), ctx, frame);
+    }
+
+    fn on_exit(&mut self) {
+        eframe::App::on_exit(&mut *self.0.borrow_mut());
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        eframe::App::ui(&mut *self.0.borrow_mut(), ui, frame);
+    }
+}
+
 impl eframe::App for App {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.tray_logic(ctx);
+        if let Some(delay) = self.tick() {
+            ctx.request_repaint_after(delay);
+        }
+    }
+
+    fn on_exit(&mut self) {
+        if self.smoke_frames.is_none() {
+            self.save_state();
+        }
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        self.window_ui(ui);
+    }
+}
+
+impl App {
+    /// Replies, status checks and polls. They also run while the window is
+    /// closed to the tray. Returns when the next poll is due.
+    pub(super) fn tick(&mut self) -> Option<std::time::Duration> {
+        use std::time::Duration;
+        let mut due: Option<Duration> = None;
+        let mut after = |delay: Duration| due = Some(due.map_or(delay, |d| d.min(delay)));
         self.receive();
+        if let Some(error) = self.status_window.as_ref().and_then(|w| w.error()) {
+            self.status_window = None;
+            self.report(Err(tf!("状态浮窗已停止：{error}")));
+        }
         if self.associations.enabled && self.connected() && self.association_error.is_none() {
             if !self.pending
                 && !self.polling
@@ -1051,7 +1141,7 @@ impl eframe::App for App {
                 self.last_association_poll = std::time::Instant::now();
                 self.start(Job::Foreground);
             }
-            ctx.request_repaint_after(std::time::Duration::from_millis(250));
+            after(Duration::from_millis(250));
         }
         // Give a due foreground poll priority over the faster button query.
         if self.gestures.running
@@ -1076,7 +1166,7 @@ impl eframe::App for App {
                 self.gestures.last_poll = std::time::Instant::now();
                 self.start(Job::GestureStatus);
             }
-            ctx.request_repaint_after(std::time::Duration::from_millis(100));
+            after(Duration::from_millis(100));
         }
         if self.connected() {
             if !self.pending
@@ -1086,23 +1176,18 @@ impl eframe::App for App {
                 self.host_buttons.last_poll = std::time::Instant::now();
                 self.start(Job::HostButtonsStatus);
             }
-            ctx.request_repaint_after(std::time::Duration::from_millis(200));
+            after(Duration::from_millis(200));
         }
         if self.watching && self.page == Page::Keys {
             if !self.pending && !self.polling {
                 self.start(Job::Held);
             }
-            ctx.request_repaint_after(std::time::Duration::from_millis(120));
+            after(Duration::from_millis(120));
         }
+        due
     }
 
-    fn on_exit(&mut self) {
-        if self.smoke_frames.is_none() {
-            self.save_state();
-        }
-    }
-
-    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+    fn window_ui(&mut self, ui: &mut egui::Ui) {
         if let Some(frames) = self.smoke_frames.as_mut() {
             *frames += 1;
             // Render each page before the smoke test closes the window.

@@ -3,10 +3,13 @@ use crate::{
     skin,
     worker::{Job, Purpose},
 };
-use bloody_a90::profile_file;
 use bloody_a90::{
     i18n::{self, tr, tr_text},
     tf,
+};
+use bloody_a90::{
+    profile_file,
+    status_window::{self, Display},
 };
 use eframe::egui::{self, RichText};
 
@@ -216,6 +219,40 @@ impl App {
             });
         });
         ui.add_space(15.0);
+        ui.horizontal_top(|ui| {
+            let width = ((ui.available_width() - 15.0) / 2.0).min(690.0);
+            tile(
+                ui,
+                width,
+                skin::Icon::Light,
+                tr("开启功能显示"),
+                |ui| {
+                    let choices = [
+                        (Some(Display::Always), tr("永远显示")),
+                        (Some(Display::Changed), tr("改变时显示")),
+                        (None, tr("不显示")),
+                    ];
+                    let mut chosen = self.status_display;
+                    let caption = |value| choices.iter().find(|(v, _)| *v == value).unwrap().1;
+                    egui::ComboBox::from_id_salt("status_window")
+                        .selected_text(caption(chosen))
+                        .width(120.0)
+                        .show_ui(ui, |ui| {
+                            for (value, text) in choices {
+                                ui.selectable_value(&mut chosen, value, text);
+                            }
+                        });
+                    if chosen != self.status_display {
+                        self.set_status_display(chosen);
+                        self.save_state();
+                    }
+                },
+            )
+            .on_hover_text(tr(
+                "桌面右下角显示当前配置的灯光颜色和 X/Y 分辨率。浮窗不接收点击。",
+            ));
+        });
+        ui.add_space(15.0);
         skin::sheet().show(ui, |ui| {
             ui.set_width(ui.available_width());
             ui.label(RichText::new(tr("Bloody A90 配置工具")).font(skin::bold(22.0)));
@@ -242,6 +279,30 @@ impl App {
     }
 }
 
+impl App {
+    /// Start, change or stop the status window. A failure turns it off.
+    pub(super) fn set_status_display(&mut self, display: Option<Display>) {
+        // Stop the old window before a new one connects.
+        self.status_window = None;
+        self.status_display = display;
+        let Some(display) = display else {
+            return;
+        };
+        let colors = self
+            .keys
+            .as_ref()
+            .map(status_window::colors)
+            .unwrap_or_default();
+        match status_window::Handle::start(display, colors) {
+            Ok(window) => self.status_window = Some(window),
+            Err(error) => {
+                self.status_display = None;
+                self.report(Err(tf!("无法显示状态浮窗：{error}")));
+            }
+        }
+    }
+}
+
 /// One 690 × 100 option tile of AboutSoftware.
 fn tile(
     ui: &mut egui::Ui,
@@ -249,7 +310,7 @@ fn tile(
     icon: skin::Icon,
     caption: &str,
     control: impl FnOnce(&mut egui::Ui),
-) {
+) -> egui::Response {
     egui::Frame::new()
         .fill(skin::PANEL)
         .inner_margin(egui::Margin::symmetric(32, 15))
@@ -265,11 +326,12 @@ fn tile(
                     control(ui);
                 });
             });
-        });
+        })
+        .response
 }
 
 /// XDG autostart entry that starts this program at login.
-fn autostart_file() -> Option<std::path::PathBuf> {
+pub(super) fn autostart_file() -> Option<std::path::PathBuf> {
     std::env::var_os("XDG_CONFIG_HOME")
         .map(std::path::PathBuf::from)
         .or_else(|| {
@@ -278,7 +340,7 @@ fn autostart_file() -> Option<std::path::PathBuf> {
         .map(|dir| dir.join("autostart").join("bloody-a90.desktop"))
 }
 
-fn set_autostart(on: bool) -> Result<String, String> {
+pub(super) fn set_autostart(on: bool) -> Result<String, String> {
     let path = autostart_file().ok_or(tr("找不到配置目录"))?;
     if !on {
         return match std::fs::remove_file(&path) {

@@ -1,5 +1,5 @@
 use super::Frame;
-use ab_glyph::{Font, FontArc, ScaleFont};
+use ab_glyph::FontArc;
 use tiny_skia::{Color, Paint, PathBuilder, Pixmap, Stroke, Transform};
 
 pub(super) const WIDTH: u32 = 360;
@@ -11,19 +11,7 @@ pub(super) struct Renderer {
 
 impl Renderer {
     pub(super) fn new() -> Result<Self, String> {
-        for path in [
-            "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
-            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-            "/usr/share/fonts/TTF/DejaVuSans.ttf",
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        ] {
-            if let Ok(bytes) = std::fs::read(path)
-                && let Ok(font) = FontArc::try_from_vec(bytes)
-            {
-                return Ok(Self { font });
-            }
-        }
-        Err("未找到手势提示板字体".into())
+        crate::overlay::font().map(|font| Self { font })
     }
 
     pub(super) fn draw(&self, frame: &Frame) -> Pixmap {
@@ -100,47 +88,13 @@ impl Renderer {
         &self,
         image: &mut Pixmap,
         text: &str,
-        mut x: f32,
+        x: f32,
         baseline: f32,
         size: f32,
         color: [u8; 3],
     ) {
-        let font = self.font.as_scaled(size);
-        for character in text.chars().take(256) {
-            let character = if character.is_control() {
-                ' '
-            } else {
-                character
-            };
-            let id = font.glyph_id(character);
-            let width = font.h_advance(id);
-            if x + width > WIDTH as f32 - 16.0 {
-                break;
-            }
-            let glyph = id.with_scale_and_position(size, ab_glyph::point(x, baseline));
-            if let Some(outline) = self.font.outline_glyph(glyph) {
-                let bounds = outline.px_bounds();
-                outline.draw(|gx, gy, coverage| {
-                    let (px, py) = (
-                        bounds.min.x as i32 + gx as i32,
-                        bounds.min.y as i32 + gy as i32,
-                    );
-                    if px < 0 || py < 0 || px >= WIDTH as i32 || py >= HEIGHT as i32 {
-                        return;
-                    }
-                    let at = (py as usize * WIDTH as usize + px as usize) * 4;
-                    let data = image.data_mut();
-                    for channel in 0..3 {
-                        data[at + channel] = (color[channel] as f32 * coverage
-                            + data[at + channel] as f32 * (1.0 - coverage))
-                            .round() as u8;
-                    }
-                    data[at + 3] =
-                        (255.0 * coverage + data[at + 3] as f32 * (1.0 - coverage)).round() as u8;
-                });
-            }
-            x += width;
-        }
+        let right = WIDTH as f32 - 16.0;
+        crate::overlay::text(image, &self.font, text, [x, baseline], right, size, color);
     }
 }
 
@@ -176,16 +130,6 @@ fn fit(points: &[[i32; 2]]) -> Vec<[f32; 2]> {
                 ((p[1] as f64 - center[1]) * scale + 106.0) as f32,
             ]
         })
-        .collect()
-}
-
-pub(super) fn bgra(image: &Pixmap) -> Vec<u8> {
-    image
-        .data()
-        .as_chunks::<4>()
-        .0
-        .iter()
-        .flat_map(|pixel| [pixel[2], pixel[1], pixel[0], pixel[3]])
         .collect()
 }
 

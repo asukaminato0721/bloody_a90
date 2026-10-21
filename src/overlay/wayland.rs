@@ -1,4 +1,4 @@
-use super::render::{HEIGHT, WIDTH};
+use super::{Place, Spec};
 use std::{
     collections::BTreeMap,
     fs::File,
@@ -24,24 +24,28 @@ struct State {
     buffers: BTreeMap<u64, wl_buffer::WlBuffer>,
 }
 
-pub(super) struct Window {
+pub(crate) struct Window {
     connection: Connection,
     queue: EventQueue<State>,
     state: State,
     surface: Option<(wl_surface::WlSurface, layer::ZwlrLayerSurfaceV1)>,
     serial: u64,
+    spec: Spec,
 }
 
 impl Window {
-    pub(super) fn connect() -> Result<Self, String> {
+    pub(super) fn connect(spec: Spec) -> Result<Self, String> {
         let connection =
-            Connection::connect_to_env().map_err(|e| format!("无法连接手势提示层：{e}"))?;
+            Connection::connect_to_env().map_err(|e| format!("无法连接{}：{e}", spec.name))?;
         let mut queue = connection.new_event_queue();
         connection.display().get_registry(&queue.handle(), ());
         let mut state = State::default();
         queue.roundtrip(&mut state).map_err(|e| e.to_string())?;
         if state.compositor.is_none() || state.shm.is_none() || state.shell.is_none() {
-            return Err("当前 Wayland 桌面不提供手势提示层。请关闭提示板选项后重试。".into());
+            return Err(format!(
+                "当前 Wayland 桌面不提供{}所需的叠加层。请关闭该选项后重试。",
+                spec.name
+            ));
         }
         Ok(Self {
             connection,
@@ -49,11 +53,13 @@ impl Window {
             state,
             surface: None,
             serial: 0,
+            spec,
         })
     }
 
     pub(super) fn present(&mut self, pixels: &[u8]) -> Result<bool, String> {
-        if pixels.len() != (WIDTH * HEIGHT * 4) as usize {
+        let Spec { width, height, .. } = self.spec;
+        if pixels.len() != self.spec.bytes() {
             return Err("提示板像素长度无效".into());
         }
         if self.surface.is_none() {
@@ -71,13 +77,21 @@ impl Window {
                 &surface,
                 None,
                 shell::Layer::Overlay,
-                "bloody-a90-tip".into(),
+                self.spec.id.into(),
                 &qh,
                 self.state.generation,
             );
-            layer.set_size(WIDTH, HEIGHT);
-            layer.set_anchor(layer::Anchor::Top | layer::Anchor::Right);
-            layer.set_margin(28, 28, 0, 0);
+            layer.set_size(width, height);
+            match self.spec.place {
+                Place::Pointer => {
+                    layer.set_anchor(layer::Anchor::Top | layer::Anchor::Right);
+                    layer.set_margin(28, 28, 0, 0);
+                }
+                Place::BottomRight => {
+                    layer.set_anchor(layer::Anchor::Bottom | layer::Anchor::Right);
+                    layer.set_margin(0, 24, 24, 0);
+                }
+            }
             layer.set_exclusive_zone(0);
             layer.set_keyboard_interactivity(layer::KeyboardInteractivity::None);
             surface.commit(); // Wait for configure before attaching a buffer.
@@ -86,12 +100,12 @@ impl Window {
             return Ok(false);
         }
         if self.state.closed {
-            return Err("桌面关闭了手势提示层".into());
+            return Err(format!("桌面关闭了{}", self.spec.name));
         }
         if !self.state.configured || self.state.buffers.len() >= 3 {
             return Ok(false);
         }
-        let fd = unsafe { libc::memfd_create(c"a90-gesture-tip".as_ptr(), libc::MFD_CLOEXEC) };
+        let fd = unsafe { libc::memfd_create(c"a90-overlay".as_ptr(), libc::MFD_CLOEXEC) };
         if fd < 0 {
             return Err(std::io::Error::last_os_error().to_string());
         }
@@ -109,9 +123,9 @@ impl Window {
         self.serial = self.serial.wrapping_add(1);
         let buffer = pool.create_buffer(
             0,
-            WIDTH as i32,
-            HEIGHT as i32,
-            (WIDTH * 4) as i32,
+            width as i32,
+            height as i32,
+            (width * 4) as i32,
             wl_shm::Format::Argb8888,
             &qh,
             self.serial,
@@ -120,7 +134,7 @@ impl Window {
         self.state.buffers.insert(self.serial, buffer.clone());
         let surface = &self.surface.as_ref().unwrap().0;
         surface.attach(Some(&buffer), 0, 0);
-        surface.damage(0, 0, WIDTH as i32, HEIGHT as i32);
+        surface.damage(0, 0, width as i32, height as i32);
         surface.commit();
         self.connection.flush().map_err(|e| e.to_string())?;
         Ok(true)
@@ -156,7 +170,7 @@ impl Window {
                 return Err(std::io::Error::last_os_error().to_string());
             }
             if descriptor.revents & (libc::POLLERR | libc::POLLHUP | libc::POLLNVAL) != 0 {
-                return Err("手势提示层连接已关闭".into());
+                return Err(format!("{}连接已关闭", self.spec.name));
             }
             if descriptor.revents & libc::POLLIN != 0 {
                 guard.read().map_err(|e| e.to_string())?;
@@ -261,8 +275,8 @@ mod tests {
     #[test]
     #[ignore = "requires a Wayland desktop with layer-shell; briefly shows a click-through tip"]
     fn wayland_tip_draws_and_hides() {
-        let mut window = Window::connect().unwrap();
-        let pixels = vec![0x77; (WIDTH * HEIGHT * 4) as usize];
+        let mut window = Window::connect(crate::gesture_tip::SPEC).unwrap();
+        let pixels = vec![0x77; window.spec.bytes()];
         let until = std::time::Instant::now() + std::time::Duration::from_secs(2);
         while !window.present(&pixels).unwrap() {
             assert!(std::time::Instant::now() < until);

@@ -1,11 +1,18 @@
 //! Non-interactive feedback for Mouse.gestures. No input is injected here.
 mod render;
-mod wayland;
-mod x11;
 
+use crate::overlay::{Native, Place, Spec};
 use std::{
     sync::{Arc, Mutex, mpsc},
     thread::{self, JoinHandle},
+};
+
+pub(crate) const SPEC: Spec = Spec {
+    width: render::WIDTH,
+    height: render::HEIGHT,
+    name: "手势提示板",
+    id: "bloody-a90-tip",
+    place: Place::Pointer,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -23,37 +30,13 @@ struct Shared {
     error: Option<String>,
 }
 
-enum Native {
-    Wayland(Box<wayland::Window>),
-    X11(Box<x11::Window>),
-}
-
-impl Native {
-    fn connect() -> Result<Self, String> {
-        if std::env::var_os("WAYLAND_DISPLAY").is_some() {
-            wayland::Window::connect().map(|w| Self::Wayland(Box::new(w)))
-        } else {
-            x11::Window::connect().map(|w| Self::X11(Box::new(w)))
-        }
-    }
-    fn present(&mut self, pixels: &[u8]) -> Result<bool, String> {
-        match self {
-            Self::Wayland(w) => w.present(pixels),
-            Self::X11(w) => w.present(pixels),
-        }
-    }
-    fn hide(&mut self) -> Result<(), String> {
-        match self {
-            Self::Wayland(w) => w.hide(),
-            Self::X11(w) => w.hide(),
-        }
-    }
-    fn pump(&mut self) -> Result<(), String> {
-        match self {
-            Self::Wayland(w) => w.pump(),
-            Self::X11(w) => w.pump(),
-        }
-    }
+#[cfg(test)]
+pub(crate) fn sample() -> tiny_skia::Pixmap {
+    render::Renderer::new().unwrap().draw(&Frame {
+        points: vec![[0, 0], [0, -80], [80, -80]],
+        direction: "上 → 右".into(),
+        action: "复制".into(),
+    })
 }
 
 pub struct Handle {
@@ -67,7 +50,7 @@ impl Handle {
         let state = shared.clone();
         let (ready, result) = mpsc::sync_channel(1);
         let thread = thread::spawn(move || {
-            let initialized = Native::connect()
+            let initialized = Native::connect(SPEC)
                 .and_then(|native| render::Renderer::new().map(|renderer| (native, renderer)));
             let (mut native, renderer) = match initialized {
                 Ok(pair) => {
@@ -92,7 +75,7 @@ impl Handle {
                     if revision != rendered {
                         if let Some(frame) = frame {
                             let image = renderer.draw(&frame);
-                            if native.present(&render::bgra(&image))? {
+                            if native.present(&crate::overlay::bgra(&image))? {
                                 rendered = revision;
                             }
                         } else {

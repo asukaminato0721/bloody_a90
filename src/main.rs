@@ -20,23 +20,49 @@ fn main() -> eframe::Result {
         }
         return Ok(());
     }
-    eframe::run_native(
-        "Bloody A90",
-        eframe::NativeOptions {
-            viewport: egui::ViewportBuilder::default()
-                .with_inner_size([1640.0, 950.0])
-                .with_min_inner_size([1280.0, 760.0]),
-            ..Default::default()
-        },
-        Box::new(move |cc| {
-            let app = app::App::new(cc);
-            Ok(Box::new(if smoke_test {
-                app.smoke_test()
-            } else {
-                app.connect_at_start()
-            }))
-        }),
-    )
+    // The App outlives each window. Closing to the tray ends eframe's run;
+    // the tray's 开启 starts a new one on the same App.
+    let shared: std::rc::Rc<std::cell::RefCell<Option<std::rc::Rc<std::cell::RefCell<app::App>>>>> =
+        Default::default();
+    loop {
+        let slot = shared.clone();
+        eframe::run_native(
+            "Bloody A90",
+            eframe::NativeOptions {
+                viewport: egui::ViewportBuilder::default()
+                    .with_inner_size([1640.0, 950.0])
+                    .with_min_inner_size([1280.0, 760.0]),
+                ..Default::default()
+            },
+            Box::new(move |cc| {
+                let mut slot = slot.borrow_mut();
+                let app = match slot.as_ref() {
+                    Some(app) => {
+                        app.borrow_mut().attach(&cc.egui_ctx);
+                        app.clone()
+                    }
+                    None => {
+                        let app = app::App::new(cc);
+                        let app = if smoke_test {
+                            app.smoke_test()
+                        } else {
+                            app.connect_at_start()
+                        };
+                        slot.insert(std::rc::Rc::new(std::cell::RefCell::new(app)))
+                            .clone()
+                    }
+                };
+                Ok(Box::new(app::Window(app)))
+            }),
+        )?;
+        let Some(app) = shared.borrow().clone() else {
+            return Ok(());
+        };
+        let mut app = app.borrow_mut();
+        if !app.stays_in_tray() || !app.run_in_tray() {
+            return Ok(());
+        }
+    }
 }
 
 const HELP: &str = "\

@@ -80,6 +80,10 @@
 硬件信息	Hardware information
 开机自动启动	Automatically start up
 显示语言	Display language
+开启功能显示	Overlay Funktionsanzeige
+永远显示	Immer anzeigen
+改变时显示	Anzeigen bei Änderung
+不显示	Deaktivieren
 传感器 [微精校准LOD]	Sensorkalibrieren
 预设高度	Voreinstellungen
 目前 CPI :	Current CPI :
@@ -99,6 +103,10 @@ M-宏枪	M-Macro
 设定弹数	Nummern
 准心回位	Zurück
 说明>>	Erklären>>
+请插入血手系列鼠标!	Keine Bloody-Maus angeschlossen, bitte jetzt anschließen.
+开机自动执行	Autostart
+进化轮设定	4D-Radeinst.
+离开	Beenden
 全彩恒亮	Vollfarb Konst.Li.
 全彩呼吸(慢闪)	Vollfarb Atm. (langs. Blink.)
 全彩呼吸(快闪)	Vollfarb Atm. (Blink.)
@@ -107,3 +115,4 @@ M-宏枪	M-Macro
 微动换彩(慢)	Langs. Farbveränd. (langs.)
 微动换彩(快)	Langs. Farbveränd. (schn.)
 文字	Text
+复制	Kopieren

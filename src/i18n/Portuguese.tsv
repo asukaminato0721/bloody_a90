@@ -80,6 +80,10 @@
 硬件信息	Hardware information
 开机自动启动	Automatically start up
 显示语言	Display language
+开启功能显示	Visor da função
+永远显示	Mostrar sempre
+改变时显示	Mostrar quando alterado
+不显示	Ocultar
 传感器 [微精校准LOD]	Calibração do sensor
 预设高度	Predefinir
 目前 CPI :	Current CPI :
@@ -99,6 +103,10 @@ M-宏枪	M-Macro
 设定弹数	Números
 准心回位	Voltar
 说明>>	Explicar>>
+请插入血手系列鼠标!	Por favor conecte a Bloody serie.
+开机自动执行	Inicialização rápida no arranque
+进化轮设定	Configurações da Roda 4D
+离开	Exit
 全彩恒亮	Luz constante colorida
 全彩呼吸(慢闪)	Respiração colorida (slow flash)
 全彩呼吸(快闪)	Respiração colorida (flash)
@@ -107,3 +115,4 @@ M-宏枪	M-Macro
 微动换彩(慢)	Mudança lenta da cor (slow)
 微动换彩(快)	Mudança lenta da cor (fast)
 文字	Texto
+复制	Copiar

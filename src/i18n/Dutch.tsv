@@ -80,6 +80,10 @@
 硬件信息	Hardware information
 开机自动启动	Automatically start up
 显示语言	Display language
+开启功能显示	Functiedisplay
+永远显示	Altijd weergeven
+改变时显示	Weergeven bij wijziging
+不显示	Verbergen
 传感器 [微精校准LOD]	Sensorkalibratie
 预设高度	Standaard
 目前 CPI :	Current CPI :
@@ -99,6 +103,10 @@ M-宏枪	M-Macro
 设定弹数	Getallen
 准心回位	Terugkeren
 说明>>	Leg uit>>
+请插入血手系列鼠标!	Geen Bloody muis gevonden, sluit uw Bloody muis aan.
+开机自动执行	Autostart bij opstarten Windows
+进化轮设定	4D Wielinstellingen
+离开	Afsluiten
 全彩恒亮	Volledige kleuren constant licht
 全彩呼吸(慢闪)	Volledige kleuren breathing (trage flash)
 全彩呼吸(快闪)	Volledige kleuren breathing (flash)
@@ -107,3 +115,4 @@ M-宏枪	M-Macro
 微动换彩(慢)	Traag veranderende kleur (traag)
 微动换彩(快)	Traag veranderende kleur (snel)
 文字	Tekst
+复制	Kopiëren

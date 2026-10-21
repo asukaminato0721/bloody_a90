@@ -724,10 +724,34 @@ impl Worker {
     }
 }
 
+/// The egui context of the current window. Closing to the tray ends that
+/// window, and reopening it creates a new context; the App outlives both.
+/// While no window is open, the App's own loop polls instead.
+#[derive(Clone)]
+pub struct Wake(std::sync::Arc<std::sync::Mutex<egui::Context>>);
+
+impl Wake {
+    pub fn new(ctx: &egui::Context) -> Self {
+        Self(std::sync::Arc::new(std::sync::Mutex::new(ctx.clone())))
+    }
+
+    pub fn set(&self, ctx: &egui::Context) {
+        if let Ok(mut current) = self.0.lock() {
+            *current = ctx.clone();
+        }
+    }
+
+    pub fn request_repaint(&self) {
+        if let Ok(current) = self.0.lock() {
+            current.request_repaint();
+        }
+    }
+}
+
 pub fn spawn(
     jobs: Receiver<Job>,
     results: Sender<Reply>,
-    wake: egui::Context,
+    wake: Wake,
 ) -> std::thread::JoinHandle<()> {
     std::thread::spawn(move || {
         let mut worker = Worker::new();

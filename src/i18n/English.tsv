@@ -320,6 +320,7 @@ A90 为单色灯光，不使用 RGB 灯效控制。	The A90 has single-color lig
 亮度已设为 {}	Brightness set to {}
 校准结果：{} 级。点击“应用”保存。	Calibration result: level {}. Click "Apply" to save.
 应用关联设置已应用	App association settings applied
+状态浮窗已停止：{}	The status window stopped: {}
 鼠标未连接	Mouse not connected
 已导入 AMC：{}{}	AMC imported: {}{}
 （HighLanguage 已转换为 M 文本）	 (HighLanguage converted to M text)
@@ -422,6 +423,11 @@ VarA 不等于 3 时前往第 1 行	Go to line 1 while VarA is not 3
 设备数据	Device data
 开机自动启动	Automatically start up
 显示语言	Display Language
+开启功能显示	Display Overlay Functions
+永远显示	Always display
+改变时显示	Display when changed
+不显示	Hide
+桌面右下角显示当前配置的灯光颜色和 X/Y 分辨率。浮窗不接收点击。	Shows the light colour of the current profile and the X/Y resolution at the bottom right of the desktop. The window does not take clicks.
 Bloody A90 配置工具	Bloody A90 Configuration Tool
 独立 Rust 工具 · egui / eframe 0.37 · 版本 {}	Standalone Rust tool · egui / eframe 0.37 · version {}
 已接入：设备识别、闪存读取、灯光亮度、DPI 和回报率保存、按键与宏保存、射击编程、抬起高度、表面校准、硬件响应时间、配置文件、AMC 宏文件、HighLanguage。	Supported: device detection, flash reading, brightness, DPI and reporting rate saving, key and macro saving, shooting programs, lift-off height, surface calibration, hardware response time, profile files, AMC macro files, HighLanguage.
@@ -430,6 +436,7 @@ Bloody A90 配置工具	Bloody A90 Configuration Tool
 桌面设置：双击速度、滚轮行数、指针速度。应用关联支持 KDE Wayland 和 X11。手势支持文件编辑、全局触发和主机宏。A90 不支持 RGB 灯效。	Desktop settings: double-click speed, wheel lines, pointer speed. App association supports KDE Wayland and X11. Gestures support file editing, global triggers and host macros. The A90 does not support RGB effects.
 研究记录见 docs/research。	Research notes are in docs/research.
 egui 文档	egui documentation
+无法显示状态浮窗：{}	Cannot show the status window: {}
 找不到配置目录	Cannot find the configuration folder
 已关闭开机自动启动	Launch at startup disabled
 无法删除 {}：{}	Cannot delete {}: {}
@@ -502,6 +509,13 @@ D-临阵：限使用于 [手枪与连狙及机枪类] 临阵可调的循环压�
 M-宏枪：限转换 [奥斯卡宏指令] 角色动作与射击合并于左键。	M-Macro: only for merging [Oscar macro] character actions with shooting on the left button.
 说明>>	Explain>>
 X 向右为正，Y 向下为正，位移使用鼠标计数值。	X is positive to the right, Y is positive downward; offsets use mouse counts.
+已连接鼠标	Mouse connected
+请插入血手系列鼠标!	Please connect a Bloody Series Mouse!
+开机自动执行	Auto Launch on Boot
+进化轮设定	4-Way Wheel Configuration
+开启 {}	Open {}
+离开	Exit
+无法创建托盘图标：{}	Cannot create the tray icon: {}
 已读取或应用滚轮设置	Wheel settings read or applied
 4-Way Wheel 正在运行	4-Way Wheel running
 4-Way Wheel 已关闭	4-Way Wheel off
@@ -689,22 +703,16 @@ KWin 窗口连接已关闭	KWin window connection closed
 鼠标接口持续被占用，无法读取宏需要的按键状态	The mouse interface stays busy; cannot read the button state macros need
 按键状态读取线程已退出	The button state reading thread has exited
 无法请求按键状态	Cannot request the button state
+手势提示板	gesture hint panel
+上 → 右	Up → Right
+复制	Copy
 提示板状态不可用	Hint panel state unavailable
 提示板线程未能启动	The hint panel thread failed to start
 手势提示板线程已退出	The gesture hint panel thread has exited
-未找到手势提示板字体	Font for the gesture hint panel not found
-无法连接手势提示层：{}	Cannot connect the gesture hint layer: {}
-当前 Wayland 桌面不提供手势提示层。请关闭提示板选项后重试。	The current Wayland desktop does not provide a gesture hint layer. Turn off the hint panel option and try again.
-提示板像素长度无效	Invalid hint panel pixel length
-桌面关闭了手势提示层	The desktop closed the gesture hint layer
-手势提示层连接已关闭	Gesture hint layer connection closed
-提示板需要 24 或 32 位 X11 色深	The hint panel needs a 24 or 32-bit X11 color depth
-X11 不支持提示板鼠标穿透：{}	X11 does not support click-through for the hint panel: {}
 下	Down
 左	Left
 右	Right
 上 → 左	Up → Left
-上 → 右	Up → Right
 下 → 右	Down → Right
 左 → 上	Left → Up
 左 → 下	Left → Down
@@ -930,6 +938,14 @@ X11 窗口管理器标识无效	Invalid X11 window manager identification
 按下程序：{}	Press program: {}
 释放程序：{}	Release program: {}
 滚轮宏超过存储上限	The wheel macro exceeds the storage limit
+未找到桌面提示字体	Font for the desktop overlay not found
+无法连接{}：{}	Cannot connect the {}: {}
+当前 Wayland 桌面不提供{}所需的叠加层。请关闭该选项后重试。	The current Wayland desktop does not provide the overlay layer the {} needs. Turn off that option and try again.
+提示板像素长度无效	Invalid hint panel pixel length
+桌面关闭了{}	The desktop closed the {}
+{}连接已关闭	The {} connection closed
+提示板需要 24 或 32 位 X11 色深	The hint panel needs a 24 or 32-bit X11 color depth
+X11 不支持提示板鼠标穿透：{}	X11 does not support click-through for the hint panel: {}
 主机动作与导出的按键表不一致。请先应用或重新读取设置。	The host actions do not match the exported key table. Apply or read the settings again first.
 不是 A90 配置文件	Not an A90 profile file
 配置文件缺少主机动作数据	The profile file lacks host action data
@@ -953,6 +969,10 @@ DPI 档位数量应为 1 至 5，当前档位必须启用	The DPI level count mu
 补偿位移应为 -126 至 126	The compensation offset must be -126 to 126
 循环起点超出射击次数	The loop start exceeds the shot count
 中	Middle
+状态浮窗	status window
+状态浮窗不可用	The status window is unavailable
+状态浮窗线程未能启动	The status window thread failed to start
+状态浮窗线程已退出	The status window thread has exited
 空操作	No operation
 结束	End
 精确模式进入	Enter precision mode
