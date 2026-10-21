@@ -21,10 +21,6 @@
 指针移动速度	Pointer movement speed
 鼠标手势	Mouse Gestures
 禁用	Désactivé
-播放/暂停	Lecture/Pause
-停止	Arrêt
-静音	Désactivation du haut-parleur
-左键双击	Cliquez_deux_fois_sur_le_bouton_gauche
 按键设置	Key settings
 按键查询	Requêtes touches
 请按下鼠标按键	Appuyez sur le bouton de la souris
@@ -116,3 +112,7 @@ M-宏枪	M-Macro
 微动换彩(快)	Couleur changeant lentement (rapide)
 文字	Texte
 复制	Copier
+播放/暂停	Lecture/Pause
+停止	Arrêt
+静音	Désactivation du haut-parleur
+左键双击	Cliquez_deux_fois_sur_le_bouton_gauche

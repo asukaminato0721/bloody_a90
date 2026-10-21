@@ -2,3 +2,5 @@
 __pycache__/
 # Built by contrib/research/wine-hid-proxy/build.sh
 contrib/research/wine-hid-proxy/hid.dll
+/web/dist
+.wrangler/

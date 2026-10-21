@@ -21,10 +21,6 @@
 指针移动速度	Pointer movement speed
 鼠标手势	Mouse Gestures
 禁用	Devredışı
-播放/暂停	Oynat/Durdur
-停止	Dur
-静音	Sessiz
-左键双击	Sol_tuşa_çift_tıkla
 按键设置	Key settings
 按键查询	Tuş sorguları
 请按下鼠标按键	Lütfen farenin düğmesine basın
@@ -116,3 +112,7 @@ M-宏枪	M-Macro
 微动换彩(快)	Yavaşça değişen renk (hızlı)
 文字	Metin
 复制	Kopyala
+播放/暂停	Oynat/Durdur
+停止	Dur
+静音	Sessiz
+左键双击	Sol_tuşa_çift_tıkla

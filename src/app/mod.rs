@@ -182,7 +182,7 @@ pub struct App {
     keys_dirty: bool,
     profile: usize,
     record: usize,
-    choice: keys::Choice,
+    choice: bloody_a90::key_menu::Choice,
     choice_value: usize,
     key_modifiers: u8,
     oscar_view: oscar::View,
@@ -391,7 +391,7 @@ impl App {
             keys_dirty: false,
             profile: 0,
             record: 0,
-            choice: keys::Choice::Mouse,
+            choice: bloody_a90::key_menu::Choice::Mouse,
             choice_value: 0,
             key_modifiers: 0,
             key_popup: None,
@@ -1433,14 +1433,14 @@ mod tests {
         assert_eq!(app.gestures.documents, documents);
         app.record = 3;
         app.host_key_selected();
-        assert!(app.choice == keys::Choice::Host);
+        assert!(app.choice == bloody_a90::key_menu::Choice::Host);
         assert_eq!(app.host_buttons.action().unwrap(), action);
         let mut output = context.run_ui(Default::default(), |ui| app.keys_page(ui));
         output.textures_delta.clear();
         for slot in [4, 8, 9] {
             app.record = slot;
             app.host_key_selected();
-            assert!(app.choice == keys::Choice::Host);
+            assert!(app.choice == bloody_a90::key_menu::Choice::Host);
             assert_eq!(
                 app.host_buttons.action().unwrap(),
                 settings.profiles[0][slot].clone().unwrap()

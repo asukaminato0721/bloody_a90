@@ -21,10 +21,6 @@
 指针移动速度	Pointer movement speed
 鼠标手势	Mouse Gestures
 禁用	Disattivato
-播放/暂停	Play/Pausa
-停止	Stop
-静音	Disattiva audio
-左键双击	Doppio_clic_pulsante_sinistro
 按键设置	Key settings
 按键查询	Richieste chiave
 请按下鼠标按键	Premere il pulsante del mouse
@@ -116,3 +112,7 @@ M-宏枪	M-Macro
 微动换彩(快)	Leggera variazione di colore (veloce)
 文字	Testo
 复制	Copia
+播放/暂停	Play/Pausa
+停止	Stop
+静音	Disattiva audio
+左键双击	Doppio_clic_pulsante_sinistro

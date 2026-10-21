@@ -21,10 +21,6 @@
 指针移动速度	Pointer movement speed
 鼠标手势	Mouse Gestures
 禁用	Desativado
-播放/暂停	Reproduzir/Pausa
-停止	Parar
-静音	Silenciar
-左键双击	Clique_duplo_botão_esquerdo
 按键设置	Key settings
 按键查询	Consultas sobre teclas
 请按下鼠标按键	Pressione o botão do rato
@@ -116,3 +112,7 @@ M-宏枪	M-Macro
 微动换彩(快)	Mudança lenta da cor (fast)
 文字	Texto
 复制	Copiar
+播放/暂停	Reproduzir/Pausa
+停止	Parar
+静音	Silenciar
+左键双击	Clique_duplo_botão_esquerdo

@@ -21,10 +21,6 @@
 指针移动速度	Pointer movement speed
 鼠标手势	Mouse Gestures
 禁用	Wyłączone
-播放/暂停	Odtwarzaj/pauza
-停止	Stop/zatrzymanie
-静音	Wycisz
-左键双击	Dwukrotnie_kliknij_lewy_przycisk
 按键设置	Key settings
 按键查询	Zapytania o klawisze
 请按下鼠标按键	Wciśnij klawisz myszy
@@ -116,3 +112,7 @@ M-宏枪	M-Macro
 微动换彩(快)	Wolna zmiana koloru (szybki)
 文字	Tekst
 复制	Kopiuj
+播放/暂停	Odtwarzaj/pauza
+停止	Stop/zatrzymanie
+静音	Wycisz
+左键双击	Dwukrotnie_kliknij_lewy_przycisk

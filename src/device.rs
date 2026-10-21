@@ -18,12 +18,8 @@ pub const REPORT: usize = 64;
 /// firmware 0c as 5450.
 pub const PRODUCTS: [u16; 2] = [0xfafd, 0x5450];
 const ID: u8 = 7;
-pub const SENSITIVITY: usize = 0x2400;
-pub const BUTTONS: usize = 0x2600;
-/// Firmware 07 keeps command handlers in page 3d00. Writes with mode 80 erase
-/// a whole 256-word page at a page-aligned address, so saves stay below it.
-pub const BUTTONS_END: usize = 0x3d00;
-const FLASH_WORDS: usize = 0x4000;
+pub use crate::flash::{BUTTONS, BUTTONS_END, SENSITIVITY};
+use crate::flash::WORDS as FLASH_WORDS;
 // Command 25 magic. A wrong magic locks the command until the next reset.
 const UNLOCK: [u8; 4] = [0x52, 0x49, 0x18, 0x22];
 

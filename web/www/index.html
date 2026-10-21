@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bloody A90</title>
+    <meta name="description" content="通过 WebHID 配置 Bloody A90 鼠标：DPI、回报率、抬起高度、按键、宏、射击编程、灯光和闪存备份。" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23252628'/%3E%3Ctext x='16' y='23' font-family='sans-serif' font-weight='700' font-size='20' text-anchor='middle' fill='%23c92227'%3Eb%3C/text%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <!-- The window keeps the 1640 × 950 layout of the desktop tool and is
+         zoomed to fit the browser, as the desktop window fits the screen. -->
+    <div class="window" id="window">
+      <aside class="dashboard">
+        <div class="logo">bloody</div>
+        <nav class="main-tabs" id="main-tabs"></nav>
+        <div class="version">
+          <strong>Bloody A90</strong>
+          <span id="version">v0.1.0 · 网页版</span>
+          <a class="repo" href="https://github.com/asukaminato0721/bloody_a90" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </aside>
+      <div class="central">
+        <header class="header">
+          <div class="header-text">
+            <div id="device-text">未连接鼠标</div>
+            <div id="status" class="status"></div>
+          </div>
+          <button id="connect" class="skin-button" style="width: 120px; height: 36px">连接鼠标</button>
+        </header>
+        <div class="sub-strip" id="sub-strip"></div>
+        <div class="separator"></div>
+        <div class="banner" id="banner"></div>
+        <div class="profile-strip" id="profile-strip"></div>
+        <div class="area" id="area">
+          <span class="info" id="info">i</span>
+          <div class="page" id="page"></div>
+          <div class="footer" id="footer"></div>
+        </div>
+        <div class="progress" id="progress" hidden>
+          <div class="progress-box">
+            <div id="progress-text"></div>
+            <div class="progress-track"><div id="progress-bar"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

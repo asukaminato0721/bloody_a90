@@ -21,10 +21,6 @@
 指针移动速度	Pointer movement speed
 鼠标手势	Mouse Gestures
 禁用	Uitgeschakeld
-播放/暂停	Afspelen/Pauze
-停止	Stop
-静音	Dempen
-左键双击	Dubbel_klikken_links_knop
 按键设置	Key settings
 按键查询	Knopstatus opvragen
 请按下鼠标按键	Druk op de muisknop alsjeblieft
@@ -116,3 +112,7 @@ M-宏枪	M-Macro
 微动换彩(快)	Traag veranderende kleur (snel)
 文字	Tekst
 复制	Kopiëren
+播放/暂停	Afspelen/Pauze
+停止	Stop
+静音	Dempen
+左键双击	Dubbel_klikken_links_knop

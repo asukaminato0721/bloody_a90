@@ -5,7 +5,7 @@ use crate::storage::{self, END, NO_OPERATION, Pool};
 
 // Firmware 07 erases 256-word pages and keeps code at 3d00, so a main vector
 // stored at 2600 must end before it. The EXE limit of 3000 bytes is larger.
-pub const WORDS: usize = crate::device::BUTTONS_END - crate::device::BUTTONS;
+pub const WORDS: usize = crate::flash::BUTTONS_END - crate::flash::BUTTONS;
 pub const PROFILES: usize = 7;
 pub const BUTTONS: usize = 24;
 pub const GESTURES: usize = 162;

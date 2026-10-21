@@ -1,0 +1,8 @@
+// Cloudflare Pages project bloody-a90 (https://bloody-a90.pages.dev).
+// Build with web/build.sh, then run `npx wrangler pages deploy` here.
+{
+  "$schema": "https://unpkg.com/wrangler@4/config-schema.json",
+  "name": "bloody-a90",
+  "compatibility_date": "2026-10-19",
+  "pages_build_output_dir": "./dist"
+}

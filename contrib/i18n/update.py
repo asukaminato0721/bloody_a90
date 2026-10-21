@@ -3,7 +3,8 @@
     python3 contrib/i18n/update.py LANGUAGE_INI_DIR
 
 LANGUAGE_INI_DIR is Data/Texts/LanguageIni of an official Bloody 8 install.
-Keys are the Chinese texts of the program (src, without main.rs and tests).
+Keys are the Chinese texts of the program (src, without main.rs and tests)
+and of the browser version (web/src and web/www/*.js).
 
 - English.tsv is edited by hand. Keys without English are listed; add them.
   Captions the official program has use its English text.
@@ -20,6 +21,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 from rustlit import literals, CJK  # noqa: E402
+import jslit  # noqa: E402
 
 ESC = {'n': '\n', 't': '\t', '"': '"', '\\': '\\', "'": "'", '0': '\0', 'r': '\r'}
 
@@ -61,6 +63,16 @@ def normalize(text, formatted):
 def keys(root):
     found = []
     files = sorted(glob.glob(f'{root}/src/**/*.rs', recursive=True))
+    files += sorted(glob.glob(f'{root}/web/src/**/*.rs', recursive=True))
+
+    def add(text):
+        pieces = [text]
+        if '\n' in text:
+            pieces += text.split('\n')
+        for piece in pieces:
+            if CJK.search(piece) and piece not in found:
+                found.append(piece)
+
     for path in files:
         if path.endswith('/main.rs') or path.endswith('/i18n.rs'):
             continue
@@ -71,13 +83,11 @@ def keys(root):
             # Format templates: the literal follows `format!(`-like macros.
             before = src[max(0, start - 30):start]
             formatted = bool(re.search(r'(format|tf|write|writeln|format_args)!\(\s*$', before))
-            text = normalize(value(raw), formatted)
-            pieces = [text]
-            if '\n' in text:
-                pieces += [line for line in text.split('\n')]
-            for piece in pieces:
-                if CJK.search(piece) and piece not in found:
-                    found.append(piece)
+            add(normalize(value(raw), formatted))
+    for path in sorted(glob.glob(f'{root}/web/www/*.js')):
+        for text in jslit.literals(open(path).read()):
+            if CJK.search(text):
+                add(text)
     return found
 
 

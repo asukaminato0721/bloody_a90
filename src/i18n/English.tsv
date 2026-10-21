@@ -143,74 +143,7 @@ AMC 文件路径	AMC file path
 主机动作需要本程序保持运行。手势按住绘图，其他动作按下执行。	Host actions need this program to keep running. Gestures draw while held; other actions run on press.
 停止主机动作	Stop Host Actions
 启用已保存的主机动作	Enable Saved Host Actions
-键盘按键	Keyboard Key
-多媒体	Multimedia
-系统按键	System Key
-快捷操作	Shortcut
-功能	Function
-射击模式	Shooting Mode
-宏	Macro
-主机动作	Host Action
-禁用	Disabled
-后退键（四键）	Back button (button 4)
-前进键（五键）	Forward button (button 5)
-播放/暂停	Play/Pause
-停止	Stop
-上一曲	Previous Track
-下一曲	Next Track
-静音	Mute
-音量加	Volume Up
-音量减	Volume Down
-浏览器后退	Browser Back
-浏览器前进	Browser Forward
-停止加载	Stop Loading
-刷新	Refresh
-搜索	Search
-收藏夹	Favorites
-浏览器主页	Browser Home
-打开浏览器	Open Browser
-电子邮件	Email
-媒体播放器	Media Player
-媒体控制设置	Media Control Settings
-计算器	Calculator
-文件管理器	File Manager
-电源	Power
-睡眠	Sleep
-唤醒	Wake
-剪切 Ctrl+X	Cut Ctrl+X
-复制 Ctrl+C	Copy Ctrl+C
-粘贴 Ctrl+V	Paste Ctrl+V
-删除 Delete	Delete Delete
-查找 Ctrl+F	Find Ctrl+F
-全选 Ctrl+A	Select All Ctrl+A
-重做 Ctrl+Y	Redo Ctrl+Y
-撤销 Ctrl+Z	Undo Ctrl+Z
-新建 Ctrl+N	New Ctrl+N
-打开 Ctrl+O	Open Ctrl+O
-保存 Ctrl+S	Save Ctrl+S
-打印 Ctrl+P	Print Ctrl+P
-左键双击	Double_click_left_key
-左键三击	Left Triple Click
-DPI 档位上移	DPI Level Up
-DPI 档位下移	DPI Level Down
-精确模式（按住生效）	Precision Mode (while held)
-配置上移	Profile Up
-配置下移	Profile Down
-配置循环	Profile Cycle
-灯光上移	Light Up
-灯光下移	Light Down
-灯光循环	Light Cycle
-回报率循环	Report Rate Cycle
-抬起高度切换	Lift-off Height Toggle
-切换 Y 轴	Toggle Y Axis
-锁定右键	Lock Right Button
 宏（{} 字）	Macro ({} words)
-后侧键	Back side button
-前侧键	Front side button
-“1”键	"1" button
-“C”键	"C" button
-“3”键	"3" button
-记录 {}	Record {}
 无主键（仅修饰键）	No main key (modifiers only)
 射击模式 {}	Shooting Mode {}
 无效按键	Invalid key
@@ -219,6 +152,7 @@ DPI 档位下移	DPI Level Down
 主机：{}	Host: {}
 鼠标{}	Mouse {}
 键盘：{}	Keyboard: {}
+禁用	Disabled
 模式{}	Mode {}
 按键设置	Key settings
 请连接鼠标，或在 其他设置 → 已有备份 中读取文件。	Connect the mouse, or read a file under Other Settings → Existing Backup.
@@ -245,7 +179,9 @@ DPI 档位下移	DPI Level Down
 新宏	New Macro
 宏库目录	Macro library folder
 打开宏库	Open Library
+刷新	Refresh
 当前宏库：{} · 分类对应目录，宏对应 AMC 文件。删除项保留在该宏库的 .trash 目录。	Current library: {} · Categories are folders and macros are AMC files. Deleted items stay in the library's .trash folder.
+收藏夹	Favorites
 暂无分类	No categories
 文件	File
 暂无宏文件	No macro files
@@ -509,6 +445,11 @@ D-临阵：限使用于 [手枪与连狙及机枪类] 临阵可调的循环压�
 M-宏枪：限转换 [奥斯卡宏指令] 角色动作与射击合并于左键。	M-Macro: only for merging [Oscar macro] character actions with shooting on the left button.
 说明>>	Explain>>
 X 向右为正，Y 向下为正，位移使用鼠标计数值。	X is positive to the right, Y is positive downward; offsets use mouse counts.
+“1”键	"1" button
+“C”键	"C" button
+“3”键	"3" button
+后侧键	Back side button
+前侧键	Front side button
 已连接鼠标	Mouse connected
 请插入血手系列鼠标!	Please connect a Bloody Series Mouse!
 开机自动执行	Auto Launch on Boot
@@ -698,6 +639,8 @@ KWin 窗口连接已关闭	KWin window connection closed
 下 → 左	Down → Left
 鼠标手势，上	Mouse gesture, Up
 上	Up
+媒体播放器	Media Player
+文件管理器	File Manager
 无法打开目标	Cannot open the target
 按键状态读取已停止	Button state reading stopped
 鼠标接口持续被占用，无法读取宏需要的按键状态	The mouse interface stays busy; cannot read the button state macros need
@@ -886,6 +829,63 @@ KWin 拒绝加载窗口动作脚本	KWin refused to load the window action scrip
 窗口动作需要支持 EWMH 的 X11 窗口管理器	Window actions need an X11 window manager supporting EWMH
 X11 窗口管理器标识无效	Invalid X11 window manager identification
 全部最小化目前需要 KDE Wayland 桌面	Minimize All currently needs a KDE Wayland desktop
+键盘按键	Keyboard Key
+多媒体	Multimedia
+系统按键	System Key
+快捷操作	Shortcut
+功能	Function
+射击模式	Shooting Mode
+宏	Macro
+主机动作	Host Action
+后退键（四键）	Back button (button 4)
+前进键（五键）	Forward button (button 5)
+播放/暂停	Play/Pause
+停止	Stop
+上一曲	Previous Track
+下一曲	Next Track
+静音	Mute
+音量加	Volume Up
+音量减	Volume Down
+浏览器后退	Browser Back
+浏览器前进	Browser Forward
+停止加载	Stop Loading
+搜索	Search
+浏览器主页	Browser Home
+打开浏览器	Open Browser
+电子邮件	Email
+媒体控制设置	Media Control Settings
+计算器	Calculator
+电源	Power
+睡眠	Sleep
+唤醒	Wake
+剪切 Ctrl+X	Cut Ctrl+X
+复制 Ctrl+C	Copy Ctrl+C
+粘贴 Ctrl+V	Paste Ctrl+V
+删除 Delete	Delete Delete
+查找 Ctrl+F	Find Ctrl+F
+全选 Ctrl+A	Select All Ctrl+A
+重做 Ctrl+Y	Redo Ctrl+Y
+撤销 Ctrl+Z	Undo Ctrl+Z
+新建 Ctrl+N	New Ctrl+N
+打开 Ctrl+O	Open Ctrl+O
+保存 Ctrl+S	Save Ctrl+S
+打印 Ctrl+P	Print Ctrl+P
+左键双击	Double_click_left_key
+左键三击	Left Triple Click
+DPI 档位上移	DPI Level Up
+DPI 档位下移	DPI Level Down
+精确模式（按住生效）	Precision Mode (while held)
+配置上移	Profile Up
+配置下移	Profile Down
+配置循环	Profile Cycle
+灯光上移	Light Up
+灯光下移	Light Down
+灯光循环	Light Cycle
+回报率循环	Report Rate Cycle
+抬起高度切换	Lift-off Height Toggle
+切换 Y 轴	Toggle Y Axis
+锁定右键	Lock Right Button
+记录 {}	Record {}
 名称不能为空，不能以点开头，也不能包含路径分隔符或控制字符	The name must not be empty, start with a dot, or contain path separators or control characters
 源路径包含零字节	The source path contains a null byte
 目标路径包含零字节	The target path contains a null byte
@@ -1067,3 +1067,67 @@ KWin 拒绝加载滚轮区域脚本	KWin refused to load the wheel zone script
 已读取桌面设置	Desktop settings read
 请先在按键页启用已保存的主机动作	Enable the saved host actions on the Keys page first
 全局手势已停止，区域滚动继续运行	Global gestures stopped; zone scrolling keeps running
+重复方式应为 0、1 或 2	The repeat mode must be 0, 1 or 2
+未知动作类型 {}	Unknown action type {}
+无效选项	Invalid option
+宏程序无法编译	The macro program cannot be compiled
+按键表无法转换：{}	The key table cannot be converted: {}
+配置不存在	The profile does not exist
+记录不存在	The record does not exist
+记录不是滚轮方向	The record is not a wheel direction
+未知射击类型	Unknown shooting type
+触发键必须是按键记录	The switch key must be a button record
+射击槽位应为 1 至 7，触发键必须是按键记录	The shooting slot must be 1 to 7, and the switch key must be a button record
+运行参数应为 8 字节	Runtime parameters must be 8 bytes
+网页版不能修改桌面设置，请使用桌面版	The web version cannot change desktop settings. Use the desktop tool.
+宏库位于本机目录，请使用桌面版	The macro library is a local folder. Use the desktop tool.
+配置文件含主机动作，请使用桌面版	Profile files contain host actions. Use the desktop tool.
+正在读取闪存	Reading flash
+正在连接…	Connecting…
+ · 本次备份已保存在浏览器中，可在 其他设置 → 已有备份 下载	 · This session's backup is stored in the browser; download it in Other Settings → Existing Backup
+ · 浏览器存储不可用，请在 其他设置 → 已有备份 下载本次备份	 · Browser storage is unavailable; download this session's backup in Other Settings → Existing Backup
+已连接并读取闪存{}	Connected and flash read{}
+连接失败：{}	Connection failed: {}
+尚未读取本次会话的闪存备份，不能写入。	This session's flash backup has not been read yet, so nothing can be written.
+正在写入…	Writing…
+按键设置已保存，设备读回一致。	Button settings saved; the device read-back matches.
+使用奥斯卡II中的单次滚轮程序	Uses the Oscar II program as a single wheel step
+左键将不再执行鼠标左键点击。确定要修改左键吗？	The left button will no longer click. Change the left button anyway?
+按住：[{}]	Held: [{}]
+鼠标正在使用此模式	The mouse is using this mode
+双击速度写入桌面设置，网页版不能修改。	Double-click speed is a desktop setting; the web version cannot change it.
+硬件按键响应时间 {} ms 已保存并读回一致。	Hardware button response time {} ms saved; the read-back matches.
+已指定切换按键。点击“应用”后写入。	Switch key assigned. Click "APPLY" to write it.
+已载入按键草稿。可在“按键”页继续修改后点击“应用”。	Loaded into the key draft. Edit further on the "Button" page, then click "APPLY".
+射击设置已保存，设备读回一致。	Shooting settings saved; the device read-back matches.
+开启后，在本页按下的键盘按键会插入编程区。	When on, keys pressed on this page are inserted into the program area.
+导出 AMC	Export AMC
+导入 AMC	Import AMC
+AMC 文件名	AMC file name
+浏览器不能向鼠标的键盘接口发送指示灯报告。请同时按下 Caps Lock、Scroll Lock、Num Lock。	Browsers cannot send LED reports to the mouse's keyboard interface. Press Caps Lock, Scroll Lock and Num Lock together.
+测试宏已写入当前配置的后侧键（第四键）。	The test macro was written to the rear side key (button 4) of the current profile.
+Bloody A90 配置工具 · 网页版	Bloody A90 configuration tool · Web
+WebHID · Rust / wasm · 与桌面版共用配置编码	WebHID · Rust / wasm · Shares the configuration encoding with the desktop tool
+已接入：设备识别、闪存读取、灯光亮度与灯效、DPI 和回报率保存、按键与宏保存、射击编程、抬起高度、表面校准、硬件响应时间、AMC 宏文件、HighLanguage、备份恢复。	Supported: device identification, flash reading, brightness and light effect, DPI and report rate saving, button and macro saving, shooting programs, lift height, surface calibration, hardware response time, AMC macro files, HighLanguage, backup restore.
+写入只使用与官方程序相同的保存流程，并限制在灵敏度页和 2600 至 3cff 的按键区。连接后先读取完整闪存并保存在浏览器中，再允许写入。	Writes use only the official program's save sequence and stay within the sensitivity page and the button area 2600 to 3cff. After connecting, the whole flash is read and kept in the browser before any write is allowed.
+主机功能（手势、主机动作、应用关联、桌面滚轮和指针设置、宏库、开机启动）需要桌面版。	Host features (gestures, host actions, app associations, desktop wheel and pointer settings, macro library, autostart) need the desktop tool.
+需要 Chrome、Edge 等支持 WebHID 的浏览器。Linux 上需安装 contrib/70-bloody-a90.rules 以获得 hidraw 权限。桌面版运行时请勿同时写入。	Requires a browser with WebHID, such as Chrome or Edge. On Linux, install contrib/70-bloody-a90.rules for hidraw access. Do not write while the desktop tool is running.
+此浏览器不支持 WebHID。	This browser does not support WebHID.
+下载本次备份	Download session backup
+下载当前闪存	Download current flash
+从备份恢复	Restore from backup
+只写入灵敏度页和按键区中与备份不同的页	Writes only the sensitivity and button pages that differ from the backup
+浏览器中保存的备份：	Backups stored in the browser:
+下载	Download
+备份的型号 {} / 固件 {} 与鼠标不同，不能恢复。	The backup's model {} / firmware {} differs from the mouse, so it cannot be restored.
+将鼠标的灵敏度页和按键区恢复为 {} 中的内容。只写入不同的页。继续吗？	Restore the mouse's sensitivity page and button area from {}? Only differing pages are written.
+恢复了 {} 页：{}	Restored {} pages: {}
+闪存已与备份一致，没有写入。	The flash already matches the backup; nothing was written.
+A90 · 固件 {} · 核心 {} · WebHID	A90 · firmware {} · core {} · WebHID
+未连接鼠标 · 正在编辑备份 {}	Mouse not connected · editing backup {}
+未连接鼠标 · 可在 其他设置 → 已有备份 读取文件	Mouse not connected · open a file in Other Settings → Existing Backup
+v0.1.0 · 网页版	v0.1.0 · Web
+此浏览器不支持 WebHID	This browser does not support WebHID
+网页版	Web
+此浏览器不支持 WebHID。请使用桌面版 Chrome 或 Edge，并通过 HTTPS 打开本页。	This browser does not support WebHID. Use desktop Chrome or Edge and open this page over HTTPS.
+鼠标已断开。草稿保留，重新连接后可继续写入。	Mouse disconnected. Drafts are kept; reconnect to continue writing.

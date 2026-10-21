@@ -111,6 +111,24 @@ cargo run
 替换后的动作在识别时启动一次。区域选择、画笔开关和语音录制由所调用的应用处理。
 官方附带的编辑器和语音程序不在本项目中重做。
 
+## 网页版
+
+`web/` 是部署在 <https://bloody-a90.pages.dev> 的网页版，界面沿用桌面版的布局和配色。
+它通过 WebHID 读写鼠标，需要 Chrome、Edge 等 Chromium 浏览器；Linux 上同样需要上面的 udev 规则。
+`web/www/hid.js` 移植了 `src/device.rs` 的请求和保存流程。备份解析、灵敏度块、按键表、
+射击程序和宏编译使用编译成 wasm 的同一套库代码（`web/src/lib.rs`）。
+网页版只包含鼠标上的设置：按键、分辨率、按键响应、回报率、微精校准、射击编程、奥斯卡II、
+灯光、硬件信息和备份恢复。手势、主机动作、应用关联、桌面滚轮与指针设置、宏库和托盘需要桌面版。
+连接后先读取整片闪存，并在浏览器中保留最近 5 份备份，然后才允许写入。不要和桌面版同时写入。
+显示语言在 其他设置 → 关于软件 中切换，默认跟随浏览器语言，使用与桌面版相同的 `src/i18n` 表格。
+`contrib/i18n/update.py` 也收集 `web/src` 和 `web/www/*.js` 中的中文文字。
+
+```sh
+web/build.sh                                   # 生成 web/dist
+A90_BACKUP=backup.bin node --test web/test/    # 用模拟设备检查读写流程
+cd web && npx wrangler pages deploy            # 部署到 Cloudflare Pages
+```
+
 ## 命令行
 
 命令行功能不创建图形窗口：

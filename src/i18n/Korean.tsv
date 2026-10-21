@@ -21,10 +21,6 @@
 指针移动速度	Pointer movement speed
 鼠标手势	Mouse Gestures
 禁用	사용안함
-播放/暂停	재생/일시정지
-停止	멈춤
-静音	음소거
-左键双击	Double_click_left_key
 按键设置	Key settings
 按键查询	마우스 버튼의 키값 확인
 请按下鼠标按键	마우스 버튼을 눌러 주십시오
@@ -116,3 +112,7 @@ M-宏枪	M-Macro
 微动换彩(快)	서서히 바뀌는 컬러(패스트)
 文字	텍스트
 复制	복사
+播放/暂停	재생/일시정지
+停止	멈춤
+静音	음소거
+左键双击	Double_click_left_key

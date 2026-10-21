@@ -21,10 +21,6 @@
 指针移动速度	Pointer movement speed
 鼠标手势	Mouse Gestures
 禁用	Deaktiviert
-播放/暂停	Wiedergabe/Pause
-停止	Stopp
-静音	Stumm
-左键双击	Linke_Taste_doppelklicken
 按键设置	Key settings
 按键查询	Tasten anfragen
 请按下鼠标按键	Bitte Maustaste drücken
@@ -116,3 +112,7 @@ M-宏枪	M-Macro
 微动换彩(快)	Langs. Farbveränd. (schn.)
 文字	Text
 复制	Kopieren
+播放/暂停	Wiedergabe/Pause
+停止	Stopp
+静音	Stumm
+左键双击	Linke_Taste_doppelklicken
